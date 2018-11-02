@@ -12,6 +12,7 @@
 #include <QtWidgets\QPushButton>
 #include <QtWidgets\QLabel>
 #include <QtWidgets\QStatusBar>
+#include <QtWidgets\QDialog>
 
 
 

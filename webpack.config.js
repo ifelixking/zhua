@@ -5,17 +5,19 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
 	entry:{
-		index: './src/web/main/index.js'
+		admin: './src/web/app/admin/index.js',
+		home: './src/web/app/home/index.js',
+		injection: './src/web/app/injection/index.js'
 	},
 	output:{
-		path: __dirname + '/bin/web/main',
-		filename: 'asset/[name]-bundle.js',
+		path: __dirname + '/bin/web',
+		filename: '[name]/js/index.js',
 		publicPath: '/'
 	},
 	plugins:[
 		new HtmlWebpackPlugin({
-			filename: 'index.html',
-			chunks: ['index'],
+			filename: 'home/index.html',
+			chunks: ['home'],
 			title: 'Welcom to zhua',
 			template: 'src/web/res/index.tpl.html'
 		}),
