@@ -2,6 +2,7 @@ import React from 'react'
 import PanelAction from './PanelAction'
 import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
+import Styles from './index.css'
 
 const MAX_LONG_LONG = 2147483647
 
@@ -74,17 +75,17 @@ class MainPanel extends React.Component {
 		const css_tab = {
 			display: 'inline-block', height: '32px', boxSizing: 'border-box', padding: '6px 16px',
 			margin: '0px 10px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer',
-			borderBottomLeftRadius: '4px', borderBottomRightRadius: '4px',
+			borderBottomLeftRadius: '4px', borderBottomRightRadius: '4px'
 		}
 		const css_tab_current = Object.assign({}, css_tab, {
-			backgroundColor: '#FF7F00', color: '#fff'
+			background: 'linear-gradient(#FF7F00, #FF7F00)', color: '#fff'
 		})
 
 		let current_idx = this.props.children.findIndex(item => item.type.title == this.props.current)
 		current_idx >= 0 || (current_idx = 0)
 
 		let tabs = this.props.children.map((item, i) => {
-			return (<span key={item.type.title} style={i == current_idx ? css_tab_current : css_tab} onClick={() => this.props.onChange(item.type.title)}>{item.type.title}</span>)
+			return (<span className={Styles['MainPanel-tab']} key={item.type.title} style={i == current_idx ? css_tab_current : css_tab} onClick={() => this.props.onChange(item.type.title)}>{item.type.title}</span>)
 		})
 
 		return (
@@ -160,3 +161,5 @@ class MainButton extends React.Component {
 		)
 	}
 }
+
+/* background-color:#FFD6AE */
