@@ -13,6 +13,7 @@
 #include <QtWidgets\QLabel>
 #include <QtWidgets\QStatusBar>
 #include <QtWidgets\QDialog>
+#include <QtWidgets\QProgressBar>
 
 
 
