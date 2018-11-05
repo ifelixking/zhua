@@ -92,7 +92,9 @@ class MainPanel extends React.Component {
 			<div style={css_frame}>
 				<div style={{ height: '8px', backgroundColor: '#FF7F00', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }} />
 				<div style={{ width: '100%', padding: '0px 12px', boxSizing: 'border-box' }}>{tabs}</div>
-				{this.props.children[current_idx]}
+				<div style={{ width: '100%', height: 'calc(100% - 40px)' }}>
+					{this.props.children[current_idx]}
+				</div>
 			</div>
 		)
 	}
@@ -161,5 +163,3 @@ class MainButton extends React.Component {
 		)
 	}
 }
-
-/* background-color:#FFD6AE */

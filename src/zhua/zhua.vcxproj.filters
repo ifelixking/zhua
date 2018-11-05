@@ -19,20 +19,18 @@
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Utils.h" />
-    <ClInclude Include="DlgNavigate.h" />
     <ClInclude Include="GeneratedFiles\ui_DlgNavigate.h">
       <Filter>GeneratedFiles</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h" />
+    <CustomBuild Include="DlgNavigate.h" />
+    <CustomBuild Include="DlgNavigate.ui" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GeneratedFiles">
       <UniqueIdentifier>{971d9a78-5d0e-4e05-930a-cd5a8d5ee2df}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="DlgNavigate.ui" />
   </ItemGroup>
 </Project>
