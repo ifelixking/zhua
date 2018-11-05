@@ -1,9 +1,11 @@
 import React from 'react'
-import { getSVGTextSize } from '../../utils'
+import { getSVGTextSize, getCachedSVGTextSize } from '../../utils'
 
 export default class PanelAction extends React.Component {
 	constructor(props) {
 		super(props)
+
+		this.buildUIActionStore = this.buildUIActionStore.bind(this)
 
 		this.state = {
 			actionStore: {
@@ -14,7 +16,17 @@ export default class PanelAction extends React.Component {
 						id: 2, type: 'open-each-url', next: 4, actionStore: {
 							start: 3,
 							actions: [
-								{ id: 3, type: 'fetch-table' },
+								{ id: 3, type: 'fetch-table', next: 5 },
+								{ id: 5, type: 'fetch-table', next: 12 },
+								{
+									id: 12, type: 'open-each-url', next: 3, actionStore: {
+										start: 13,
+										actions: [
+											{ id: 13, type: 'fetch-table', next: 15 },
+											{ id: 15, type: 'fetch-table' },
+										]
+									}
+								},
 							]
 						}
 					},
@@ -22,86 +34,121 @@ export default class PanelAction extends React.Component {
 				]
 			}
 		}
+
+		this.uiStart = null
+
 	}
 	static title = "动作"
+	
 
-	render() {
 
-		debugger;
+	buildUIActionStore() {
 
-		let blocks = [], line = 10, dicExist = {}
-		const f = (blocks, parent, action) => {
+		const blockPadding = { x: 16, y: 8 }
+		const blockMargin = { x: 0, y: 32 }
+
+		const f = (action, uiList, parentStore, offset) => {
+
+			let ui = { action }; uiList.push(ui)
+			const textSize = getCachedSVGTextSize(action.type)
+			ui.blockSize = { width: textSize.width + (blockPadding.x << 1), height: textSize.height + (blockPadding.y << 1) }
+
+
 			// child
-			let childBlocks = null
 			if (action.actionStore) {
-				childBlocks = []
-				if (action.actionStore.start) {
-					f(childBlocks, action.actionStore, action.actionStore.actions.find(item => item.id == action.actionStore.start))
-				}
-			}
+				ui.children = []; let childOffset = { y: blockMargin.y }
+				const startAction = action.actionStore.actions.find(a => a.id == action.actionStore.start)
+				ui.childStart = f(startAction, ui.children, action.actionStore, childOffset)
 
-			// block
-			let block = <Block key={action.id} position={{ x: 10, y: line }} text={action.type}>{childBlocks}</Block>
-			blocks.push(block)
-			dicExist[action.id] = block
-			line += 50
+				ui.frameSize = { width: ui.blockSize.width, height: ui.blockSize.height + childOffset.y }
+				// ui.children.forEach(i => {
+				// 	const size = i.blockSize || i.frameSize
+				// 	ui.frameSize.height += size.height
+				// })
+			}
+			ui.position = { x: 10, y: offset.y }; offset.y += (ui.frameSize || ui.blockSize).height + blockMargin.y
 
 			// next
 			if (action.next) {
-				let nextBlock = dicExist[action.next]
-				if (!nextBlock) {
-					nextBlock = f(blocks, parent, parent.actions.find(item => item.id == action.next))
+				let uiNext = uiList.find(u => u.action.id == action.next)
+				if (!uiNext) {
+					let actionNext = parentStore.actions.find(a => a.id == action.next)
+					uiNext = f(actionNext, uiList, parentStore, offset)
 				}
-				// arrow
+				ui.next = uiNext
 			}
-			return block
-		}
-		f(blocks, this.state.actionStore, this.state.actionStore.actions.find(action => action.id == this.state.actionStore.start))
 
-		return (
-			<svg width={'100%'} height={'100%'}>
-				{blocks}
-			</svg>
-		)
+
+			return ui
+
+		}
+
+		let startAction = this.state.actionStore.actions.find(action => action.id == this.state.actionStore.start)
+		let uiList = [], offset = { y: 10 }
+		this.uiStart = f(startAction, uiList, this.state.actionStore, offset)
+
+	}
+
+
+	render() {
+
+		this.buildUIActionStore()
+
+		let blocks = [], line = 10, exists = []
+		const f = (ui, blocks) => {
+			// child
+			let childBlocks = null
+			if (ui.children) {
+				childBlocks = []
+				f(ui.childStart, childBlocks)
+			}
+
+			// block
+			let block = <Block key={ui.action.id} blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.type}>{childBlocks}</Block>
+			blocks.push(block); exists.push(ui.action.id)
+
+			// next
+			if (ui.next) {
+				if (exists.indexOf(ui.next.action.id) == -1) {
+					f(ui.next, blocks)
+				}
+			}
+		}
+
+		f(this.uiStart, blocks)
+
+		return (<svg width={'100%'} height={'100%'}>{blocks}</svg>)
 	}
 }
 
 class Block extends React.Component {
 	constructor(props) {
 		super(props)
-		this.calcTextSize = this.calcTextSize.bind(this)
-		this.textSize = null
-	}
-
-	componentWillReceiveProps(next) {
-		(next.text != this.props.text) && this.calcTextSize()
-	}
-
-	componentWillMount() {
-		this.calcTextSize()
-	}
-
-	calcTextSize() {
-		this.textSize = getSVGTextSize(this.props.text)
 	}
 
 	render() {
-		const padding = { x: 16, y: 8 }
-		const size = { width: this.textSize.width + (padding.x << 1), height: this.textSize.height + (padding.y << 1) }
-
 		let g
 		if (this.props.children && this.props.children.length) {
-			<g transform={`translate(${this.props.position.x}, ${this.props.position.y})`}>
-				<rect width={this.props.size.width} height={this.props.size.height} rx="4" ry="4" style={{ fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }} />
-				<text fill="#fff" x={this.props.size.width >> 1} y={this.props.size.height >> 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
+			g = <g transform={`translate(${this.props.position.x}, ${this.props.position.y})`}>
+				<rect width={this.props.frameSize.width} height={this.props.frameSize.height} style={{ fill: '#FFF', strokeWidth: 1, stroke: '#507E32' }} />
+				<rect x={1} y={1} width={this.props.frameSize.width - 2} height={this.props.blockSize.height - 2} style={{ fill: '#70AD47' }} />
+				<text fill="#fff" x={this.props.frameSize.width >> 1} y={this.props.blockSize.height >> 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
+				<g transform={`translate(1, ${this.props.blockSize.height})`}>
+					{this.props.children}
+				</g>
 			</g>
 		} else {
 			g = <g transform={`translate(${this.props.position.x}, ${this.props.position.y})`}>
-				<rect width={size.width} height={size.height} rx="4" ry="4" style={{ fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }} />
-				<text fill="#fff" x={size.width >> 1} y={(size.height >> 1) + 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
+				<rect width={this.props.blockSize.width} height={this.props.blockSize.height} rx="4" ry="4" style={{ fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }} />
+				<text fill="#fff" x={this.props.blockSize.width >> 1} y={(this.props.blockSize.height >> 1) + 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
 			</g>
 		}
 
 		return g
+	}
+
+	static exportToBlockSize(textSize) {
+		const padding = { x: 16, y: 8 }
+		return { width: textSize.width + (padding.x << 1), height: textSize.height + (padding.y << 1) }
 	}
 }

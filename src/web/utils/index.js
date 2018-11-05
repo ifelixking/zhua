@@ -19,3 +19,13 @@ export function getSVGTextSize(text) {
 
 	return {width, height}
 }
+
+let g_text_to_size = []
+export function getCachedSVGTextSize(text) {
+	let size = g_text_to_size[text]
+	if (!size) {
+		size = getSVGTextSize(text)
+		g_text_to_size[text] = size
+	}
+	return size;
+}
