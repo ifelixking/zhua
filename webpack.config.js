@@ -51,7 +51,35 @@ module.exports = {
 				use: {
 					loader: 'babel-loader',
 					options: {
-						presets: ['@babel/preset-react', ["@babel/preset-env", { "targets": { "esmodules": true } }]],
+						presets: [
+							'@babel/preset-react',											// 搞定 JSX 语法
+							["@babel/preset-env", { "targets": { "esmodules": true } }]		// 搞定 ES6 语法
+						],
+						plugins: [
+							// Stage 0
+							// "@babel/plugin-proposal-function-bind",
+
+							// Stage 1
+							// "@babel/plugin-proposal-export-default-from",
+							// "@babel/plugin-proposal-logical-assignment-operators",
+							// ["@babel/plugin-proposal-optional-chaining", { "loose": false }],
+							// ["@babel/plugin-proposal-pipeline-operator", { "proposal": "minimal" }],
+							// ["@babel/plugin-proposal-nullish-coalescing-operator", { "loose": false }],
+							// "@babel/plugin-proposal-do-expressions",
+
+							// Stage 2
+							// ["@babel/plugin-proposal-decorators", { "legacy": true }],
+							// "@babel/plugin-proposal-function-sent",
+							// "@babel/plugin-proposal-export-namespace-from",
+							// "@babel/plugin-proposal-numeric-separator",
+							// "@babel/plugin-proposal-throw-expressions",
+
+							// Stage 3
+							// "@babel/plugin-syntax-dynamic-import",
+							// "@babel/plugin-syntax-import-meta",
+							["@babel/plugin-proposal-class-properties", { "loose": false }],		// 搞定 提案:类静态方法 语法
+							// "@babel/plugin-proposal-json-strings"
+						]
 					}
 				}
 			},
