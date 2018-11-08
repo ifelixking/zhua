@@ -65,7 +65,7 @@ class MainPanel extends React.Component {
 	}
 
 	render() {
-		const width = 268, height = 850, posOffset = 18
+		const width = 500, height = 850, posOffset = 18
 		const css_frame = {
 			position: 'absolute', zIndex: MAX_LONG_LONG - 1, borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
 			width: `${width}px`, height: `${height}px`, backgroundColor: '#fff',
