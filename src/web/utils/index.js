@@ -12,12 +12,12 @@ export function getSVGTextSize(text) {
 	tmpSVGText.appendChild(txtNode)
 
 	g_svgDOM_hidden.appendChild(tmpSVGText)
-	let {width, height} = tmpSVGText.getBBox()
+	let { width, height } = tmpSVGText.getBBox()
 	g_svgDOM_hidden.removeChild(tmpSVGText)
 
 	document.body.removeChild(g_svgDOM_hidden);
 
-	return {width, height}
+	return { width, height }
 }
 
 let g_text_to_size = []
@@ -29,3 +29,24 @@ export function getCachedSVGTextSize(text) {
 	}
 	return size;
 }
+
+export function getActionById(id, actions) {
+	if (actions) {
+		return actions.find(a => a.id == id)
+	} else {
+		let result
+		const f = (actions) => {
+			return actions.find(a => {
+				if (a.id == id) { result = a; return true }
+				return a.actionStore && f(a.actionStore.actions)
+			})
+		}
+		return result;
+	}
+}
+
+export function getChildStartAction(action) {
+	return action.actionStore && App.getActionById(action.actionStore.start, action.actionStore.actions)
+}
+
+export const ROOT_ELEMENT_ID = '__ZHUA_ROOT__'

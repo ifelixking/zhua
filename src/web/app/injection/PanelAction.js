@@ -1,5 +1,6 @@
 import React from 'react'
-import { getSVGTextSize, getCachedSVGTextSize } from '../../utils'
+import * as utils from '../../utils'
+import * as ActionTools from './ActionTools'
 
 export default class PanelAction extends React.Component {
 	constructor(props) {
@@ -7,34 +8,7 @@ export default class PanelAction extends React.Component {
 
 		this.buildUIActionStore = this.buildUIActionStore.bind(this)
 
-		this.state = {
-			actionStore: {
-				start: 1,
-				actions: [
-					{ id: 1, type: 'open-url', next: 2 },
-					{
-						id: 2, type: 'open-each-url', next: 4,
-						actionStore: {
-							start: 3,
-							actions: [
-								{ id: 3, type: 'fetch-table', next: 5 },
-								{ id: 5, type: 'fetch-table', next: 12 },
-								{
-									id: 12, type: 'open-each-url', next: 3, actionStore: {
-										start: 13,
-										actions: [
-											{ id: 13, type: 'fetch-table', next: 15 },
-											{ id: 15, type: 'fetch-table', next: 13 },
-										]
-									}
-								},
-							]
-						}
-					},
-					{ id: 4, type: 'open-url', next: 2 },
-				]
-			}
-		}
+		this.state = {}
 
 		this.uiStart = null
 
@@ -52,7 +26,7 @@ export default class PanelAction extends React.Component {
 		const f = (action, uiList, parentStore, offset) => {
 
 			let ui = { action }; uiList.push(ui)
-			const textSize = getCachedSVGTextSize(action.type)
+			const textSize = utils.getCachedSVGTextSize(action.type)
 			ui.blockSize = { width: textSize.width + (this.config.blockPadding.x << 1), height: textSize.height + (this.config.blockPadding.y << 1) }
 
 			// child
@@ -83,21 +57,19 @@ export default class PanelAction extends React.Component {
 
 		}
 
-		let startAction = this.state.actionStore.actions.find(action => action.id == this.state.actionStore.start)
+		let startAction = this.props.actionStore.actions.find(action => action.id == this.props.actionStore.start)
 		let uiList = [], offset = { y: 10, maxWidth: 0 }
-		this.uiStart = f(startAction, uiList, this.state.actionStore, offset)
+		this.uiStart = f(startAction, uiList, this.props.actionStore, offset)
 
 		return { width: offset.maxWidth, height: offset.y }
 	}
 
-
 	render() {
 
+		// blocks
 		const totalSize = this.buildUIActionStore()
-
 		const css_line = { fill: 'none', stroke: '#70AD47', strokeWidth: this.config.lineWidth, markerEnd: 'url(#arrow)' }
-
-		let blocks = [], line = 10, exists = []
+		let blocks = [], line = 10, exists = [], currentAction = null
 		const f = (ui, blocks, frameWidth) => {
 			const width = (ui.frameSize || ui.blockSize).width
 			const height = (ui.frameSize || ui.blockSize).height
@@ -112,8 +84,10 @@ export default class PanelAction extends React.Component {
 				f(ui.childStart, childBlocks, width)
 			}
 
-			// block			
-			let block = <Block key={ui.action.id} blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.id + '-' + ui.action.type}>{childBlocks}</Block>
+			// block
+			(ui.action.id == this.props.currentAction) && (currentAction = ui.action)
+			let block = <Block key={ui.action.id} data={ui.action} highLight={ui.action.id == this.props.currentAction} onClick={this.props.onActionClick}
+				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.id + '-' + ui.action.type}>{childBlocks}</Block>
 			blocks.push(block); exists.push(ui.action.id)
 
 			// next
@@ -139,18 +113,31 @@ export default class PanelAction extends React.Component {
 
 			}
 		}
-
 		f(this.uiStart, blocks, totalSize.width)
 
-		return (			
-			<svg width={totalSize.width} height={totalSize.height}>
-				<defs>
-					<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto">
-						<path d="M0,0 L0,2 L1,1 z" fill="#70AD47" />
-					</marker>
-				</defs>
-				{blocks}
-			</svg>
+		// tool
+		let actionTool = null
+
+		switch(currentAction && currentAction.type){
+			case 'open-url': { actionTool = <ActionTools.OpenURL /> } break;
+			case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
+			case 'fetch-table': { actionTool = <ActionTools.FetchTable /> } break;
+		}
+
+		//
+		const css_frame = { width:'100%', height:'100%', textAlign: 'center', overflow: 'scroll' }
+		return (
+			<div style={css_frame}>
+				<svg width={totalSize.width} height={totalSize.height} style={{ cursor: 'default' }}>
+					<defs>
+						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto">
+							<path d="M0,0 L0,2 L1,1 z" fill="#70AD47" />
+						</marker>
+					</defs>
+					{blocks}
+				</svg>
+				{actionTool}
+			</div>
 		)
 	}
 }
@@ -158,23 +145,42 @@ export default class PanelAction extends React.Component {
 class Block extends React.Component {
 	constructor(props) {
 		super(props)
+		this.onGroupClick = this.onGroupClick.bind(this)
+	}
+
+	onGroupClick(e) {
+		e.stopPropagation()
+		this.props.onClick(this.props.data)
 	}
 
 	render() {
+		let css_frame = { fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }
+		let css_text = { fill: '#fff' }
+		if (this.props.highLight) {
+			css_frame.strokeWidth = 4
+			css_text.fontWeight = 'bold'
+		}
+
 		let g
 		if (this.props.children && this.props.children.length) {
-			g = <g transform={`translate(${this.props.position.x}, ${this.props.position.y})`}>
-				<rect width={this.props.frameSize.width} height={this.props.frameSize.height} rx="4" ry="4" style={{ fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }} />
-				<text fill="#fff" x={this.props.frameSize.width >> 1} y={this.props.blockSize.height >> 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
+			let innerRectWidth = this.props.frameSize.width - 2
+			let innerRectX = 0
+			if (this.props.highLight) {
+				innerRectWidth = this.props.frameSize.width - 4
+				innerRectX = 1
+			}
+			g = <g transform={`translate(${this.props.position.x}, ${this.props.position.y})`} onClick={this.onGroupClick}>
+				<rect width={this.props.frameSize.width} height={this.props.frameSize.height} rx="4" ry="4" style={css_frame} />
+				<text style={css_text} x={this.props.frameSize.width >> 1} y={this.props.blockSize.height >> 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
 				<g transform={`translate(1, ${this.props.blockSize.height})`}>
-					<rect x={0} y={0} width={this.props.frameSize.width - 2} height={this.props.frameSize.height - this.props.blockSize.height - 1} rx="4" ry="4" style={{ fill: '#FFF' }} />
+					<rect x={innerRectX} y={0} width={innerRectWidth} height={this.props.frameSize.height - this.props.blockSize.height - 1} rx="4" ry="4" style={{ fill: '#FFF' }} />
 					{this.props.children}
 				</g>
 			</g>
 		} else {
-			g = <g transform={`translate(${this.props.position.x}, ${this.props.position.y})`}>
-				<rect width={this.props.blockSize.width} height={this.props.blockSize.height} rx="4" ry="4" style={{ fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }} />
-				<text fill="#fff" x={this.props.blockSize.width >> 1} y={(this.props.blockSize.height >> 1) + 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
+			g = <g transform={`translate(${this.props.position.x}, ${this.props.position.y})`} onClick={this.onGroupClick}>
+				<rect width={this.props.blockSize.width} height={this.props.blockSize.height} rx="4" ry="4" style={css_frame} />
+				<text style={css_text} x={this.props.blockSize.width >> 1} y={(this.props.blockSize.height >> 1) + 1} textAnchor="middle" dominantBaseline="middle">{this.props.text}</text>
 			</g>
 		}
 

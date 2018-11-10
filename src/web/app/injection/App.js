@@ -4,6 +4,7 @@ import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
 import Styles from './index.css'
 
+
 const MAX_LONG_LONG = 2147483647
 
 export default class App extends React.Component {
@@ -13,11 +14,40 @@ export default class App extends React.Component {
 		this.onMainBtnMove = this.onMainBtnMove.bind(this)
 		this.onPanelChange = this.onPanelChange.bind(this)
 		this.onPanelResize = this.onPanelResize.bind(this)
+		this.onActionClick = this.onActionClick.bind(this)
+
 		this.state = {
 			showMainPanel: false,
 			positionMain: { x: 61.8, y: 100 },
-			panelSize: { width: 300, height: 500 },
+			panelSize: { width: 400, height: 700 },
 			currentPanel: null,
+			currentAction: 1,
+			actionStore: {
+				start: 1,
+				actions: [
+					{ id: 1, type: 'open-url', next: 2 },
+					{
+						id: 2, type: 'open-each-url', next: 4,
+						actionStore: {
+							start: 3,
+							actions: [
+								{ id: 3, type: 'fetch-table', next: 5 },
+								{ id: 5, type: 'fetch-table', next: 12 },
+								{
+									id: 12, type: 'open-each-url', next: 3, actionStore: {
+										start: 13,
+										actions: [
+											{ id: 13, type: 'fetch-table', next: 15 },
+											{ id: 15, type: 'fetch-table', next: 13 },
+										]
+									}
+								},
+							]
+						}
+					},
+					{ id: 4, type: 'open-url', next: 2 },
+				]
+			},
 		}
 	}
 
@@ -43,18 +73,23 @@ export default class App extends React.Component {
 		this.setState({ panelSize: newSize })
 	}
 
+	onActionClick(action){
+		if ((action && action.id) == this.state.currentAction) { return }
+		this.setState({currentAction: action && action.id})
+	}
+
 	render() {
 		let mainPanel = this.state.showMainPanel ? (
 			<MainPanel position={this.state.positionMain}
 				current={this.state.currentPanel} onChange={this.onPanelChange}
 				size={this.state.panelSize} onResize={this.onPanelResize} miniSize={{ width: 300, height: 500 }}>
-				<PanelAction />
+				<PanelAction actionStore={this.state.actionStore} currentAction={this.state.currentAction} onActionClick={this.onActionClick}/>
 				<PanelResource />
 				<PanelOption />
 			</MainPanel>
 		) : null
 
-		const css_global = { color: '#333', fontFamily: 'Microsoft YaHei,SimHei,NSimSun,SimSun,SimHei' }
+		const css_global = { color: '#333', fontFamily: 'Microsoft YaHei,SimHei,NSimSun,SimSun,SimHei', fontSize: '12px' }
 
 		return (
 			<div style={css_global}>
@@ -109,7 +144,7 @@ class MainPanel extends React.Component {
 	render() {
 		const posOffset = 18
 		const css_frame = {
-			position: 'absolute', zIndex: MAX_LONG_LONG - 1, borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
+			position: 'fixed', zIndex: MAX_LONG_LONG - 1, borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
 			width: `${this.props.size.width}px`, height: `${this.props.size.height}px`, backgroundColor: '#fff',
 			left: `${this.props.position.x + posOffset}px`, top: `${this.props.position.y + posOffset}px`
 		}
@@ -134,7 +169,7 @@ class MainPanel extends React.Component {
 			<div style={css_frame}>
 				<div style={{ height: '8px', backgroundColor: '#FF7F00', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }} />
 				<div style={{ width: '100%', padding: '0px 12px', boxSizing: 'border-box' }}>{tabs}</div>
-				<div style={{ width: '100%', height: 'calc(100% - 40px)', textAlign: 'center', overflow: 'scroll' }}>
+				<div style={{ width: '100%', height: 'calc(100% - 40px)' }}>
 					{this.props.children[current_idx]}
 				</div>
 				<div onMouseDown={this.onMouseDownForResize} style={{ cursor: 'se-resize', position: 'absolute', width: '0px', height: '0px', backgroundColor: 'transparent', right: '0px', bottom: '0px', borderWidth: '8px 8px 8px 8px', borderColor: 'transparent #FF7F00 #FF7F00 transparent', borderStyle: 'solid' }} />
@@ -196,7 +231,7 @@ class MainButton extends React.Component {
 
 		const css = {
 			backgroundColor: '#FF7F00', width: `${size}px`, height: `${size}px`, borderRadius: `${size >> 1}px`, boxSizing: 'border-box', zIndex: MAX_LONG_LONG,
-			position: 'absolute', left: `${this.props.position.x}px`, top: `${this.props.position.y}px`, boxShadow: '0px 0px 5px #888888', cursor: 'pointer',
+			position: 'fixed', left: `${this.props.position.x}px`, top: `${this.props.position.y}px`, boxShadow: '0px 0px 5px #888888', cursor: 'pointer',
 			lineHeight: `${size}px`, fontSize: `${fontSize}px`, color: 'white', fontWeight: 'bold', textAlign: 'center',
 			transitionProperty: `width,height,border-radius,line-height,font-size`, transitionDuration: `${timing}s`, transitionTimingFunction: 'ease'
 		}

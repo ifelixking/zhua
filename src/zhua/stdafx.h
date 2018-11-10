@@ -14,7 +14,7 @@
 #include <QtWidgets\QStatusBar>
 #include <QtWidgets\QDialog>
 #include <QtWidgets\QProgressBar>
-
+#include <QtCore\QUuid>
 
 
 

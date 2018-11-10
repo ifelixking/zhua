@@ -17,6 +17,7 @@ private:
 	void slotShowDevTool();
 
 private:
+	QString m_injectScriptID;
 	QWebEngineView * m_view;
 	//enum InjectStates {
 	//	IS_NOTYET,

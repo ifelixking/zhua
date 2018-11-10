@@ -6,7 +6,9 @@ MainWindow::MainWindow(QWidget * parent)
 	: QMainWindow(parent)
 	// 	, m_injectState(IS_NOTYET)
 	, m_view(new QWebEngineView(this))
+	, m_injectScriptID(QUuid::createUuid().toString())
 {
+
 	this->initMenu();
 
 	setCentralWidget(m_view);
@@ -14,8 +16,8 @@ MainWindow::MainWindow(QWidget * parent)
 	connect(m_view, &QWebEngineView::loadProgress, this, &MainWindow::onViewLoadProgress);
 	connect(m_view, &QWebEngineView::loadStarted, this, &MainWindow::onViewLoadStarted);
 	m_view->show();
-
-	m_view->load(QUrl("http://www.baidu.com"));
+	
+	m_view->load(QUrl("http://www.csdn.net"));
 }
 
 MainWindow::~MainWindow() {
@@ -95,8 +97,8 @@ void MainWindow::slotNavigate() {
 }
 
 void MainWindow::inject() {
-	// qDebug() << "--------------------- Inject";
-	QString script = "(function(){ if (document.getElementById('showmethemoney')) return; if (!document.body) return; var s=document.createElement('script');s.id='showmethemoney';s.src='http://localhost/injection/js/index.js';document.body.append(s)})()";
+	// qDebug() << "--------------------- Inject";	
+	auto script = QString("(function(){ if (document.getElementById('%1')) return; if (!document.body) return; var s=document.createElement('script');s.id='%1';s.src='http://localhost:80/injection/js/index.js';document.body.append(s)})()").arg(m_injectScriptID);
 	// InjectStates * state = &this->m_injectState;
 	m_view->page()->runJavaScript(script/*, [state](const QVariant & result) {*state = result == true ? IS_SUCCESSED : IS_FAILED;}*/);
 }

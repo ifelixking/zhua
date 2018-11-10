@@ -41,6 +41,7 @@ module.exports = {
 				{ from: /^\/admin/, to: '/admin.html' }
 			],
 		},
+		// https: true,
 	},
 	module: {
 		rules: [
