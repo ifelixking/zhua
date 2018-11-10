@@ -12,9 +12,11 @@ export default class App extends React.Component {
 		this.onMainBtnClick = this.onMainBtnClick.bind(this)
 		this.onMainBtnMove = this.onMainBtnMove.bind(this)
 		this.onPanelChange = this.onPanelChange.bind(this)
+		this.onPanelResize = this.onPanelResize.bind(this)
 		this.state = {
 			showMainPanel: false,
 			positionMain: { x: 61.8, y: 100 },
+			panelSize: { width: 300, height: 500 },
 			currentPanel: null,
 		}
 	}
@@ -37,9 +39,15 @@ export default class App extends React.Component {
 		})
 	}
 
+	onPanelResize(newSize) {
+		this.setState({ panelSize: newSize })
+	}
+
 	render() {
 		let mainPanel = this.state.showMainPanel ? (
-			<MainPanel position={this.state.positionMain} current={this.state.currentPanel} onChange={this.onPanelChange}>
+			<MainPanel position={this.state.positionMain}
+				current={this.state.currentPanel} onChange={this.onPanelChange}
+				size={this.state.panelSize} onResize={this.onPanelResize} miniSize={{ width: 300, height: 500 }}>
 				<PanelAction />
 				<PanelResource />
 				<PanelOption />
@@ -62,13 +70,47 @@ export default class App extends React.Component {
 class MainPanel extends React.Component {
 	constructor(props) {
 		super(props)
+		this.onMouseDownForResize = this.onMouseDownForResize.bind(this)
+	}
+
+	onMouseDownForResize(e) {
+		const onMouseMove = (e) => {
+			e.stopPropagation()
+			let pt = { x: e.clientX, y: e.clientY }
+			let newSize = { width: this.props.size.width + pt.x - lastPt.x, height: this.props.size.height + pt.y - lastPt.y }
+			if (newSize.width < this.props.miniSize.width) {
+				newSize.width = this.props.miniSize.width
+			} else {
+				lastPt.x = pt.x
+			}
+			if (newSize.height < this.props.miniSize.height) {
+				newSize.height = this.props.miniSize.height
+			} else {
+				lastPt.y = pt.y
+			}
+			this.props.onResize(newSize)
+			// lastPt = pt;
+		}
+		const onMouseUp = (e) => {
+			e.stopPropagation()
+			window.removeEventListener('mousemove', onMouseMove, true)
+			window.removeEventListener('mouseup', onMouseUp, true)
+			document.onselectstart = oldOnSelectStart
+		}
+		const disableSelect = function (e) { return false; }
+		let lastPt = { x: e.clientX, y: e.clientY }
+		let oldOnSelectStart = document.onselectstart
+		document.onselectstart = disableSelect
+		window.addEventListener('mousemove', onMouseMove, true)
+		window.addEventListener('mouseup', onMouseUp, true)
+		e.stopPropagation()
 	}
 
 	render() {
-		const width = 500, height = 850, posOffset = 18
+		const posOffset = 18
 		const css_frame = {
 			position: 'absolute', zIndex: MAX_LONG_LONG - 1, borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
-			width: `${width}px`, height: `${height}px`, backgroundColor: '#fff',
+			width: `${this.props.size.width}px`, height: `${this.props.size.height}px`, backgroundColor: '#fff',
 			left: `${this.props.position.x + posOffset}px`, top: `${this.props.position.y + posOffset}px`
 		}
 
@@ -92,9 +134,10 @@ class MainPanel extends React.Component {
 			<div style={css_frame}>
 				<div style={{ height: '8px', backgroundColor: '#FF7F00', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }} />
 				<div style={{ width: '100%', padding: '0px 12px', boxSizing: 'border-box' }}>{tabs}</div>
-				<div style={{ width: '100%', height: 'calc(100% - 40px)' }}>
+				<div style={{ width: '100%', height: 'calc(100% - 40px)', textAlign: 'center', overflow: 'scroll' }}>
 					{this.props.children[current_idx]}
 				</div>
+				<div onMouseDown={this.onMouseDownForResize} style={{ cursor: 'se-resize', position: 'absolute', width: '0px', height: '0px', backgroundColor: 'transparent', right: '0px', bottom: '0px', borderWidth: '8px 8px 8px 8px', borderColor: 'transparent #FF7F00 #FF7F00 transparent', borderStyle: 'solid' }} />
 			</div>
 		)
 	}
