@@ -50,3 +50,17 @@ export function getChildStartAction(action) {
 }
 
 export const ROOT_ELEMENT_ID = '__ZHUA_ROOT__'
+
+export function eventFilterRoot(e) {
+	if (e.path.find(ele => ele.id == ROOT_ELEMENT_ID)) { return true }
+	e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation(); e.returnValue = false
+	return false
+}
+
+export function getModalRoot(){
+	return document.getElementById(ROOT_ELEMENT_ID).children[1]
+}
+
+export function highLightElement(elements){
+	// elements.forEach(ele=>{})
+}
