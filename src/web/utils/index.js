@@ -1,3 +1,5 @@
+import Icons from '../res/iconfont/iconfont.css'
+
 let g_svgDOM_hidden = null
 export function getSVGTextSize(text) {
 	const ns = 'http://www.w3.org/2000/svg'
@@ -57,10 +59,14 @@ export function eventFilterRoot(e) {
 	return false
 }
 
-export function getModalRoot(){
+export function getModalRoot() {
 	return document.getElementById(ROOT_ELEMENT_ID).children[1]
 }
 
-export function highLightElement(elements){
+export function highLightElement(elements) {
 	// elements.forEach(ele=>{})
+}
+
+export function icon(name, extStyles = []) {
+	return [Icons.iconfont, Icons[name], ...extStyles].join(' ')
 }
