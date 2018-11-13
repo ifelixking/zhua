@@ -1,4 +1,6 @@
 import Icons from '../res/iconfont/iconfont.css'
+import * as _Smart from './smart'
+export const Smart = _Smart
 
 let g_svgDOM_hidden = null
 export function getSVGTextSize(text) {
@@ -70,3 +72,4 @@ export function highLightElement(elements) {
 export function icon(name, extStyles = []) {
 	return [Icons.iconfont, Icons[name], ...extStyles].join(' ')
 }
+

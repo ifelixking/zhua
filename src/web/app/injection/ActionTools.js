@@ -22,7 +22,12 @@ export class OpenURL extends React.Component {
 
 	onMouseMove(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		const highLight = [e.target]
+		let highLight
+		if (this.state.selection.indexOf(e.target) != -1) {
+			highLight = []
+		} else {
+			highLight = [e.target]
+		}
 		this.setState({
 			highLight, highLightRects: highLight.map(ele => {
 				const { left, top, width, height } = ele.getBoundingClientRect()
@@ -43,7 +48,7 @@ export class OpenURL extends React.Component {
 
 	onClick(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		const selection = [e.target]
+		const selection = utils.Smart.findSimilarity(e.target)
 		const selectionRects = selection.map((ele) => {
 			const { left, top, width, height } = ele.getBoundingClientRect()
 			return {
@@ -112,7 +117,7 @@ export class OpenURL extends React.Component {
 		let highLightFrames = this.state.highLightRects.map((rect, i) => {
 			const css_div = Object.assign({}, css_highLight, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
 			return (<div key={`h-${i}`} style={css_div} />)
-		})	
+		})
 		let selectionFrames = this.state.selectionRects.map((rect, i) => {
 			const css_div = Object.assign({}, css_selection, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
 			return (<div key={`s-${i}`} style={css_div} />)
@@ -133,10 +138,10 @@ export class OpenURL extends React.Component {
 			)
 		}
 		return ReactDOM.createPortal([
-			<Mask rects={this.state.selectionRects} />,
-			<div>{highLightFrames}</div>,
-			<div>{selectionFrames}</div>,
-			<div>{opBtns}</div>			
+			<Mask key={1} rects={this.state.selectionRects} />,
+			<div key={2} >{highLightFrames}</div>,
+			<div key={3} >{selectionFrames}</div>,
+			<div key={4} >{opBtns}</div>
 		], utils.getModalRoot());
 	}
 }
