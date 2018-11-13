@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import * as utils from '../../utils'
-// import Styles from './index.css'
+import Mask from './Mask'
 
 export class OpenURL extends React.Component {
 	constructor(props) {
@@ -9,16 +9,30 @@ export class OpenURL extends React.Component {
 		this.onClick = this.onClick.bind(this)
 		this.onMouseDown = this.onMouseDown.bind(this)
 		this.onMouseMove = this.onMouseMove.bind(this)
+		this.onWindowResize = this.onWindowResize.bind(this)
 		this.state = {
 			highLight: [],
+			highLightRects: [],
 			selection: [],
+			selectionRects: [],
 			opElement: null,
+			opElementRect: {}
 		}
 	}
 
 	onMouseMove(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		this.setState({ highLight: [e.target] })
+		const highLight = [e.target]
+		this.setState({
+			highLight, highLightRects: highLight.map(ele => {
+				const { left, top, width, height } = ele.getBoundingClientRect()
+				return {
+					left: left + document.documentElement.scrollLeft,
+					top: top + document.documentElement.scrollTop,
+					width, height
+				}
+			})
+		})
 		return false
 	}
 
@@ -29,17 +43,63 @@ export class OpenURL extends React.Component {
 
 	onClick(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		this.setState({ selection: [e.target], opElement: e.target })
+		const selection = [e.target]
+		const selectionRects = selection.map((ele) => {
+			const { left, top, width, height } = ele.getBoundingClientRect()
+			return {
+				left: left + document.documentElement.scrollLeft,
+				top: top + document.documentElement.scrollTop,
+				width, height
+			}
+		})
+		const opElementRect = e.target.getBoundingClientRect()
+		this.setState({
+			selection, selectionRects,
+			opElement: e.target, opElementRect: {
+				left: opElementRect.left + document.documentElement.scrollLeft,
+				top: opElementRect.top + document.documentElement.scrollTop,
+				width: opElementRect.width, height: opElementRect.height
+			}
+		})
 		return false
+	}
+
+	onWindowResize(e) {
+		const opElementRect = this.state.opElement.getBoundingClientRect()
+		this.setState({
+			selectionRects: this.state.selection.map((ele) => {
+				const { left, top, width, height } = ele.getBoundingClientRect()
+				return {
+					left: left + document.documentElement.scrollLeft,
+					top: top + document.documentElement.scrollTop,
+					width: width, height: height
+				}
+			}),
+			highLightRects: this.state.highLight.map(ele => {
+				const { left, top, width, height } = ele.getBoundingClientRect()
+				return {
+					left: left + document.documentElement.scrollLeft,
+					top: top + document.documentElement.scrollTop,
+					width, height
+				}
+			}),
+			opElementRect: {
+				left: opElementRect.left + document.documentElement.scrollLeft,
+				top: opElementRect.top + document.documentElement.scrollTop,
+				width: opElementRect.width, height: opElementRect.height
+			}
+		})
 	}
 
 	componentDidMount() {
 		window.document.addEventListener('mousemove', this.onMouseMove, true)
 		window.document.addEventListener('mousedown', this.onMouseDown, true)
 		window.document.addEventListener('click', this.onClick, true)
+		window.addEventListener('resize', this.onWindowResize, true)
 	}
 
 	componentWillUnmount() {
+		window.removeEventListener('resize', this.onWindowResize, true)
 		window.document.removeEventListener('mousemove', this.onMouseMove, true)
 		window.document.removeEventListener('mousedown', this.onMouseDown, true)
 		window.document.removeEventListener('click', this.onClick, true)
@@ -49,32 +109,20 @@ export class OpenURL extends React.Component {
 		const css = { position: 'absolute', pointerEvents: 'none' }
 		const css_highLight = Object.assign({}, css, { border: '1px dashed #FF7F00' })
 		const css_selection = Object.assign({}, css, { border: '2px dashed #FF7F00' })
-		let highLightRects = this.state.highLight.map((ele, i) => {
-			const rect = ele.getBoundingClientRect()
-			const css_div = Object.assign({}, css_highLight, {
-				left: `${rect.left + document.documentElement.scrollLeft}px`,
-				top: `${rect.top + document.documentElement.scrollTop}px`,
-				width: `${rect.width}px`,
-				height: `${rect.height}px`,
-			})
+		let highLightFrames = this.state.highLightRects.map((rect, i) => {
+			const css_div = Object.assign({}, css_highLight, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
 			return (<div key={`h-${i}`} style={css_div} />)
-		})
-		let selectionRects = this.state.selection.map((ele, i) => {
-			const rect = ele.getBoundingClientRect()
-			const css_div = Object.assign({}, css_selection, {
-				left: `${rect.left + document.documentElement.scrollLeft}px`,
-				top: `${rect.top + document.documentElement.scrollTop}px`,
-				width: `${rect.width}px`,
-				height: `${rect.height}px`,
-			})
+		})	
+		let selectionFrames = this.state.selectionRects.map((rect, i) => {
+			const css_div = Object.assign({}, css_selection, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
 			return (<div key={`s-${i}`} style={css_div} />)
 		})
+
 		let opBtns = []
 		if (this.state.opElement) {
-			const clientRect = this.state.opElement.getBoundingClientRect()
-			const left = clientRect.left + document.documentElement.scrollLeft
-			const top = clientRect.top + document.documentElement.scrollTop + clientRect.height
-			const css_icon = { cursor:'pointer', backgroundColor: '#FF7F00', color:'#fff',marginRight:'1px',border:'1px solid #E6E6E6', width:'16px', height:'16px' }
+			const left = this.state.opElementRect.left
+			const top = this.state.opElementRect.top + this.state.opElementRect.height
+			const css_icon = { cursor: 'pointer', backgroundColor: '#FF7F00', color: '#fff', marginRight: '1px', border: '1px solid #E6E6E6', width: '16px', height: '16px' }
 			opBtns.push(
 				<div key={'open-url'} style={{ position: 'absolute', left: `${left}px`, top: `${top}px` }}>
 					<i style={css_icon} className={utils.icon('icon-click')}></i>
@@ -85,9 +133,10 @@ export class OpenURL extends React.Component {
 			)
 		}
 		return ReactDOM.createPortal([
-			<div key={1}>{highLightRects}</div>,
-			<div key={2}>{selectionRects}</div>,
-			<div key={3}>{opBtns}</div>,
+			<Mask rects={this.state.selectionRects} />,
+			<div>{highLightFrames}</div>,
+			<div>{selectionFrames}</div>,
+			<div>{opBtns}</div>			
 		], utils.getModalRoot());
 	}
 }

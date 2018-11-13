@@ -21,6 +21,11 @@ module.exports = {
 			title: 'Welcom to zhua',
 			template: 'src/web/res/index.tpl.html'
 		}),
+		new HtmlWebpackPlugin({
+			filename: 'injection/index.html',
+			chunks: ['injection'],
+			template: 'src/web/res/injection-test.tpl.html'
+		}),
 		new CopyWebpackPlugin([{ from: './src/web/static' }])
 	],
 	optimization: {
