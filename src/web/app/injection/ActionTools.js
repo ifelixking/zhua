@@ -13,6 +13,8 @@ export class OpenURL extends React.Component {
 		this.onWindowResize = this.onWindowResize.bind(this)
 		this.onFilterMouseOver = this.onFilterMouseOver.bind(this)
 		this.onFilterMouseOut = this.onFilterMouseOut.bind(this)
+		this.onFilterToggleCheck = this.onFilterToggleCheck.bind(this)
+		this.flushByQNodeList = this.flushByQNodeList.bind(this)
 		this.state = {
 			highLight: [],
 			highLightRects: [],
@@ -54,25 +56,16 @@ export class OpenURL extends React.Component {
 	onClick(e) {
 		if (utils.eventFilterRoot(e)) { return true }
 		const qNodeList = utils.Smart.analysePath(e.target)
-
-		const selection = $(utils.Smart.toQueryString(qNodeList)).toArray()
-		const selectionRects = selection.map((ele) => {
-			const { left, top, width, height } = ele.getBoundingClientRect()
-			return {
-				left: left + document.documentElement.scrollLeft,
-				top: top + document.documentElement.scrollTop,
-				width, height
-			}
-		})
+		this.flushByQNodeList(qNodeList)
 		const opElementRect = e.target.getBoundingClientRect()
 		this.setState({
-			selection, selectionRects, qNodeList,
 			opElement: e.target, opElementRect: {
 				left: opElementRect.left + document.documentElement.scrollLeft,
 				top: opElementRect.top + document.documentElement.scrollTop,
 				width: opElementRect.width, height: opElementRect.height
 			}
 		})
+
 		return false
 	}
 
@@ -132,6 +125,41 @@ export class OpenURL extends React.Component {
 		this.setState({ filterTriggerRect: null })
 	}
 
+	flushByQNodeList(qNodeList){
+		const selection = utils.Smart.queryElements(qNodeList)
+		const selectionRects = selection.map((ele) => {
+			const { left, top, width, height } = ele.getBoundingClientRect()
+			return {
+				left: left + document.documentElement.scrollLeft,
+				top: top + document.documentElement.scrollTop,
+				width, height
+			}
+		})
+		this.setState({selection, selectionRects, qNodeList})
+	}
+	
+	onFilterToggleCheck(idx, field) {
+		let qNodeList = [...this.state.qNodeList]
+		let node = qNodeList[idx]
+		switch (field) {
+			case 'tag': { node.config.tagName = !node.config.tagName } break
+			case 'f': { node.config.isFirst = !node.config.isFirst } break
+			case 'l': { node.config.isLast = !node.config.isLast } break
+			case 'i': { node.config.index = !node.config.index } break
+			case 't': { node.config.text = !node.config.text } break
+			default: {
+				if (field[0] == 'c') {
+					let i = parseInt(field.substr(2))
+					utils.toggleArray(node.config.className, i)
+				} else if (field[0] == 'a') {
+					let i = parseInt(field.substr(2))
+					utils.toggleArray(node.config.attributes, i)
+				} break
+			}
+		}
+		this.flushByQNodeList(qNodeList)
+	}
+
 	render() {
 		const css = { position: 'absolute', pointerEvents: 'none' }
 		const css_highLight = Object.assign({}, css, { border: '1px dashed #FF7F00' })
@@ -155,12 +183,13 @@ export class OpenURL extends React.Component {
 					<i style={css_icon} className={utils.icon('icon-click')}></i>
 					<i style={css_icon} className={utils.icon('icon-open-url')}></i>
 					<i style={css_icon} className={utils.icon('icon-open-each-url')}></i>
-					<i style={css_icon} clazz={Filter.clazz} onMouseOver={this.onFilterMouseOver} onMouseOut={this.onFilterMouseOut} className={utils.icon('icon-fetch-table')}></i>
+					<i style={css_icon} className={utils.icon('icon-fetch-table')}></i>
+					<i style={css_icon} clazz={Filter.clazz} onMouseOver={this.onFilterMouseOver} onMouseOut={this.onFilterMouseOut} className={utils.icon('icon-filter')}></i>
 				</div>
 			)
 		}
 
-		let filter = this.state.filterTriggerRect && <Filter qNodeList={this.state.qNodeList} triggerRect={this.state.filterTriggerRect} onMouseOut={this.onFilterMouseOut} />
+		let filter = this.state.filterTriggerRect && <Filter qNodeList={this.state.qNodeList} triggerRect={this.state.filterTriggerRect} onMouseOut={this.onFilterMouseOut} onToggleCheck={this.onFilterToggleCheck}/>
 
 		return ReactDOM.createPortal([
 			<Mask key={1} rects={this.state.selectionRects} />,
@@ -175,42 +204,83 @@ export class OpenURL extends React.Component {
 export class Filter extends React.Component {
 	constructor(props) {
 		super(props)
+		this.onClick = this.onClick.bind(this)
+		this.state = {
+			explodeClassName: [],
+			explodeAttributes: [],
+		}
 	}
 
 	static clazz = 'Filter'
+
+	onClick(e) {
+		if (e.target) {
+			const key = e.target.attributes['data-key']
+			if (key) {
+				let idx = utils.getElementRIndex(e.target.parentElement)
+				if (key.value == 'e-c') {
+					let explodeClassName = [...this.state.explodeClassName]
+					utils.toggleArray(explodeClassName, idx)
+					this.setState({ explodeClassName })
+				} else if (key.value == 'e-a') {
+					let explodeAttributes = [...this.state.explodeAttributes]
+					utils.toggleArray(explodeAttributes, idx)
+					this.setState({ explodeAttributes })
+				} else {
+					this.props.onToggleCheck(idx, key.value)
+				}
+			}
+		}
+	}
 
 	render() {
 		const r = this.props.triggerRect
 		const left = document.documentElement.scrollLeft + r.left
 		const top = document.documentElement.scrollTop + r.top + r.height
 		const css_frame = { position: 'absolute', left: `${left}px`, top: `${top}px`, backgroundColor: '#ccc' }
-		const css_tag = { cursor: 'pointer', display: 'inline-block', height: '15px', backgroundColor: '#FF7F00', color: '#fff', borderRadius: '8px', lineHeight: '15px', padding: '0px 8px' }
-		const css_line = { lineHeight: '18px' }
-		const css_check = { cursor: 'pointer', display: 'inline-block', height: '15px', minWidth: '15px', textAlign: 'center', margin: '0px 2px', backgroundColor: '#FF7F00', color: '#fff', borderRadius: '8px', lineHeight: '15px' }
+
+		const css_line = { lineHeight: '20px', whiteSpace: 'nowrap' }
+		const css_check = { cursor: 'pointer', display: 'inline-block', height: '16px', minWidth: '16px', textAlign: 'center', marginRight: '4px', backgroundColor: '#FF7F00', color: '#fff', borderRadius: '8px', lineHeight: '16px', fontWeight: 'bold' }
 		const css_uncheck = Object.assign({}, css_check, { backgroundColor: '#fff', color: '#FF7F00' })
+		const css_tag_check = Object.assign({}, css_check, { padding: '0px 8px' })
+		const css_tag_uncheck = Object.assign({}, css_tag_check, { backgroundColor: '#fff', color: '#FF7F00' })
+		const css_explode = Object.assign({}, css_check, { backgroundColor: '#FFBE7E', color: '#fff', fontSize:'14px' })
 
 		let lines = this.props.qNodeList.map((n, i) => {
 			let checkes = []
-			checkes.push(<div key={'tag'} style={css_tag} title={`标签`}>{n.tagName}</div>)			// tag
-			checkes.push(...n.className.map((a, i) => (<div key={`c-${i}`} style={css_uncheck} title={`样式:${a}`}>C</div>)))	// [class]
-			n.isFirst && checkes.push(<div key={'f'} style={css_uncheck} title={'第一个'}>F</div>)			// first
-			n.isLast && checkes.push(<div key={'l'} style={css_uncheck} title={'最后一个'}>L</div>)			// last
-			!n.isFirst && checkes.push(<div key={'i'} style={css_uncheck} title={`第${n.index}个`}>I</div>)			// index
-			n.innerText && checkes.push(<div key={'t'} style={css_uncheck} title={`文本:${n.innerText}`}>T</div>)					// text
-			checkes.push(...n.attributes.map((a, i) => (<div key={`a-${i}`} style={css_uncheck} title={`属性:${a.name}=${a.value}`}>A</div>)))		// [attributes]
-
+			checkes.push(<div key={'tag'} data-key={'tag'} style={n.config.tagName ? css_tag_check : css_tag_uncheck} title={`标签`}>{n.tagName}</div>)			// tag
+			// [class]
+			{
+				let explode = this.state.explodeClassName.indexOf(i) != -1
+				let final = (n.className.length <= 3 || explode) ? n.className : n.className.slice(0, 3)
+				checkes.push(...final.map((a, j) => (<div key={`c-${j}`} data-key={`c-${j}`} style={n.config.className.indexOf(j) != -1 ? css_check : css_uncheck} title={`样式:${a}`}>C</div>)))
+				if (n.className.length > 3){
+					checkes.push(<div key={'e-c'} data-key={'e-c'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')}/>)
+				}
+			}			
+			n.isFirst && checkes.push(<div key={'f'} data-key={'f'} style={n.config.isFirst ? css_check : css_uncheck} title={'第一个'}>F</div>)				// first
+			n.isLast && checkes.push(<div key={'l'} data-key={'l'} style={n.config.isLast ? css_check : css_uncheck} title={'最后一个'}>L</div>)				// last
+			!n.isFirst && checkes.push(<div key={'i'} data-key={'i'} style={n.config.index ? css_check : css_uncheck} title={`第${n.index}个`}>I</div>)			// index
+			n.innerText && checkes.push(<div key={'t'} data-key={'t'} style={n.config.text ? css_check : css_uncheck} title={`文本:${n.innerText}`}>T</div>)		// text
+			// [attributes]
+			{
+				let explode = this.state.explodeAttributes.indexOf(i) != -1
+				let final = (n.attributes.length <= 3 || explode) ? n.attributes : n.attributes.slice(0, 3)
+				checkes.push(...final.map((a, j) => (<div key={`a-${j}`} data-key={`a-${j}`} style={n.config.attributes.indexOf(j) != -1 ? css_check : css_uncheck} title={`属性:${a.name}=${a.value}`}>A</div>)))
+				if (n.attributes.length > 3){
+					checkes.push(<div key={'e-a'} data-key={'e-a'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')}/>)
+				}
+			}
 			return (
 				<div style={css_line} key={i}>
-					<nobr>
-						{checkes}
-					</nobr>
+					{checkes}
 				</div>
 			)
 		})
 		lines.reverse()
 
 		return (
-			<div clazz={Filter.clazz} onMouseOut={this.props.onMouseOut} style={css_frame}>
+			<div clazz={Filter.clazz} onMouseOut={this.props.onMouseOut} style={css_frame} onClick={this.onClick}>
 				{lines}
 			</div>
 		)

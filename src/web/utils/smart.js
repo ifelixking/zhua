@@ -35,5 +35,24 @@ export function analysePath(element) {
 }
 
 export function toQueryString(qNodes) {
-	return qNodes.map(n => n.jQString).join(' ')
+	debugger;
+	let str = ''
+	qNodes.forEach(n => {
+		let tmp = ''
+		n.config.tagName && (tmp += n.tagName)
+		n.config.index && (tmp += ':nth-child(' + (n.index + 1) + ')')
+		n.config.first && (tmp += ':first')
+		n.config.last && (tmp += ':last')
+		tmp += n.config.className.map(function (a) { return n.className[a] ? ('.' + n.className[a]) : '' }).join('')
+		tmp += n.config.attributes.map(function (a) { return '[' + n.attributes[a].name + '="' + n.attributes[a].value + '"]' }).join('')
+		str && (str += '>')
+		str += tmp
+	})
+	return str
+	// return qNodes.map(n => n.jQString).join(' ')
+}
+
+export function queryElements(qNodes) {
+	let selection = $(toQueryString(qNodes)).toArray()
+	return selection
 }

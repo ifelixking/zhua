@@ -73,3 +73,19 @@ export function icon(name, extStyles = []) {
 	return [Icons.iconfont, Icons[name], ...extStyles].join(' ')
 }
 
+export function getElementIndex(element) {
+	if (element && element.parentElement) { return Array.from(element.parentElement.children).indexOf(element) }
+}
+
+export function getElementRIndex(element) {
+	if (element && element.parentElement) { return element.parentElement.children.length - Array.from(element.parentElement.children).indexOf(element) - 1 }
+}
+
+export function toggleArray(array, value) {
+	let idx = array.indexOf(value)
+	if (idx == -1) {
+		array.push(value)
+	} else {
+		array.splice(idx, 1)
+	}
+}
