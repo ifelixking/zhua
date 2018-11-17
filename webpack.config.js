@@ -2,19 +2,20 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const path = require('path')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const Z_INDEX_BASE = (2147483647 - 2000)
 
 module.exports = {
-	entry:{
+	entry: {
 		admin: './src/web/app/admin/index.js',
 		home: './src/web/app/home/index.js',
 		injection: './src/web/app/injection/index.js'
 	},
-	output:{
+	output: {
 		path: __dirname + '/bin/web',
 		filename: '[name]/js/index.js',
 		publicPath: '/'
 	},
-	plugins:[
+	plugins: [
 		new HtmlWebpackPlugin({
 			filename: 'home/index.html',
 			chunks: ['home'],
@@ -85,6 +86,12 @@ module.exports = {
 							// "@babel/plugin-syntax-import-meta",
 							["@babel/plugin-proposal-class-properties", { "loose": false }],		// 搞定 提案:类静态方法 语法
 							// "@babel/plugin-proposal-json-strings"
+
+							// ["import", {
+							// 	"libraryName": "antd",
+							// 	"libraryDirectory": "es",
+							// 	"style": "css" // `style: true` 会加载 less 文件
+							// }]
 						]
 					}
 				}
@@ -95,6 +102,39 @@ module.exports = {
 					'style-loader?sourceMap',
 					'css-loader?modules&importLoaders=1&localIdentName=[path]___[name]__[local]___[hash:base64:5]'
 				]
+			},
+			{
+				test: /\.less?$/,
+				use: [
+					{ loader: 'style-loader' },
+					{ loader: 'css-loader' },
+					{
+						loader: 'less-loader',
+						options: {
+							modifyVars: {
+								// z-index list
+								'zindex-affix'           : Z_INDEX_BASE + 10,
+								'zindex-back-top'        : Z_INDEX_BASE + 10,
+								'zindex-modal-mask'      : Z_INDEX_BASE + 1000,
+								'zindex-modal'           : Z_INDEX_BASE + 1000,
+								'zindex-notification'    : Z_INDEX_BASE + 1010,
+								'zindex-message'         : Z_INDEX_BASE + 1010,
+								'zindex-popover'         : Z_INDEX_BASE + 1030,
+								'zindex-picker'          : Z_INDEX_BASE + 1050,
+								'zindex-dropdown'        : Z_INDEX_BASE + 1050,
+								'zindex-tooltip'         : Z_INDEX_BASE + 1060,
+
+							},
+							javascriptEnabled: true,
+							sourceMap: true
+						},
+					},
+				],
+				// loaders: [
+				// 	'style-loader',
+				// 	'css-loader',
+				// 	'less-loader?{"sourceMap":true,"javascriptEnabled":true}'
+				// ],
 			},
 			{
 				test: /\.svg$/,

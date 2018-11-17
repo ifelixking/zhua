@@ -2,3 +2,7 @@
 	background: linear-gradient(#FF7F00, #FFE2C5);
 	color: #FFF;
 }
+
+.z-index-dialog-popup{
+	z-index: 2147483646
+}

@@ -89,3 +89,8 @@ export function toggleArray(array, value) {
 		array.splice(idx, 1)
 	}
 }
+
+export const Z_INDEX_BASE = (2147483647 - 2000)
+export const Z_INDEX_ROOT = Z_INDEX_BASE
+// export const Z_INDEX_MODAL = MAX_Z_INDEX - 2
+// export const Z_INDEX_MODAL_POPUP = MAX_Z_INDEX - 1

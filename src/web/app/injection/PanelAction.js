@@ -7,7 +7,8 @@ export default class PanelAction extends React.Component {
 		super(props)
 
 		this.buildUIActionStore = this.buildUIActionStore.bind(this)
-
+		this.onFrameDivClick = this.onFrameDivClick.bind(this)
+		
 		this.state = {}
 
 		this.uiStart = null
@@ -62,6 +63,13 @@ export default class PanelAction extends React.Component {
 		this.uiStart = f(startAction, uiList, this.props.actionStore, offset)
 
 		return { width: offset.maxWidth, height: offset.y }
+	}
+
+	// 用于清空 current select action
+	onFrameDivClick(e){
+		if (e.target == e.currentTarget || e.currentTarget.children[0] == e.target){
+			this.props.onActionClick(null)
+		}
 	}
 
 	render() {
@@ -119,7 +127,7 @@ export default class PanelAction extends React.Component {
 		let actionTool = null
 
 		switch(currentAction && currentAction.type){
-			case 'open-url': { actionTool = <ActionTools.OpenURL /> } break;
+			case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={()=>{this.props.onActionClick(null)}} /> } break;
 			case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
 			case 'fetch-table': { actionTool = <ActionTools.FetchTable /> } break;
 		}
@@ -127,7 +135,7 @@ export default class PanelAction extends React.Component {
 		//
 		const css_frame = { width:'100%', height:'100%', textAlign: 'center', overflow: 'scroll' }
 		return (
-			<div style={css_frame}>
+			<div style={css_frame} onClick={this.onFrameDivClick}>
 				<svg width={totalSize.width} height={totalSize.height} style={{ cursor: 'default' }}>
 					<defs>
 						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto">
@@ -154,8 +162,8 @@ class Block extends React.Component {
 	}
 
 	render() {
-		let css_frame = { fill: '#70AD47', strokeWidth: 1, stroke: '#507E32' }
-		let css_text = { fill: '#fff' }
+		let css_frame = { fill: '#70AD47', strokeWidth: 1, stroke: '#507E32', cursor:'pointer' }
+		let css_text = { fill: '#fff', cursor:'pointer' }
 		if (this.props.highLight) {
 			css_frame.strokeWidth = 4
 			css_text.fontWeight = 'bold'

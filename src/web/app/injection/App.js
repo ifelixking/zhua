@@ -4,9 +4,6 @@ import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
 import Styles from './index.css'
 
-
-const MAX_LONG_LONG = 2147483647
-
 export default class App extends React.Component {
 	constructor(props) {
 		super(props)
@@ -93,10 +90,10 @@ export default class App extends React.Component {
 
 		return (
 			<div>
+				{mainPanel}
 				<MainButton
 					onClick={this.onMainBtnClick} mini={this.state.showMainPanel}
-					onMove={this.onMainBtnMove} position={this.state.positionMain} />
-				{mainPanel}
+					onMove={this.onMainBtnMove} position={this.state.positionMain} />				
 			</div>
 		)
 	}
@@ -144,7 +141,7 @@ class MainPanel extends React.Component {
 	render() {
 		const posOffset = 18
 		const css_frame = {
-			position: 'fixed', zIndex: MAX_LONG_LONG - 1, borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
+			position: 'fixed', borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
 			width: `${this.props.size.width}px`, height: `${this.props.size.height}px`, backgroundColor: '#fff',
 			left: `${this.props.position.x + posOffset}px`, top: `${this.props.position.y + posOffset}px`
 		}
@@ -230,7 +227,7 @@ class MainButton extends React.Component {
 		const timing = 0.2
 
 		const css = {
-			backgroundColor: '#FF7F00', width: `${size}px`, height: `${size}px`, borderRadius: `${size >> 1}px`, boxSizing: 'border-box', zIndex: MAX_LONG_LONG,
+			backgroundColor: '#FF7F00', width: `${size}px`, height: `${size}px`, borderRadius: `${size >> 1}px`, boxSizing: 'border-box', 
 			position: 'fixed', left: `${this.props.position.x}px`, top: `${this.props.position.y}px`, boxShadow: '0px 0px 5px #888888', cursor: 'pointer',
 			lineHeight: `${size}px`, fontSize: `${fontSize}px`, color: 'white', fontWeight: 'bold', textAlign: 'center',
 			transitionProperty: `width,height,border-radius,line-height,font-size`, transitionDuration: `${timing}s`, transitionTimingFunction: 'ease'
