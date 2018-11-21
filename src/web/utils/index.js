@@ -62,7 +62,7 @@ export function eventFilterRoot(e) {
 }
 
 export function getModalRoot() {
-	return document.getElementById(ROOT_ELEMENT_ID).children[1]
+	return document.getElementById(ROOT_ELEMENT_ID).children[0]
 }
 
 export function highLightElement(elements) {

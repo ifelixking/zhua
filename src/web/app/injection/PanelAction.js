@@ -8,7 +8,7 @@ export default class PanelAction extends React.Component {
 
 		this.buildUIActionStore = this.buildUIActionStore.bind(this)
 		this.onFrameDivClick = this.onFrameDivClick.bind(this)
-		
+
 		this.state = {}
 
 		this.uiStart = null
@@ -66,8 +66,8 @@ export default class PanelAction extends React.Component {
 	}
 
 	// 用于清空 current select action
-	onFrameDivClick(e){
-		if (e.target == e.currentTarget || e.currentTarget.children[0] == e.target){
+	onFrameDivClick(e) {
+		if (e.target == e.currentTarget || e.currentTarget.children[0] == e.target) {
 			this.props.onActionClick(null)
 		}
 	}
@@ -76,8 +76,8 @@ export default class PanelAction extends React.Component {
 
 		// blocks
 		const totalSize = this.buildUIActionStore()
-		const css_line = { fill: 'none', stroke: '#70AD47', strokeWidth: this.config.lineWidth, markerEnd: 'url(#arrow)' }
-		let blocks = [], line = 10, exists = [], currentAction = null
+
+		let blocks = [], line = 10, exists = []
 		const f = (ui, blocks, frameWidth) => {
 			const width = (ui.frameSize || ui.blockSize).width
 			const height = (ui.frameSize || ui.blockSize).height
@@ -88,37 +88,40 @@ export default class PanelAction extends React.Component {
 			if (ui.children) {
 				const x1 = (width >> 1), y1 = this.config.lineOffset;
 				const x2 = x1, y2 = ui.childStart.position.y - this.config.lineOffset - this.config.lineWidth;
-				childBlocks = [<line key={0} style={css_line} x1={x1} y1={y1} x2={x2} y2={y2} />]
+				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'innerNext' && ui.action.id == this.props.currentActionInfo.action.id
+				childBlocks = [<Line data={{ type: 'innerNext', action: ui.action, childStart: ui.childStart.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={0}
+					points={[{ x: x1, y: y1 }, { x: x2, y: y2 }]} onClick={this.props.onActionClick} />]
 				f(ui.childStart, childBlocks, width)
 			}
 
 			// block
-			(ui.action.id == this.props.currentAction) && (currentAction = ui.action)
-			let block = <Block key={ui.action.id} data={ui.action} highLight={ui.action.id == this.props.currentAction} onClick={this.props.onActionClick}
+			let blockHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'action' && ui.action.id == this.props.currentActionInfo.action.id
+			let block = <Block key={ui.action.id} data={{ type: 'action', action: ui.action }} highLight={blockHighLight} onClick={this.props.onActionClick}
 				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.id + '-' + ui.action.type}>{childBlocks}</Block>
 			blocks.push(block); exists.push(ui.action.id)
 
 			// next
 			if (ui.next) {
-				let line;
 				const nextSize = ui.next.frameSize || ui.next.blockSize
 				const key = `${ui.action.id}.${ui.next.action.id}`
 				const x1 = ui.position.x + (width >> 1), y1 = ui.position.y + height + this.config.lineOffset;
 
+				let points = []
 				if (exists.indexOf(ui.next.action.id) == -1) {
 					f(ui.next, blocks, frameWidth)
 					const x2 = ui.next.position.x + (nextSize.width >> 1), y2 = ui.next.position.y - this.config.lineOffset - this.config.lineWidth;
-					line = <line key={key} style={css_line} x1={x1} y1={y1} x2={x2} y2={y2} />
+					points.push(...[{ x: x1, y: y1 }, { x: x2, y: y2 }])
 				} else {
-					line = <polyline key={key} style={css_line}
-						points={`${x1},${y1} ${x1},${y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth} 
-						${ui.next.position.x + ((nextSize.width - frameWidth) >> 1) + this.config.lineWidth + (this.config.blockPadding.x >> 1)},${y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth}
-						${ui.next.position.x + ((nextSize.width - frameWidth) >> 1) + this.config.lineWidth + (this.config.blockPadding.x >> 1)},${ui.next.position.y + (ui.next.blockSize.height >> 1)}
-						${ui.next.position.x - this.config.lineOffset},${ui.next.position.y + (ui.next.blockSize.height >> 1)}
-					`} />
+					points.push(...[
+						{ x: x1, y: y1 },
+						{ x: x1, y: y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth },
+						{ x: ui.next.position.x + ((nextSize.width - frameWidth) >> 1) + this.config.lineWidth + (this.config.blockPadding.x >> 1), y: y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth },
+						{ x: ui.next.position.x + ((nextSize.width - frameWidth) >> 1) + this.config.lineWidth + (this.config.blockPadding.x >> 1), y: ui.next.position.y + (ui.next.blockSize.height >> 1) },
+						{ x: ui.next.position.x - this.config.lineOffset, y: ui.next.position.y + (ui.next.blockSize.height >> 1) }
+					])
 				}
-				blocks.push(line)
-
+				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'next' && ui.action.id == this.props.currentActionInfo.action.id
+				blocks.push(<Line data={{ type: 'next', action: ui.action, next: ui.next.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
 			}
 		}
 		f(this.uiStart, blocks, totalSize.width)
@@ -126,21 +129,28 @@ export default class PanelAction extends React.Component {
 		// tool
 		let actionTool = null
 
-		switch(currentAction && currentAction.type){
-			case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={()=>{this.props.onActionClick(null)}} /> } break;
-			case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
-			case 'fetch-table': { actionTool = <ActionTools.FetchTable /> } break;
+		if (this.props.currentActionInfo) {
+			if (this.props.currentActionInfo.type == 'action') {
+				switch (this.props.currentActionInfo.action.type) {
+					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
+					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
+					case 'fetch-table': { actionTool = <ActionTools.FetchTable /> } break;
+				}
+			} else if (this.props.currentActionInfo.type == 'next') {
+				switch (this.props.currentActionInfo.action.type) {
+					case 'open-url': { actionTool = <ActionTools.OpenURLNext /> } break;
+				}
+			}
 		}
 
 		//
-		const css_frame = { width:'100%', height:'100%', textAlign: 'center', overflow: 'scroll' }
+		const css_frame = { width: '100%', height: '100%', textAlign: 'center', overflow: 'scroll' }
 		return (
 			<div style={css_frame} onClick={this.onFrameDivClick}>
 				<svg width={totalSize.width} height={totalSize.height} style={{ cursor: 'default' }}>
 					<defs>
-						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto">
-							<path d="M0,0 L0,2 L1,1 z" fill="#70AD47" />
-						</marker>
+						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#70AD47" /></marker>
+						<marker id="arrowHighLight" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#507E32" /></marker>
 					</defs>
 					{blocks}
 				</svg>
@@ -162,8 +172,8 @@ class Block extends React.Component {
 	}
 
 	render() {
-		let css_frame = { fill: '#70AD47', strokeWidth: 1, stroke: '#507E32', cursor:'pointer' }
-		let css_text = { fill: '#fff', cursor:'pointer' }
+		let css_frame = { fill: '#70AD47', strokeWidth: 1, stroke: '#507E32', cursor: 'pointer' }
+		let css_text = { fill: '#fff', cursor: 'pointer' }
 		if (this.props.highLight) {
 			css_frame.strokeWidth = 4
 			css_text.fontWeight = 'bold'
@@ -201,3 +211,32 @@ class Block extends React.Component {
 	}
 }
 
+class Line extends React.Component {
+	constructor(props) {
+		super(props)
+		this.onClick = this.onClick.bind(this)
+	}
+
+	onClick(e) {
+		e.stopPropagation()
+		this.props.onClick(this.props.data)
+	}
+
+	render() {
+		const css_line = { fill: 'none', stroke: this.props.highLight ? '#507E32' : '#70AD47', strokeWidth: this.props.lineWidth, markerEnd: this.props.highLight ? 'url(#arrowHighLight)' : 'url(#arrow)' }
+		const css_line_cover = { cursor: 'pointer', fill: 'none', stroke: 'transparent', strokeWidth: this.props.lineWidth + 8 }
+		let pointsForCover = [...this.props.points]
+		let p0 = {...pointsForCover[pointsForCover.length - 2]}
+		let p1 = {...pointsForCover[pointsForCover.length - 1]};
+		pointsForCover[pointsForCover.length - 2] = p0;
+		pointsForCover[pointsForCover.length - 1] = p1;
+		(p1.x != p0.x) && (p1.x += (p1.x - p0.x) / Math.abs(p1.x - p0.x) * 8);
+		(p1.y != p0.y) && (p1.y += (p1.y - p0.y) / Math.abs(p1.y - p0.y) * 8)
+		return (
+			<g onClick={this.onClick} >
+				<polyline style={css_line} points={this.props.points.map(p => `${p.x},${p.y}`).join(' ')} />
+				<polyline style={css_line_cover} points={pointsForCover.map(p => `${p.x},${p.y}`).join(' ')} />
+			</g>
+		)
+	}
+}

@@ -11,34 +11,47 @@ import 'antd/lib/Select/style'
 export class OpenURL extends React.Component {
 	constructor(props) {
 		super(props)
+
 		this.state = {
-			showDialog: true
+			showDialog: true,
+			inputURL: '',
+			protocol: '',			
 		}
+
 		this.onCancel = this.onCancel.bind(this)
 		this.onOK = this.onOK.bind(this)
 		this.onURLChange = this.onURLChange.bind(this)
 		this.onProtocolChange = this.onProtocolChange.bind(this)
 		this.getProtocol = this.getProtocol.bind(this)
-
-		this.inputURL = null
-		this.protocol = this.getProtocol(window.location.href)
 	}
 
-	onCancel(e){
+	componentWillMount() {
+		let protocol = this.getProtocol(window.location.href)
+		let inputURL = window.location.href.substr(protocol.length)
+		this.setState({ protocol, inputURL })
+	}
+
+	onCancel(e) {
 		e.stopPropagation()
-		this.setState({showDialog: false})
+		this.setState({ showDialog: false })
 	}
 
-	onOK(){
-		window.location = this.protocol + '//' + this.inputURL
+	onOK() {
+		window.location = this.state.protocol + '//' + this.state.inputURL
 	}
 
-	onURLChange(e){
-		this.inputURL = e.currentTarget.value
+	onURLChange(e) {
+		let protocol = this.getProtocol(e.currentTarget.value.toLowerCase())
+		let inputURL = e.currentTarget.value
+		if (protocol) {
+			this.setState({ protocol })
+			inputURL = inputURL.substr(protocol.length)
+		}
+		this.setState({ inputURL })
 	}
 
-	onProtocolChange(e){
-		this.protocol = e
+	onProtocolChange(protocol) {
+		this.setState({ protocol })
 	}
 
 	getProtocol(url) {
@@ -48,13 +61,9 @@ export class OpenURL extends React.Component {
 	}
 
 	render() {
-		let url = window.location.href
-		let defaultValue = this.getProtocol(url)
-
 		let selectBefore = null
-		if (defaultValue) {
-			url = url.substr(defaultValue.length)
-			selectBefore = <Select defaultValue={defaultValue} style={{ width: 90 }} onChange={this.onProtocolChange}>
+		if (this.state.protocol) {
+			selectBefore = <Select value={this.state.protocol} style={{ width: 90 }} onChange={this.onProtocolChange}>
 				<Option className={Styles['z-index-dialog-popup']} value="http://">http://</Option>
 				<Option className={Styles['z-index-dialog-popup']} value="https://">https://</Option>
 			</Select>
@@ -62,7 +71,7 @@ export class OpenURL extends React.Component {
 
 		return (
 			<Modal title="Open-URL" visible={this.state.showDialog} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
-				<Input addonBefore={selectBefore} defaultValue={url} onChange={this.onURLChange}/>
+				<Input addonBefore={selectBefore} value={this.state.inputURL} onChange={this.onURLChange} onPressEnter={this.onOK} />
 			</Modal>
 		)
 	}
@@ -75,8 +84,9 @@ export class OpenURLNext extends React.Component {
 		this.onMouseDown = this.onMouseDown.bind(this)
 		this.onMouseMove = this.onMouseMove.bind(this)
 		this.onWindowResize = this.onWindowResize.bind(this)
-		this.onFilterMouseOver = this.onFilterMouseOver.bind(this)
-		this.onFilterMouseOut = this.onFilterMouseOut.bind(this)
+		//this.onFilterMouseOver = this.onFilterMouseOver.bind(this)
+		//this.onFilterMouseOut = this.onFilterMouseOut.bind(this)
+		this.onFilterClick = this.onFilterClick.bind(this)
 		this.onFilterToggleCheck = this.onFilterToggleCheck.bind(this)
 		this.flushByQNodeList = this.flushByQNodeList.bind(this)
 		this.state = {
@@ -86,8 +96,9 @@ export class OpenURLNext extends React.Component {
 			selectionRects: [],
 			opElement: null,
 			opElementRect: {},
-			filterTriggerRect: null,
-			qNodeList: []
+			filterPosition: null,
+			qNodeList: [],
+			// showFilter : false,
 		}
 	}
 
@@ -127,7 +138,7 @@ export class OpenURLNext extends React.Component {
 				left: opElementRect.left + document.documentElement.scrollLeft,
 				top: opElementRect.top + document.documentElement.scrollTop,
 				width: opElementRect.width, height: opElementRect.height
-			}
+			}, filterPosition: null
 		})
 
 		return false
@@ -173,24 +184,32 @@ export class OpenURLNext extends React.Component {
 		window.document.removeEventListener('mousedown', this.onMouseDown, true)
 		window.document.removeEventListener('click', this.onClick, true)
 	}
+	
+	// onFilterMouseOver(e) {
+	// 	let rect = e.target.getBoundingClientRect()
+	// 	this.setState({ filterTriggerRect: rect })
+	// }
 
-	onFilterMouseOver(e) {
-		let rect = e.target.getBoundingClientRect()
-		this.setState({ filterTriggerRect: rect })
-	}
+	// onFilterMouseOut(e) {
+	// 	if (e.relatedTarget) {
+	// 		for (let itor = e.relatedTarget; itor; itor = itor.parentElement) {
+	// 			let attr = itor.attributes['clazz']
+	// 			if (attr && attr.value == 'Filter') { return }
+	// 		}
+	// 	}
+	// 	this.setState({ filterTriggerRect: null })
+	// }
 
-	onFilterMouseOut(e) {
-		if (e.relatedTarget) {
-			for (let itor = e.relatedTarget; itor; itor = itor.parentElement) {
-				let attr = itor.attributes['clazz']
-				if (attr && attr.value == 'Filter') { return }
-			}
-		}
-		this.setState({ filterTriggerRect: null })
+	onFilterClick(e) {
+		e.stopPropagation()
+		let rect = e.currentTarget.getBoundingClientRect()
+		let position = { x: document.documentElement.scrollLeft + rect.left, y: document.documentElement.scrollTop + rect.top + rect.height + 4 }
+		this.setState({ filterPosition: this.state.filterPosition ? null : position })
 	}
 
 	flushByQNodeList(qNodeList) {
-		const selection = utils.Smart.queryElements(qNodeList)
+		let jqExpr = utils.Smart.toQueryString(qNodeList)
+		let selection = $(jqExpr).toArray()
 		const selectionRects = selection.map((ele) => {
 			const { left, top, width, height } = ele.getBoundingClientRect()
 			return {
@@ -199,7 +218,7 @@ export class OpenURLNext extends React.Component {
 				width, height
 			}
 		})
-		this.setState({ selection, selectionRects, qNodeList })
+		this.setState({ selection, selectionRects, qNodeList, jqExpr })
 	}
 
 	onFilterToggleCheck(idx, field) {
@@ -210,7 +229,7 @@ export class OpenURLNext extends React.Component {
 			case 'f': { node.config.isFirst = !node.config.isFirst } break
 			case 'l': { node.config.isLast = !node.config.isLast } break
 			case 'i': { node.config.index = !node.config.index } break
-			case 't': { node.config.text = !node.config.text } break
+			case 't': { node.config.innerText = !node.config.innerText } break
 			default: {
 				if (field[0] == 'c') {
 					let i = parseInt(field.substr(2))
@@ -240,20 +259,23 @@ export class OpenURLNext extends React.Component {
 		let opBtns = []
 		if (this.state.opElement) {
 			const left = this.state.opElementRect.left
-			const top = this.state.opElementRect.top + this.state.opElementRect.height
-			const css_icon = { cursor: 'pointer', backgroundColor: '#FF7F00', color: '#fff', marginRight: '1px', border: '1px solid #E6E6E6', width: '16px', height: '16px' }
+			const top = this.state.opElementRect.top + this.state.opElementRect.height + 4
+			const css_icon = { borderRadius:'3px', boxShadow: '0px 0px 6px #000', cursor: 'pointer', backgroundColor: '#FF7F00', color: '#fff', marginRight: '4px', display: 'inline-block', width: '20px', height: '20px', lineHeight:'20px', textAlign:'center' }
+			let buttons = [
+				<div key={'click'} style={css_icon}><i className={utils.icon('icon-click')} /></div>,
+				<div key={'open-url'} style={css_icon}><i className={utils.icon('icon-open-url')} /></div>,
+				<div key={'open-each-url'} style={css_icon}><i className={utils.icon('icon-open-each-url')} /></div>,
+				<div key={'fetch-table'} style={css_icon}><i className={utils.icon('icon-fetch-table')} /></div>,
+				<div key={'filter'} style={css_icon} clazz={Filter.clazz} onClick={this.onFilterClick}><i className={utils.icon('icon-filter')} /></div>,
+			]
 			opBtns.push(
-				<div key={'open-url'} style={{ position: 'absolute', left: `${left}px`, top: `${top}px` }}>
-					<i style={css_icon} className={utils.icon('icon-click')}></i>
-					<i style={css_icon} className={utils.icon('icon-open-url')}></i>
-					<i style={css_icon} className={utils.icon('icon-open-each-url')}></i>
-					<i style={css_icon} className={utils.icon('icon-fetch-table')}></i>
-					<i style={css_icon} clazz={Filter.clazz} onMouseOver={this.onFilterMouseOver} onMouseOut={this.onFilterMouseOut} className={utils.icon('icon-filter')}></i>
+				<div key={'open-url'} style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
+					{buttons}
 				</div>
 			)
 		}
 
-		let filter = this.state.filterTriggerRect && <Filter qNodeList={this.state.qNodeList} triggerRect={this.state.filterTriggerRect} onMouseOut={this.onFilterMouseOut} onToggleCheck={this.onFilterToggleCheck} />
+		let filter = this.state.filterPosition && <Filter jqExpr={this.state.jqExpr} qNodeList={this.state.qNodeList} position={this.state.filterPosition} onMouseOut={this.onFilterMouseOut} onToggleCheck={this.onFilterToggleCheck} />
 
 		return ReactDOM.createPortal([
 			<Mask key={1} rects={this.state.selectionRects} />,
@@ -265,7 +287,7 @@ export class OpenURLNext extends React.Component {
 	}
 }
 
-export class Filter extends React.Component {
+class Filter extends React.Component {
 	constructor(props) {
 		super(props)
 		this.onClick = this.onClick.bind(this)
@@ -298,54 +320,70 @@ export class Filter extends React.Component {
 	}
 
 	render() {
-		const r = this.props.triggerRect
-		const left = document.documentElement.scrollLeft + r.left
-		const top = document.documentElement.scrollTop + r.top + r.height
-		const css_frame = { position: 'absolute', left: `${left}px`, top: `${top}px`, backgroundColor: '#ccc' }
+		const css_frame = { position: 'absolute', left: `${this.props.position.x}px`, top: `${this.props.position.y}px`, backgroundColor: 'transparent' }
 
 		const css_line = { lineHeight: '20px', whiteSpace: 'nowrap' }
-		const css_check = { cursor: 'pointer', display: 'inline-block', height: '16px', minWidth: '16px', textAlign: 'center', marginRight: '4px', backgroundColor: '#FF7F00', color: '#fff', borderRadius: '8px', lineHeight: '16px', fontWeight: 'bold' }
+		const css_check = { boxShadow: '0px 0px 6px #000', cursor: 'pointer', display: 'inline-block', height: '16px', minWidth: '16px', textAlign: 'center', marginRight: '4px', backgroundColor: '#FF7F00', color: '#fff', borderRadius: '8px', lineHeight: '16px', fontWeight: 'bold' }
 		const css_uncheck = Object.assign({}, css_check, { backgroundColor: '#fff', color: '#FF7F00' })
 		const css_tag_check = Object.assign({}, css_check, { padding: '0px 8px' })
 		const css_tag_uncheck = Object.assign({}, css_tag_check, { backgroundColor: '#fff', color: '#FF7F00' })
 		const css_explode = Object.assign({}, css_check, { backgroundColor: '#FFBE7E', color: '#fff', fontSize: '14px' })
+		const css_expr = { backgroundColor: '#fff', padding: '0px 8px', borderRadius: '8px', boxShadow: '0px 0px 6px #000' }
 
 		let lines = this.props.qNodeList.map((n, i) => {
 			let checkes = []
-			checkes.push(<div key={'tag'} data-key={'tag'} style={n.config.tagName ? css_tag_check : css_tag_uncheck} title={`标签`}>{n.tagName}</div>)			// tag
+			// tag
+			checkes.push(
+
+				<div key={'tag'} data-key={'tag'} style={n.config.tagName ? css_tag_check : css_tag_uncheck} title="标签">{n.tagName}</div>
+
+			)
 			// [class]
 			{
 				let explode = this.state.explodeClassName.indexOf(i) != -1
 				let final = (n.className.length <= 3 || explode) ? n.className : n.className.slice(0, 3)
-				checkes.push(...final.map((a, j) => (<div key={`c-${j}`} data-key={`c-${j}`} style={n.config.className.indexOf(j) != -1 ? css_check : css_uncheck} title={`样式:${a}`}>C</div>)))
+				checkes.push(...final.map((a, j) => (
+					<div key={`c-${j}`} data-key={`c-${j}`} style={n.config.className.indexOf(j) != -1 ? css_check : css_uncheck} title={`样式:${a}`}>C</div>
+				)))
 				if (n.className.length > 3) {
 					checkes.push(<div key={'e-c'} data-key={'e-c'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')} />)
 				}
 			}
-			n.isFirst && checkes.push(<div key={'f'} data-key={'f'} style={n.config.isFirst ? css_check : css_uncheck} title={'第一个'}>F</div>)				// first
-			n.isLast && checkes.push(<div key={'l'} data-key={'l'} style={n.config.isLast ? css_check : css_uncheck} title={'最后一个'}>L</div>)				// last
-			!n.isFirst && checkes.push(<div key={'i'} data-key={'i'} style={n.config.index ? css_check : css_uncheck} title={`第${n.index}个`}>I</div>)			// index
-			n.innerText && checkes.push(<div key={'t'} data-key={'t'} style={n.config.text ? css_check : css_uncheck} title={`文本:${n.innerText}`}>T</div>)		// text
+			// first
+			n.isFirst && !n.isLast && checkes.push(
+				<div key={'f'} data-key={'f'} style={n.config.isFirst ? css_check : css_uncheck} title={'第一个'}>F</div>
+			)
+			// last
+			n.isLast && !n.isFirst && checkes.push(
+				<div key={'l'} data-key={'l'} style={n.config.isLast ? css_check : css_uncheck} title={'最后一个'}>L</div>
+			)
+			// index
+			!n.isFirst && !n.isLast && checkes.push(
+				<div key={'i'} data-key={'i'} style={n.config.index ? css_check : css_uncheck} title={`第${n.index + 1}个`}>I</div>
+			)
+			// text
+			n.innerText && n.innerText.length <= 16 && checkes.push(
+				<div key={'t'} data-key={'t'} style={n.config.innerText ? css_check : css_uncheck} title={`文本:${n.innerText}`}>T</div>
+			)
 			// [attributes]
 			{
 				let explode = this.state.explodeAttributes.indexOf(i) != -1
 				let final = (n.attributes.length <= 3 || explode) ? n.attributes : n.attributes.slice(0, 3)
-				checkes.push(...final.map((a, j) => (<div key={`a-${j}`} data-key={`a-${j}`} style={n.config.attributes.indexOf(j) != -1 ? css_check : css_uncheck} title={`属性:${a.name}=${a.value}`}>A</div>)))
+				checkes.push(...final.map((a, j) => (
+					<div key={`a-${j}`} data-key={`a-${j}`} style={n.config.attributes.indexOf(j) != -1 ? css_check : css_uncheck} title={`属性:${a.name}=${decodeURI(a.value)}`}>A</div>
+				)))
 				if (n.attributes.length > 3) {
 					checkes.push(<div key={'e-a'} data-key={'e-a'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')} />)
 				}
 			}
-			return (
-				<div style={css_line} key={i}>
-					{checkes}
-				</div>
-			)
+			return (<div style={css_line} key={i}>{checkes}</div>)
 		})
 		lines.reverse()
 
 		return (
 			<div clazz={Filter.clazz} onMouseOut={this.props.onMouseOut} style={css_frame} onClick={this.onClick}>
-				{lines}
+				<div>{lines}</div>
+				<div style={css_line}><span style={css_expr}>{this.props.jqExpr}</span></div>				
 			</div>
 		)
 	}

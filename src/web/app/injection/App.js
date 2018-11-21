@@ -16,33 +16,33 @@ export default class App extends React.Component {
 		this.state = {
 			showMainPanel: false,
 			positionMain: { x: 61.8, y: 100 },
-			panelSize: { width: 300, height: 300 },
+			panelSize: { width: 300, height: 600 },
 			currentPanel: null,
-			currentAction: 1,
+			currentActionInfo: null,
 			actionStore: {
 				start: 1,
 				actions: [
-					{ id: 1, type: 'open-url' },
-					// {
-					// 	id: 2, type: 'open-each-url', next: 4,
-					// 	actionStore: {
-					// 		start: 3,
-					// 		actions: [
-					// 			{ id: 3, type: 'fetch-table', next: 5 },
-					// 			{ id: 5, type: 'fetch-table', next: 12 },
-					// 			{
-					// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
-					// 					start: 13,
-					// 					actions: [
-					// 						{ id: 13, type: 'fetch-table', next: 15 },
-					// 						{ id: 15, type: 'fetch-table', next: 13 },
-					// 					]
-					// 				}
-					// 			},
-					// 		]
-					// 	}
-					// },
-					// { id: 4, type: 'open-url', next: 2 },
+					{ id: 1, type: 'open-url', next: 2 },
+					{
+						id: 2, type: 'open-each-url', next: 4,
+						actionStore: {
+							start: 3,
+							actions: [
+								{ id: 3, type: 'fetch-table', next: 5 },
+								{ id: 5, type: 'fetch-table', next: 12 },
+								{
+									id: 12, type: 'open-each-url', next: 3, actionStore: {
+										start: 13,
+										actions: [
+											{ id: 13, type: 'fetch-table', next: 15 },
+											{ id: 15, type: 'fetch-table', next: 13 },
+										]
+									}
+								},
+							]
+						}
+					},
+					{ id: 4, type: 'open-url', next: 2 },
 				]
 			},
 		}
@@ -70,9 +70,8 @@ export default class App extends React.Component {
 		this.setState({ panelSize: newSize })
 	}
 
-	onActionClick(action){
-		if ((action && action.id) == this.state.currentAction) { return }
-		this.setState({currentAction: action && action.id})
+	onActionClick(actionInfo) {
+		this.setState({ currentActionInfo: actionInfo })
 	}
 
 	render() {
@@ -80,20 +79,20 @@ export default class App extends React.Component {
 			<MainPanel position={this.state.positionMain}
 				current={this.state.currentPanel} onChange={this.onPanelChange}
 				size={this.state.panelSize} onResize={this.onPanelResize} miniSize={{ width: 300, height: 500 }}>
-				<PanelAction actionStore={this.state.actionStore} currentAction={this.state.currentAction} onActionClick={this.onActionClick}/>
+				<PanelAction actionStore={this.state.actionStore} currentActionInfo={this.state.currentActionInfo} onActionClick={this.onActionClick} />
 				<PanelResource />
 				<PanelOption />
 			</MainPanel>
 		) : null
 
-		
+
 
 		return (
 			<div>
 				{mainPanel}
 				<MainButton
 					onClick={this.onMainBtnClick} mini={this.state.showMainPanel}
-					onMove={this.onMainBtnMove} position={this.state.positionMain} />				
+					onMove={this.onMainBtnMove} position={this.state.positionMain} />
 			</div>
 		)
 	}
@@ -227,7 +226,7 @@ class MainButton extends React.Component {
 		const timing = 0.2
 
 		const css = {
-			backgroundColor: '#FF7F00', width: `${size}px`, height: `${size}px`, borderRadius: `${size >> 1}px`, boxSizing: 'border-box', 
+			backgroundColor: '#FF7F00', width: `${size}px`, height: `${size}px`, borderRadius: `${size >> 1}px`, boxSizing: 'border-box',
 			position: 'fixed', left: `${this.props.position.x}px`, top: `${this.props.position.y}px`, boxShadow: '0px 0px 5px #888888', cursor: 'pointer',
 			lineHeight: `${size}px`, fontSize: `${fontSize}px`, color: 'white', fontWeight: 'bold', textAlign: 'center',
 			transitionProperty: `width,height,border-radius,line-height,font-size`, transitionDuration: `${timing}s`, transitionTimingFunction: 'ease'
