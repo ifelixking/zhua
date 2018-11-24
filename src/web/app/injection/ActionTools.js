@@ -84,8 +84,6 @@ export class OpenURLNext extends React.Component {
 		this.onMouseDown = this.onMouseDown.bind(this)
 		this.onMouseMove = this.onMouseMove.bind(this)
 		this.onWindowResize = this.onWindowResize.bind(this)
-		//this.onFilterMouseOver = this.onFilterMouseOver.bind(this)
-		//this.onFilterMouseOut = this.onFilterMouseOut.bind(this)
 		this.onFilterClick = this.onFilterClick.bind(this)
 		this.onFilterToggleCheck = this.onFilterToggleCheck.bind(this)
 		this.flushByQNodeList = this.flushByQNodeList.bind(this)
@@ -185,21 +183,6 @@ export class OpenURLNext extends React.Component {
 		window.document.removeEventListener('click', this.onClick, true)
 	}
 	
-	// onFilterMouseOver(e) {
-	// 	let rect = e.target.getBoundingClientRect()
-	// 	this.setState({ filterTriggerRect: rect })
-	// }
-
-	// onFilterMouseOut(e) {
-	// 	if (e.relatedTarget) {
-	// 		for (let itor = e.relatedTarget; itor; itor = itor.parentElement) {
-	// 			let attr = itor.attributes['clazz']
-	// 			if (attr && attr.value == 'Filter') { return }
-	// 		}
-	// 	}
-	// 	this.setState({ filterTriggerRect: null })
-	// }
-
 	onFilterClick(e) {
 		e.stopPropagation()
 		let rect = e.currentTarget.getBoundingClientRect()
@@ -256,20 +239,19 @@ export class OpenURLNext extends React.Component {
 			return (<div key={`s-${i}`} style={css_div} />)
 		})
 
-		let opBtns = []
+		let opBtns = null
 		if (this.state.opElement) {
 			const left = this.state.opElementRect.left
 			const top = this.state.opElementRect.top + this.state.opElementRect.height + 4
 			const css_icon = { borderRadius:'3px', boxShadow: '0px 0px 6px #000', cursor: 'pointer', backgroundColor: '#FF7F00', color: '#fff', marginRight: '4px', display: 'inline-block', width: '20px', height: '20px', lineHeight:'20px', textAlign:'center' }
-			let buttons = [
-				<div key={'click'} style={css_icon}><i className={utils.icon('icon-click')} /></div>,
-				<div key={'open-url'} style={css_icon}><i className={utils.icon('icon-open-url')} /></div>,
-				<div key={'open-each-url'} style={css_icon}><i className={utils.icon('icon-open-each-url')} /></div>,
-				<div key={'fetch-table'} style={css_icon}><i className={utils.icon('icon-fetch-table')} /></div>,
-				<div key={'filter'} style={css_icon} clazz={Filter.clazz} onClick={this.onFilterClick}><i className={utils.icon('icon-filter')} /></div>,
-			]
-			opBtns.push(
-				<div key={'open-url'} style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
+			let buttons = [];
+			(this.state.selection.length == 1) && (buttons.push(<div title={'点击'} key={'click'} style={css_icon}><i className={utils.icon('icon-click')} /></div>));
+			(this.state.selection.length == 1) && (buttons.push(<div title={'打开连接'} key={'open-url'} style={css_icon}><i className={utils.icon('icon-open-url')} /></div>));
+			(this.state.selection.length > 0) && (buttons.push(<div title={'打开每个连接'} key={'open-each-url'} style={css_icon}><i className={utils.icon('icon-open-each-url')} /></div>));
+			(this.state.selection.length > 0) && (buttons.push(<div title={'抓取数据'} key={'fetch-table'} style={css_icon}><i className={utils.icon('icon-fetch-table')} /></div>));
+			buttons.push(<div title={`自定义筛选, 目前已选中${this.state.selection.length}条`} key={'filter'} style={css_icon} onClick={this.onFilterClick}><i className={utils.icon('icon-filter')} /></div>)			
+			opBtns = (
+				<div style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
 					{buttons}
 				</div>
 			)
@@ -287,6 +269,51 @@ export class OpenURLNext extends React.Component {
 	}
 }
 
+export class OpenEachURL extends React.Component {
+	constructor(props) {
+		super(props)
+		this.onClick = this.onClick.bind(this)
+	}
+
+	onClick() {
+		debugger
+	}
+
+	componentDidMount() {
+		// window.document.addEventListener('click', this.onClick, true)
+	}
+	componentWillUnmount() {
+		// window.document.removeEventListener('click', this.onClick, true)
+	}
+
+	render() {
+		return <div> open each url </div>
+	}
+}
+
+export class FetchTable extends React.Component {
+	constructor(props) {
+		super(props)
+		this.onClick = this.onClick.bind(this)
+	}
+
+	onClick() {
+		debugger
+	}
+
+	componentDidMount() {
+		// window.document.addEventListener('click', this.onClick, true)
+	}
+	componentWillUnmount() {
+		// window.document.removeEventListener('click', this.onClick, true)
+	}
+
+	render() {
+		return <div> fetch table </div>
+	}
+}
+
+// ===========================================================================================================================================================================================================================================================================================================================
 class Filter extends React.Component {
 	constructor(props) {
 		super(props)
@@ -296,8 +323,6 @@ class Filter extends React.Component {
 			explodeAttributes: [],
 		}
 	}
-
-	static clazz = 'Filter'
 
 	onClick(e) {
 		if (e.target) {
@@ -381,54 +406,10 @@ class Filter extends React.Component {
 		lines.reverse()
 
 		return (
-			<div clazz={Filter.clazz} onMouseOut={this.props.onMouseOut} style={css_frame} onClick={this.onClick}>
+			<div onMouseOut={this.props.onMouseOut} style={css_frame} onClick={this.onClick}>
 				<div>{lines}</div>
 				<div style={css_line}><span style={css_expr}>{this.props.jqExpr}</span></div>				
 			</div>
 		)
-	}
-}
-
-export class OpenEachURL extends React.Component {
-	constructor(props) {
-		super(props)
-		this.onClick = this.onClick.bind(this)
-	}
-
-	onClick() {
-		debugger
-	}
-
-	componentDidMount() {
-		// window.document.addEventListener('click', this.onClick, true)
-	}
-	componentWillUnmount() {
-		// window.document.removeEventListener('click', this.onClick, true)
-	}
-
-	render() {
-		return <div> open each url </div>
-	}
-}
-
-export class FetchTable extends React.Component {
-	constructor(props) {
-		super(props)
-		this.onClick = this.onClick.bind(this)
-	}
-
-	onClick() {
-		debugger
-	}
-
-	componentDidMount() {
-		// window.document.addEventListener('click', this.onClick, true)
-	}
-	componentWillUnmount() {
-		// window.document.removeEventListener('click', this.onClick, true)
-	}
-
-	render() {
-		return <div> fetch table </div>
 	}
 }

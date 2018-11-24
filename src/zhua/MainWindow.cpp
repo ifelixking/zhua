@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget * parent)
 	connect(m_view, &QWebEngineView::loadStarted, this, &MainWindow::onViewLoadStarted);
 	m_view->show();
 	
-	m_view->load(QUrl("http://www.csdn.net"));
+	m_view->load(QUrl("http://www.sohu.com"));
 }
 
 MainWindow::~MainWindow() {
