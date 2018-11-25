@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import * as utils from '../../utils'
+import * as utils from '../../../utils'
 
 export default class Mask extends React.Component {
 	constructor(props) {

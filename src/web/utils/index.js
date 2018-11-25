@@ -2,6 +2,7 @@ import Icons from '../res/iconfont/iconfont.css'
 import * as _Smart from './smart'
 export const Smart = _Smart
 
+
 let g_svgDOM_hidden = null
 export function getSVGTextSize(text) {
 	const ns = 'http://www.w3.org/2000/svg'

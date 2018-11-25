@@ -59,3 +59,15 @@ export function queryElements(qNodes) {
 	let selection = $(toQueryString(qNodes)).toArray()
 	return selection
 }
+
+export class QTree{
+	constructor(qNodeList){
+		this.root = {
+			data : qNodeList,
+			children: []
+		}
+	}
+
+	// get root() { return this.root }
+
+}

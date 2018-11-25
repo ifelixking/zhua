@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import * as utils from '../../../utils'
-import Mask from '../Mask'
+import Mask from '../Common/Mask'
 import Styles from '../index.css'
 import { Modal, Input, Select } from 'antd'
 const Option = Select.Option;

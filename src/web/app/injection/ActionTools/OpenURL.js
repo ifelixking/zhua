@@ -1,12 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import * as utils from '../../../utils'
-import Mask from '../Mask'
+import Mask from '../Common/Mask'
 import Styles from '../index.css'
 import { Modal, Input, Select } from 'antd'
 const Option = Select.Option;
 import 'antd/lib/Modal/style'
 import 'antd/lib/Select/style'
+import Icon from '../Common/Icon'
 
 export class OpenURL extends React.Component {
 	constructor(props) {
@@ -15,7 +16,7 @@ export class OpenURL extends React.Component {
 		this.state = {
 			showDialog: true,
 			inputURL: '',
-			protocol: '',			
+			protocol: '',
 		}
 
 		this.onCancel = this.onCancel.bind(this)
@@ -183,7 +184,7 @@ export class OpenURLNext extends React.Component {
 		window.document.removeEventListener('mousedown', this.onMouseDown, true)
 		window.document.removeEventListener('click', this.onClick, true)
 	}
-	
+
 	onFilterClick(e) {
 		e.stopPropagation()
 		let rect = e.currentTarget.getBoundingClientRect()
@@ -227,7 +228,7 @@ export class OpenURLNext extends React.Component {
 		this.flushByQNodeList(qNodeList)
 	}
 
-	onBtnFetchTableClick(){
+	onBtnFetchTableClick() {
 		this.props.onBtnFetchTableClick(this.state.qNodeList)
 	}
 
@@ -248,13 +249,13 @@ export class OpenURLNext extends React.Component {
 		if (this.state.opElement) {
 			const left = this.state.opElementRect.left
 			const top = this.state.opElementRect.top + this.state.opElementRect.height + 4
-			const css_icon = { borderRadius:'3px', boxShadow: '0px 0px 6px #000', cursor: 'pointer', backgroundColor: '#FF7F00', color: '#fff', marginRight: '4px', display: 'inline-block', width: '20px', height: '20px', lineHeight:'20px', textAlign:'center' }
+			const css_icon = { borderRadius: '3px', boxShadow: '0px 0px 6px #000', cursor: 'pointer', backgroundColor: '#FF7F00', marginRight: '4px', display: 'inline-block', width: '20px', height: '20px', lineHeight: '20px', textAlign: 'center' }
 			let buttons = [];
-			// (this.state.selection.length == 1) && (buttons.push(<div title={'点击'} key={'click'} style={css_icon}><i className={utils.icon('icon-click')} /></div>));
-			(this.state.selection.length == 1) && (buttons.push(<div title={'打开连接'} key={'open-url'} style={css_icon}><i className={utils.icon('icon-open-url')} /></div>));
-			(this.state.selection.length > 0) && (buttons.push(<div title={'打开每个连接'} key={'open-each-url'} style={css_icon}><i className={utils.icon('icon-open-each-url')} /></div>));
-			(this.state.selection.length > 0) && (buttons.push(<div onClick={this.onBtnFetchTableClick} title={'抓取数据'} key={'fetch-table'} style={css_icon}><i className={utils.icon('icon-fetch-table')} /></div>));
-			buttons.push(<div title={`自定义筛选, 目前已选中${this.state.selection.length}条`} key={'filter'} style={css_icon} onClick={this.onFilterClick}><i className={utils.icon('icon-filter')} /></div>)			
+			// (this.state.selection.length == 1) && (buttons.push(<div title={'点击'} key={'click'} style={css_icon}><Icon style={{color: '#fff'}} name='icon-click' /></div>));
+			(this.state.selection.length == 1) && (buttons.push(<div title={'打开连接'} key={'open-url'} style={css_icon}><Icon style={{ color: '#fff' }} name='icon-open-url' /></div>));
+			(this.state.selection.length > 0) && (buttons.push(<div title={'打开每个连接'} key={'open-each-url'} style={css_icon}><Icon style={{ color: '#fff' }} name='icon-open-each-url' /></div>));
+			(this.state.selection.length > 0) && (buttons.push(<div onClick={this.onBtnFetchTableClick} title={'抓取数据'} key={'fetch-table'} style={css_icon}><Icon style={{ color: '#fff' }} name='icon-fetch-table' /></div>));
+			buttons.push(<div title={`自定义筛选, 目前已选中${this.state.selection.length}条`} key={'filter'} style={css_icon} onClick={this.onFilterClick}><Icon style={{ color: '#fff' }} name='icon-filter' /></div>)
 			opBtns = (
 				<div style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
 					{buttons}
@@ -369,7 +370,7 @@ class Filter extends React.Component {
 		return (
 			<div onMouseOut={this.props.onMouseOut} style={css_frame} onClick={this.onClick}>
 				<div>{lines}</div>
-				<div style={css_line}><span style={css_expr}>{this.props.jqExpr}</span></div>				
+				<div style={css_line}><span style={css_expr}>{this.props.jqExpr}</span></div>
 			</div>
 		)
 	}

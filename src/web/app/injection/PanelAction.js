@@ -131,11 +131,11 @@ export default class PanelAction extends React.Component {
 				switch (this.props.currentActionInfo.action.get('type')) {
 					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
 					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
-					case 'fetch-table': { actionTool = <ActionTools.FetchTable actionStore={this.props.actionStore} current={this.props.currentActionInfo} /> } break;
+					case 'fetch-table': { actionTool = <ActionTools.FetchTable actionStore={this.props.actionStore} action={this.props.currentActionInfo.action} /> } break;
 				}
 			} else if (this.props.currentActionInfo.type == 'next') {
 				switch (this.props.currentActionInfo.action.get('type')) {
-					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.props.onActionCreate('fetch-table', qNodeList)} /> } break;
+					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.props.onActionCreate('fetch-table', new utils.Smart.QTree(qNodeList))} /> } break;
 				}
 			}
 		}

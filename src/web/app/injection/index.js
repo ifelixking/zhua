@@ -2,10 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import App from './App'
 import * as utils from '../../utils'
+import Styles from './index.css'
 
-(function(){
-	const css_global = { color: '#333', fontFamily: 'Microsoft YaHei,Helvetica Neue,Helvetica,Arial,sans-serif,Consolas,Courier New,monospace,NSimSun,SimSun,SimHei', fontSize: '12px', lineHeight: '12px', position: 'absolute', left: '0px', top: '0px', fontWeigth: 'normal', zIndex: utils.Z_INDEX_ROOT }
-	let root = document.createElement('div'); Object.assign(root.style, css_global); root.setAttribute('id', utils.ROOT_ELEMENT_ID);
+(function(){	
+	const css_root = { position: 'absolute', left: '0px', top: '0px', zIndex: utils.Z_INDEX_ROOT }
+	let root = document.createElement('div'); root.className = Styles['global']; root.setAttribute('id', utils.ROOT_ELEMENT_ID);  Object.assign(root.style, css_root)
 	let modal = document.createElement('div'); root.append(modal)
 	let content = document.createElement('div'); root.append(content)	
 	document.body.append(root)
