@@ -1,6 +1,6 @@
 import React from 'react'
 import * as utils from '../../utils'
-import * as ActionTools from './ActionTools'
+import ActionTools from './ActionTools'
 
 export default class PanelAction extends React.Component {
 	constructor(props) {
@@ -117,7 +117,7 @@ export default class PanelAction extends React.Component {
 				blocks.push(<Line data={{ type: 'next', action: ui.action, next: ui.next.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
 			} else {
 				const key = `${ui.action.get('id')}.`
-				let points = [{ x: x1, y: y1 }, { x: x1, y: y1 + this.config.blockMargin.y - this.config.lineOffset - this.config.lineWidth }]
+				let points = [{ x: x1, y: y1 }, { x: x1, y: y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth }]
 				blocks.push(<Line data={{ type: 'next', action: ui.action, next: null }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
 			}
 		}
@@ -131,7 +131,7 @@ export default class PanelAction extends React.Component {
 				switch (this.props.currentActionInfo.action.get('type')) {
 					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
 					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
-					case 'fetch-table': { actionTool = <ActionTools.FetchTable /> } break;
+					case 'fetch-table': { actionTool = <ActionTools.FetchTable actionStore={this.props.actionStore} current={this.props.currentActionInfo} /> } break;
 				}
 			} else if (this.props.currentActionInfo.type == 'next') {
 				switch (this.props.currentActionInfo.action.get('type')) {

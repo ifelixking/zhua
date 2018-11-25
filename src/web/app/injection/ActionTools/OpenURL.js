@@ -1,8 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import * as utils from '../../utils'
-import Mask from './Mask'
-import Styles from './index.css'
+import * as utils from '../../../utils'
+import Mask from '../Mask'
+import Styles from '../index.css'
 import { Modal, Input, Select } from 'antd'
 const Option = Select.Option;
 import 'antd/lib/Modal/style'
@@ -271,50 +271,6 @@ export class OpenURLNext extends React.Component {
 			<div key={4}>{opBtns}</div>,
 			<div key={5}>{filter}</div>,
 		], utils.getModalRoot());
-	}
-}
-
-export class OpenEachURL extends React.Component {
-	constructor(props) {
-		super(props)
-		this.onClick = this.onClick.bind(this)
-	}
-
-	onClick() {
-		debugger
-	}
-
-	componentDidMount() {
-		// window.document.addEventListener('click', this.onClick, true)
-	}
-	componentWillUnmount() {
-		// window.document.removeEventListener('click', this.onClick, true)
-	}
-
-	render() {
-		return <div> open each url </div>
-	}
-}
-
-export class FetchTable extends React.Component {
-	constructor(props) {
-		super(props)
-		this.onClick = this.onClick.bind(this)
-	}
-
-	onClick() {
-		debugger
-	}
-
-	componentDidMount() {
-		// window.document.addEventListener('click', this.onClick, true)
-	}
-	componentWillUnmount() {
-		// window.document.removeEventListener('click', this.onClick, true)
-	}
-
-	render() {
-		return <div> fetch table </div>
 	}
 }
 

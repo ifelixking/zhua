@@ -4,8 +4,7 @@ import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
 import Styles from './index.css'
 import Immutable from 'immutable'
-
-
+import * as utils from '../../utils'
 
 export default class App extends React.Component {
 	constructor(props) {
@@ -17,13 +16,13 @@ export default class App extends React.Component {
 		this.onActionClick = this.onActionClick.bind(this)
 		this.onActionCreate = this.onActionCreate.bind(this)
 
+		this.maxActionID = 1
 		this.state = {
 			showMainPanel: false,
 			positionMain: { x: 61.8, y: 100 },
 			panelSize: { width: 300, height: 600 },
 			currentPanel: null,
-			currentActionInfo: null,
-			maxActionID: 1,
+			currentActionInfo: null,			
 			actionStore: Immutable.fromJS(
 				{
 					start: 1,
@@ -84,7 +83,14 @@ export default class App extends React.Component {
 	}
 
 	onActionCreate(type, param) {
-		debugger;
+		let currentActionID = this.state.currentActionInfo.action.get('id')
+		let { path, action } = utils.actionStoreFindAction(this.state.actionStore, currentActionID)
+		let newAction = Immutable.Map({ id: ++this.maxActionID, type, data: param })
+		this.setState({
+			actionStore: this.state.actionStore.updateIn(path.slice(0, path.length - 1), actions => {
+				return actions.push(newAction)
+			}).setIn([...path, 'next'], newAction.get('id'))
+		})
 	}
 
 	render() {

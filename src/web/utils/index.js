@@ -34,6 +34,28 @@ export function getCachedSVGTextSize(text) {
 	return size;
 }
 
+export function actionStoreFindAction(actionStore, actionID) {
+	let path = []
+	const func = function (store) {
+		let actions = store.get('actions'); if (!actions) { return }
+		path.push('actions')
+		let found = actions.find((a, i) => {
+			if (a.get('id') == actionID) { path.push(i); return true }
+		})
+		if (!found) {
+			actions.forEach((a, i) => {
+				path.push([i, 'actionStore'])
+				found = func(a.get('actionStore'))
+				found == null && (path.pop(), path.pop())
+				return found == null
+			})
+		}
+		return found
+	}
+	let action = func(actionStore)
+	return { action, path }
+}
+
 // export function getActionById(id, actions) {
 // 	if (actions) {
 // 		return actions.find(a => a.id == id)
