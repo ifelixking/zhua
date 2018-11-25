@@ -34,24 +34,24 @@ export function getCachedSVGTextSize(text) {
 	return size;
 }
 
-export function getActionById(id, actions) {
-	if (actions) {
-		return actions.find(a => a.id == id)
-	} else {
-		let result
-		const f = (actions) => {
-			return actions.find(a => {
-				if (a.id == id) { result = a; return true }
-				return a.actionStore && f(a.actionStore.actions)
-			})
-		}
-		return result;
-	}
-}
+// export function getActionById(id, actions) {
+// 	if (actions) {
+// 		return actions.find(a => a.id == id)
+// 	} else {
+// 		let result
+// 		const f = (actions) => {
+// 			return actions.find(a => {
+// 				if (a.id == id) { result = a; return true }
+// 				return a.actionStore && f(a.actionStore.actions)
+// 			})
+// 		}
+// 		return result;
+// 	}
+// }
 
-export function getChildStartAction(action) {
-	return action.actionStore && App.getActionById(action.actionStore.start, action.actionStore.actions)
-}
+// export function getChildStartAction(action) {
+// 	return action.actionStore && App.getActionById(action.actionStore.start, action.actionStore.actions)
+// }
 
 export const ROOT_ELEMENT_ID = '__ZHUA_ROOT__'
 

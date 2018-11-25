@@ -6,13 +6,9 @@ export default class PanelAction extends React.Component {
 	constructor(props) {
 		super(props)
 
-		this.buildUIActionStore = this.buildUIActionStore.bind(this)
 		this.onFrameDivClick = this.onFrameDivClick.bind(this)
 
 		this.state = {}
-
-		this.uiStart = null
-
 		this.config = {
 			blockPadding: { x: 16, y: 8 },
 			blockMargin: { x: 0, y: 32 },
@@ -23,47 +19,6 @@ export default class PanelAction extends React.Component {
 	}
 	static title = "动作"
 
-	buildUIActionStore() {
-		const f = (action, uiList, parentStore, offset) => {
-
-			let ui = { action }; uiList.push(ui)
-			const textSize = utils.getCachedSVGTextSize(action.type)
-			ui.blockSize = { width: textSize.width + (this.config.blockPadding.x << 1), height: textSize.height + (this.config.blockPadding.y << 1) }
-
-			// child
-			if (action.actionStore) {
-				ui.children = []; let childOffset = { y: this.config.blockMargin.y, maxWidth: ui.blockSize.width }
-				const startAction = action.actionStore.actions.find(a => a.id == action.actionStore.start)
-				ui.childStart = f(startAction, ui.children, action.actionStore, childOffset)
-				ui.frameSize = { width: childOffset.maxWidth, height: ui.blockSize.height + childOffset.y }
-			}
-			ui.position = { /*x: this.config.blockPadding.x,*/ y: offset.y };
-			offset.y += (ui.frameSize || ui.blockSize).height + this.config.blockMargin.y
-			let outFrameWidth = (ui.frameSize || ui.blockSize).width + (this.config.blockPadding.x << 1)
-			offset.maxWidth < outFrameWidth && (offset.maxWidth = outFrameWidth)
-
-			// next
-			if (action.next) {
-				let uiNext = uiList.find(u => u.action.id == action.next)
-				if (!uiNext) {
-					let actionNext = parentStore.actions.find(a => a.id == action.next)
-					uiNext = f(actionNext, uiList, parentStore, offset)
-				} else {
-					offset.maxWidth += (this.config.lineWidth << 2)
-				}
-				ui.next = uiNext
-			}
-
-			return ui
-
-		}
-
-		let startAction = this.props.actionStore.actions.find(action => action.id == this.props.actionStore.start)
-		let uiList = [], offset = { y: 10, maxWidth: 0 }
-		this.uiStart = f(startAction, uiList, this.props.actionStore, offset)
-
-		return { width: offset.maxWidth, height: offset.y }
-	}
 
 	// 用于清空 current select action
 	onFrameDivClick(e) {
@@ -74,8 +29,46 @@ export default class PanelAction extends React.Component {
 
 	render() {
 
-		// blocks
-		const totalSize = this.buildUIActionStore()
+		// buildUIActionStore
+		const { totalWidth, totalHeight, uiStart } = (() => {
+			const f = (action, uiList, parentStore, offset) => {
+
+				let ui = { action }; uiList.push(ui)
+				const textSize = utils.getCachedSVGTextSize(action.get('type'))
+				ui.blockSize = { width: textSize.width + (this.config.blockPadding.x << 1), height: textSize.height + (this.config.blockPadding.y << 1) }
+
+				// child
+				if (action.get('actionStore')) {
+					ui.children = []; let childOffset = { y: this.config.blockMargin.y, maxWidth: ui.blockSize.width }
+					const startAction = action.getIn(['actionStore', 'actions']).find(a => a.get('id') == action.getIn(['actionStore', 'start']))
+					ui.childStart = f(startAction, ui.children, action.get('actionStore'), childOffset)
+					ui.frameSize = { width: childOffset.maxWidth, height: ui.blockSize.height + childOffset.y }
+				}
+				ui.position = { /*x: this.config.blockPadding.x,*/ y: offset.y };
+				offset.y += (ui.frameSize || ui.blockSize).height + this.config.blockMargin.y
+				let outFrameWidth = (ui.frameSize || ui.blockSize).width + (this.config.blockPadding.x << 1)
+				offset.maxWidth < outFrameWidth && (offset.maxWidth = outFrameWidth)
+
+				// next
+				if (action.get('next')) {
+					let uiNext = uiList.find(u => u.action.get('id') == action.get('next'))
+					if (!uiNext) {
+						let actionNext = parentStore.get('actions').find(a => a.get('id') == action.get('next'))
+						uiNext = f(actionNext, uiList, parentStore, offset)
+					} else {
+						offset.maxWidth += (this.config.lineWidth << 2)
+					}
+					ui.next = uiNext
+				}
+				return ui
+			}
+
+			let startAction = this.props.actionStore.get('actions').find(action => action.get('id') == this.props.actionStore.get('start'))
+			let uiList = [], offset = { y: 10, maxWidth: 0 }
+			let uiStart = f(startAction, uiList, this.props.actionStore, offset)
+
+			return { totalWidth: offset.maxWidth, totalHeight: offset.y, uiStart }
+		})()
 
 		let blocks = [], line = 10, exists = []
 		const f = (ui, blocks, frameWidth) => {
@@ -86,28 +79,28 @@ export default class PanelAction extends React.Component {
 			// child
 			let childBlocks = null
 			if (ui.children) {
+				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'innerNext' && ui.action.get('id') == this.props.currentActionInfo.action.get('id')
 				const x1 = (width >> 1), y1 = this.config.lineOffset;
 				const x2 = x1, y2 = ui.childStart.position.y - this.config.lineOffset - this.config.lineWidth;
-				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'innerNext' && ui.action.id == this.props.currentActionInfo.action.id
 				childBlocks = [<Line data={{ type: 'innerNext', action: ui.action, childStart: ui.childStart.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={0}
 					points={[{ x: x1, y: y1 }, { x: x2, y: y2 }]} onClick={this.props.onActionClick} />]
 				f(ui.childStart, childBlocks, width)
 			}
 
 			// block
-			let blockHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'action' && ui.action.id == this.props.currentActionInfo.action.id
-			let block = <Block key={ui.action.id} data={{ type: 'action', action: ui.action }} highLight={blockHighLight} onClick={this.props.onActionClick}
-				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.id + '-' + ui.action.type}>{childBlocks}</Block>
+			let blockHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'action' && ui.action.get('id') == this.props.currentActionInfo.action.get('id')
+			let block = <Block key={ui.action.get('id')} data={{ type: 'action', action: ui.action }} highLight={blockHighLight} onClick={this.props.onActionClick}
+				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.get('id') + '-' + ui.action.get('type')}>{childBlocks}</Block>
 			blocks.push(block); exists.push(ui.action.id)
 
 			// next
+			const x1 = ui.position.x + (width >> 1), y1 = ui.position.y + height + this.config.lineOffset;
+			let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'next' && ui.action.get('id') == this.props.currentActionInfo.action.get('id')
 			if (ui.next) {
 				const nextSize = ui.next.frameSize || ui.next.blockSize
-				const key = `${ui.action.id}.${ui.next.action.id}`
-				const x1 = ui.position.x + (width >> 1), y1 = ui.position.y + height + this.config.lineOffset;
-
+				const key = `${ui.action.get('id')}.${ui.next.action.get('id')}`
 				let points = []
-				if (exists.indexOf(ui.next.action.id) == -1) {
+				if (exists.indexOf(ui.next.action.get('id')) == -1) {
 					f(ui.next, blocks, frameWidth)
 					const x2 = ui.next.position.x + (nextSize.width >> 1), y2 = ui.next.position.y - this.config.lineOffset - this.config.lineWidth;
 					points.push(...[{ x: x1, y: y1 }, { x: x2, y: y2 }])
@@ -120,25 +113,29 @@ export default class PanelAction extends React.Component {
 						{ x: ui.next.position.x - this.config.lineOffset, y: ui.next.position.y + (ui.next.blockSize.height >> 1) }
 					])
 				}
-				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'next' && ui.action.id == this.props.currentActionInfo.action.id
+
 				blocks.push(<Line data={{ type: 'next', action: ui.action, next: ui.next.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
+			} else {
+				const key = `${ui.action.get('id')}.`
+				let points = [{ x: x1, y: y1 }, { x: x1, y: y1 + this.config.blockMargin.y - this.config.lineOffset - this.config.lineWidth }]
+				blocks.push(<Line data={{ type: 'next', action: ui.action, next: null }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
 			}
 		}
-		f(this.uiStart, blocks, totalSize.width)
+		f(uiStart, blocks, totalWidth)
 
 		// tool
 		let actionTool = null
 
 		if (this.props.currentActionInfo) {
 			if (this.props.currentActionInfo.type == 'action') {
-				switch (this.props.currentActionInfo.action.type) {
+				switch (this.props.currentActionInfo.action.get('type')) {
 					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
 					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
 					case 'fetch-table': { actionTool = <ActionTools.FetchTable /> } break;
 				}
 			} else if (this.props.currentActionInfo.type == 'next') {
-				switch (this.props.currentActionInfo.action.type) {
-					case 'open-url': { actionTool = <ActionTools.OpenURLNext /> } break;
+				switch (this.props.currentActionInfo.action.get('type')) {
+					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.props.onActionCreate('fetch-table', qNodeList)} /> } break;
 				}
 			}
 		}
@@ -147,7 +144,7 @@ export default class PanelAction extends React.Component {
 		const css_frame = { width: '100%', height: '100%', textAlign: 'center', overflow: 'scroll' }
 		return (
 			<div style={css_frame} onClick={this.onFrameDivClick}>
-				<svg width={totalSize.width} height={totalSize.height} style={{ cursor: 'default' }}>
+				<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>
 					<defs>
 						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#70AD47" /></marker>
 						<marker id="arrowHighLight" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#507E32" /></marker>
@@ -160,6 +157,7 @@ export default class PanelAction extends React.Component {
 	}
 }
 
+// ========================================================================================================================================================================================================================================================================================
 class Block extends React.Component {
 	constructor(props) {
 		super(props)
@@ -226,8 +224,8 @@ class Line extends React.Component {
 		const css_line = { fill: 'none', stroke: this.props.highLight ? '#507E32' : '#70AD47', strokeWidth: this.props.lineWidth, markerEnd: this.props.highLight ? 'url(#arrowHighLight)' : 'url(#arrow)' }
 		const css_line_cover = { cursor: 'pointer', fill: 'none', stroke: 'transparent', strokeWidth: this.props.lineWidth + 8 }
 		let pointsForCover = [...this.props.points]
-		let p0 = {...pointsForCover[pointsForCover.length - 2]}
-		let p1 = {...pointsForCover[pointsForCover.length - 1]};
+		let p0 = { ...pointsForCover[pointsForCover.length - 2] }
+		let p1 = { ...pointsForCover[pointsForCover.length - 1] };
 		pointsForCover[pointsForCover.length - 2] = p0;
 		pointsForCover[pointsForCover.length - 1] = p1;
 		(p1.x != p0.x) && (p1.x += (p1.x - p0.x) / Math.abs(p1.x - p0.x) * 8);

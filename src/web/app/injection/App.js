@@ -3,6 +3,9 @@ import PanelAction from './PanelAction'
 import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
 import Styles from './index.css'
+import Immutable from 'immutable'
+
+
 
 export default class App extends React.Component {
 	constructor(props) {
@@ -12,6 +15,7 @@ export default class App extends React.Component {
 		this.onPanelChange = this.onPanelChange.bind(this)
 		this.onPanelResize = this.onPanelResize.bind(this)
 		this.onActionClick = this.onActionClick.bind(this)
+		this.onActionCreate = this.onActionCreate.bind(this)
 
 		this.state = {
 			showMainPanel: false,
@@ -19,33 +23,37 @@ export default class App extends React.Component {
 			panelSize: { width: 300, height: 600 },
 			currentPanel: null,
 			currentActionInfo: null,
-			actionStore: {
-				start: 1,
-				actions: [
-					{ id: 1, type: 'open-url', next: 2 },
-					{ id: 2, type: 'fetch-table' },
-					// {
-					// 	id: 2, type: 'open-each-url', next: 4,
-					// 	actionStore: {
-					// 		start: 3,
-					// 		actions: [
-					// 			{ id: 3, type: 'fetch-table', next: 5 },
-					// 			{ id: 5, type: 'fetch-table', next: 12 },
-					// 			{
-					// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
-					// 					start: 13,
-					// 					actions: [
-					// 						{ id: 13, type: 'fetch-table', next: 15 },
-					// 						{ id: 15, type: 'fetch-table', next: 13 },
-					// 					]
-					// 				}
-					// 			},
-					// 		]
-					// 	}
-					// },
-					// { id: 4, type: 'open-url', next: 2 },
-				]
-			},
+			maxActionID: 1,
+			actionStore: Immutable.fromJS(
+				{
+					start: 1,
+					actions: [
+						{ id: 1, type: 'open-url' },
+						// { id: 2, type: 'fetch-table' },
+						// {
+						// 	id: 2, type: 'open-each-url', next: 4,
+						// 	actionStore: {
+						// 		start: 3,
+						// 		actions: [
+						// 			{ id: 3, type: 'fetch-table', next: 5 },
+						// 			{ id: 5, type: 'fetch-table', next: 12 },
+						// 			{
+						// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
+						// 					start: 13,
+						// 					actions: [
+						// 						{ id: 13, type: 'fetch-table', next: 15 },
+						// 						{ id: 15, type: 'fetch-table', next: 13 },
+						// 					]
+						// 				}
+						// 			},
+						// 		]
+						// 	}
+						// },
+						// { id: 4, type: 'open-url', next: 2 },
+					]
+				}
+			),
+
 		}
 	}
 
@@ -75,18 +83,20 @@ export default class App extends React.Component {
 		this.setState({ currentActionInfo: actionInfo })
 	}
 
+	onActionCreate(type, param) {
+		debugger;
+	}
+
 	render() {
 		let mainPanel = this.state.showMainPanel ? (
 			<MainPanel position={this.state.positionMain}
 				current={this.state.currentPanel} onChange={this.onPanelChange}
 				size={this.state.panelSize} onResize={this.onPanelResize} miniSize={{ width: 300, height: 500 }}>
-				<PanelAction actionStore={this.state.actionStore} currentActionInfo={this.state.currentActionInfo} onActionClick={this.onActionClick} />
+				<PanelAction actionStore={this.state.actionStore} currentActionInfo={this.state.currentActionInfo} onActionClick={this.onActionClick} onActionCreate={this.onActionCreate} />
 				<PanelResource />
 				<PanelOption />
 			</MainPanel>
 		) : null
-
-
 
 		return (
 			<div>

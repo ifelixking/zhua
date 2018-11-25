@@ -87,6 +87,7 @@ export class OpenURLNext extends React.Component {
 		this.onFilterClick = this.onFilterClick.bind(this)
 		this.onFilterToggleCheck = this.onFilterToggleCheck.bind(this)
 		this.flushByQNodeList = this.flushByQNodeList.bind(this)
+		this.onBtnFetchTableClick = this.onBtnFetchTableClick.bind(this)
 		this.state = {
 			highLight: [],
 			highLightRects: [],
@@ -226,6 +227,10 @@ export class OpenURLNext extends React.Component {
 		this.flushByQNodeList(qNodeList)
 	}
 
+	onBtnFetchTableClick(){
+		this.props.onBtnFetchTableClick(this.state.qNodeList)
+	}
+
 	render() {
 		const css = { position: 'absolute', pointerEvents: 'none' }
 		const css_highLight = Object.assign({}, css, { border: '1px dashed #FF7F00' })
@@ -245,10 +250,10 @@ export class OpenURLNext extends React.Component {
 			const top = this.state.opElementRect.top + this.state.opElementRect.height + 4
 			const css_icon = { borderRadius:'3px', boxShadow: '0px 0px 6px #000', cursor: 'pointer', backgroundColor: '#FF7F00', color: '#fff', marginRight: '4px', display: 'inline-block', width: '20px', height: '20px', lineHeight:'20px', textAlign:'center' }
 			let buttons = [];
-			(this.state.selection.length == 1) && (buttons.push(<div title={'点击'} key={'click'} style={css_icon}><i className={utils.icon('icon-click')} /></div>));
+			// (this.state.selection.length == 1) && (buttons.push(<div title={'点击'} key={'click'} style={css_icon}><i className={utils.icon('icon-click')} /></div>));
 			(this.state.selection.length == 1) && (buttons.push(<div title={'打开连接'} key={'open-url'} style={css_icon}><i className={utils.icon('icon-open-url')} /></div>));
 			(this.state.selection.length > 0) && (buttons.push(<div title={'打开每个连接'} key={'open-each-url'} style={css_icon}><i className={utils.icon('icon-open-each-url')} /></div>));
-			(this.state.selection.length > 0) && (buttons.push(<div title={'抓取数据'} key={'fetch-table'} style={css_icon}><i className={utils.icon('icon-fetch-table')} /></div>));
+			(this.state.selection.length > 0) && (buttons.push(<div onClick={this.onBtnFetchTableClick} title={'抓取数据'} key={'fetch-table'} style={css_icon}><i className={utils.icon('icon-fetch-table')} /></div>));
 			buttons.push(<div title={`自定义筛选, 目前已选中${this.state.selection.length}条`} key={'filter'} style={css_icon} onClick={this.onFilterClick}><i className={utils.icon('icon-filter')} /></div>)			
 			opBtns = (
 				<div style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
