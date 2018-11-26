@@ -236,14 +236,11 @@ export class OpenURLNext extends React.Component {
 		const css = { position: 'absolute', pointerEvents: 'none' }
 		const css_highLight = Object.assign({}, css, { border: '1px dashed #FF7F00' })
 		const css_selection = Object.assign({}, css, { border: '2px dashed #FF7F00' })
-		let highLightFrames = this.state.highLightRects.map((rect, i) => {
-			const css_div = Object.assign({}, css_highLight, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
-			return (<div key={`h-${i}`} style={css_div} />)
-		})
-		let selectionFrames = this.state.selectionRects.map((rect, i) => {
-			const css_div = Object.assign({}, css_selection, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
-			return (<div key={`s-${i}`} style={css_div} />)
-		})
+		let rectGroups = [
+			{ style: css_selection, rects: this.state.selectionRects, hole: true },
+			{ style: css_highLight, rects: this.state.highLightRects }
+		]
+		let mask = <Mask key={'mask'} rectGroups={rectGroups} />
 
 		let opBtns = null
 		if (this.state.opElement) {
@@ -257,21 +254,14 @@ export class OpenURLNext extends React.Component {
 			(this.state.selection.length > 0) && (buttons.push(<div onClick={this.onBtnFetchTableClick} title={'抓取数据'} key={'fetch-table'} style={css_icon}><Icon style={{ color: '#fff' }} name='icon-fetch-table' /></div>));
 			buttons.push(<div title={`自定义筛选, 目前已选中${this.state.selection.length}条`} key={'filter'} style={css_icon} onClick={this.onFilterClick}><Icon style={{ color: '#fff' }} name='icon-filter' /></div>)
 			opBtns = (
-				<div style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
+				<div key={'opBtns'} style={{ position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${(buttons.length + 1) * 24}px` }}>
 					{buttons}
 				</div>
 			)
 		}
 
-		let filter = this.state.filterPosition && <Filter jqExpr={this.state.jqExpr} qNodeList={this.state.qNodeList} position={this.state.filterPosition} onMouseOut={this.onFilterMouseOut} onToggleCheck={this.onFilterToggleCheck} />
-
-		return ReactDOM.createPortal([
-			<Mask key={1} rects={this.state.selectionRects} />,
-			<div key={2}>{highLightFrames}</div>,
-			<div key={3}>{selectionFrames}</div>,
-			<div key={4}>{opBtns}</div>,
-			<div key={5}>{filter}</div>,
-		], utils.getModalRoot());
+		let filter = this.state.filterPosition && <Filter key={'filter'} jqExpr={this.state.jqExpr} qNodeList={this.state.qNodeList} position={this.state.filterPosition} onMouseOut={this.onFilterMouseOut} onToggleCheck={this.onFilterToggleCheck} />
+		return ReactDOM.createPortal([mask, opBtns, filter], utils.getModalRoot());
 	}
 }
 

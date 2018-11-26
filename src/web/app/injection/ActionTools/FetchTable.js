@@ -78,8 +78,8 @@ class CapturePanel extends React.Component {
 		const func = (node) => {
 			let subs = node.children.map(n => func(n))
 			let tags = []; node.data.forEach((t, i) => {
-				tags.push(<span onClick={() => this.onTagClick(t)} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
-				(i < node.data.length - 1) && tags.push(<Icon style={css_next} name='icon-next' />)
+				tags.push(<span key={i << 1} onClick={() => this.onTagClick(t)} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
+				(i < node.data.length - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
 			return (
 				<div style={css_node}>
@@ -93,11 +93,11 @@ class CapturePanel extends React.Component {
 
 		let divProperty = null
 		if (st) {
-			let options = [{ label: '使用标签', value:'tag' }]
-			st.isFirst && !st.isLast && (options.push({ label: '选择第一个', value:'first' }))
-			st.isLast && !st.isFirst && (options.push({ label: '选择最后一个', value:'last' }))
-			!st.isLast && !st.isFirst && (options.push({ label: `选择第${st.index}个`, value:'index' }))
-			st.innerText && st.innerText.length <= 16 && (options.push({ label: `选择内容为:"${st.innerText}"`, value:'text' }))
+			let options = [{ label: '使用标签', value: 'tag' }]
+			st.isFirst && !st.isLast && (options.push({ label: '选择第一个', value: 'first' }))
+			st.isLast && !st.isFirst && (options.push({ label: '选择最后一个', value: 'last' }))
+			!st.isLast && !st.isFirst && (options.push({ label: `选择第${st.index}个`, value: 'index' }))
+			st.innerText && st.innerText.length <= 16 && (options.push({ label: `选择内容为:"${st.innerText}"`, value: 'text' }))
 			let checks = (<CheckboxGroup options={options} />)
 
 			let divClass = null
