@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 import PanelGroup from '../Common/PanelGroup'
 import Styles from '../index.css'
 import * as utils from '../../../utils'
@@ -6,24 +7,57 @@ import { Checkbox } from 'antd';
 const CheckboxGroup = Checkbox.Group;
 import 'antd/lib/Checkbox/style'
 import Icon from '../Common/Icon'
+import Mask from '../Common/Mask'
+
 
 export class FetchTable extends React.Component {
 	constructor(props) {
 		super(props)
-		// this.flushData = this.flushData.bind(this)
+		this.flushCapture = this.flushCapture.bind(this)
+		this.onCapture = this.onCapture.bind(this)
+		this.isValidElement = this.isValidElement.bind(this)
 		this.state = {
-			qTree: this.props.action.get('data')
+			qTree: this.props.action.get('data'),
+			captureElements: []
 		}
+
+	}
+
+	componentWillReceiveProps(nextProps) {
+		let nextProps_data = nextProps.action.get('data')
+		if (nextProps_data != this.props.action.get('data')) {
+			this.flushCapture(nextProps_data)
+		}
+	}
+
+	componentDidMount() {
+		this.flushCapture(this.state.qTree)
+	}
+
+	flushCapture(qTree) {
+		let elements = utils.Smart.queryElements(qTree.root.data)
+		this.setState({ captureElements: elements });
+	}
+
+	isValidElement(target) {
+		return !this.state.captureElements.find(ele => utils.isAncestors(ele, target))
+	}
+
+	onCapture(target){
+		if (!this.isValidElement(target)) { return }
 	}
 
 	render() {
 		return (
-			<PanelGroup right={true} initSize={{ width: 400 }} initShow={true}>
-				<TablePanel></TablePanel>
-				<RawPanel></RawPanel>
-				<CapturePanel qTree={this.state.qTree}></CapturePanel>
-				<QueryPanel></QueryPanel>
-			</PanelGroup>
+			<div>
+				<PanelGroup right={true} initSize={{ width: 400 }} initShow={true}>
+					<TablePanel></TablePanel>
+					<RawPanel></RawPanel>
+					<CapturePanel qTree={this.state.qTree}></CapturePanel>
+					<QueryPanel></QueryPanel>
+				</PanelGroup>
+				<Tool captureElements={this.state.captureElements} onCapture={this.onCapture} isValidElement={this.isValidElement} />
+			</div>
 		)
 
 	}
@@ -143,5 +177,107 @@ class QueryPanel extends React.Component {
 	static title = "查询"
 	render() {
 		return <h1>查询</h1>
+	}
+}
+
+class Tool extends React.Component {
+	constructor(props) {
+		super(props)
+
+		this.onClick = this.onClick.bind(this)
+		this.onMouseDown = this.onMouseDown.bind(this)
+		this.onMouseMove = this.onMouseMove.bind(this)
+		this.flushRects = this.flushRects.bind(this)
+
+		this.state = {
+			rects: [],
+			highLightRects: []
+		}
+
+	}
+
+	componentWillMount() {
+		window.document.addEventListener('mousemove', this.onMouseMove, true)
+		window.document.addEventListener('mousedown', this.onMouseDown, true)
+		window.document.addEventListener('click', this.onClick, true)
+	}
+
+	componentWillUnmount() {
+		window.document.removeEventListener('mousemove', this.onMouseMove, true)
+		window.document.removeEventListener('mousedown', this.onMouseDown, true)
+		window.document.removeEventListener('click', this.onClick, true)
+	}
+
+	componentDidMount() {
+		this.flushRects(this.props.captureElements)
+	}
+
+	componentWillReceiveProps(nextProps) {
+		if (nextProps.captureElements != this.props.captureElements) {
+			this.flushRects(nextProps.captureElements)
+		}
+	}
+
+	flushRects(elements) {
+		this.setState({
+			rects: elements.map((ele) => {
+				const { left, top, width, height } = ele.getBoundingClientRect()
+				return {
+					left: left + document.documentElement.scrollLeft,
+					top: top + document.documentElement.scrollTop,
+					width: width, height: height
+				}
+			})
+		})
+	}
+
+	onMouseMove(e) {
+		if (utils.eventFilterRoot(e)) { return true }
+		let highLight = this.props.isValidElement(e.target) ? [e.target] : []
+		this.setState({
+			highLightRects: highLight.map(ele => {
+				const { left, top, width, height } = ele.getBoundingClientRect()
+				return {
+					left: left + document.documentElement.scrollLeft,
+					top: top + document.documentElement.scrollTop,
+					width, height
+				}
+			})
+		})
+		return false
+	}
+
+	onMouseDown(e) {
+		if (utils.eventFilterRoot(e)) { return true }
+		return false
+	}
+
+	onClick(e) {
+		if (utils.eventFilterRoot(e)) { return true }
+		this.props.onCapture(e.target)
+		// const qNodeList = utils.Smart.analysePath(e.target)
+		// this.flushByQNodeList(qNodeList)
+		// const opElementRect = e.target.getBoundingClientRect()
+		// this.setState({
+		// 	opElement: e.target, opElementRect: {
+		// 		left: opElementRect.left + document.documentElement.scrollLeft,
+		// 		top: opElementRect.top + document.documentElement.scrollTop,
+		// 		width: opElementRect.width, height: opElementRect.height
+		// 	}, filterPosition: null
+		// })
+
+		// return false
+	}
+
+
+	render() {
+		const css = { position: 'absolute', pointerEvents: 'none' }
+		const css_highLight = Object.assign({}, css, { border: '1px dashed #FF7F00' })
+
+		let mask = <Mask key={'mask'} rectGroups={[
+			{ style: {}, rects: this.state.rects, hole: true },
+			{ style: css_highLight, rects: this.state.highLightRects }
+		]} />
+		return ReactDOM.createPortal([mask], utils.getModalRoot());
 	}
 }

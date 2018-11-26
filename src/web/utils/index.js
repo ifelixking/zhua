@@ -88,10 +88,6 @@ export function getModalRoot() {
 	return document.getElementById(ROOT_ELEMENT_ID).children[0]
 }
 
-export function highLightElement(elements) {
-	// elements.forEach(ele=>{})
-}
-
 export function icon(name, extStyles = []) {
 	return [Icons.iconfont, Icons[name], ...extStyles].join(' ')
 }
@@ -102,6 +98,13 @@ export function getElementIndex(element) {
 
 export function getElementRIndex(element) {
 	if (element && element.parentElement) { return element.parentElement.children.length - Array.from(element.parentElement.children).indexOf(element) - 1 }
+}
+
+export function isAncestors(element, target) {
+	for (let itor = element; itor; itor = itor.parentElement) {
+		if (itor == target) { return true }
+	}
+	return false
 }
 
 export function toggleArray(array, value) {

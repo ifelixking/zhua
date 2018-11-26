@@ -56,8 +56,8 @@ export function toQueryString(qNodes) {
 }
 
 export function queryElements(qNodes) {
-	let selection = $(toQueryString(qNodes)).toArray()
-	return selection
+	let elements = $(toQueryString(qNodes)).toArray()
+	return elements
 }
 
 export class QTree{
@@ -68,6 +68,6 @@ export class QTree{
 		}
 	}
 
-	// get root() { return this.root }
+	
 
 }

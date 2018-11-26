@@ -125,7 +125,7 @@ class MainPanel extends React.Component {
 		current_idx >= 0 || (current_idx = 0)
 
 		let tabs = this.props.children.map((item, i) => {
-			return (<span className={Styles['MainPanel-tab']} key={item.type.title} style={i == current_idx ? css_tab_current : css_tab} onClick={() => this.props.onChange(item.type.title)}>{item.type.title}</span>)
+			return (<span className={Styles['MainPanel-tab']} key={i} style={i == current_idx ? css_tab_current : css_tab} onClick={() => this.props.onChange(item.type.title)}>{item.type.title}</span>)
 		})
 
 		return (
