@@ -43,8 +43,11 @@ export class FetchTable extends React.Component {
 		return !this.state.captureElements.find(ele => utils.isAncestors(ele, target))
 	}
 
-	onCapture(target){
+	onCapture(target) {
 		if (!this.isValidElement(target)) { return }
+		this.setState({
+			qTree: this.state.qTree.mergeElement(target)
+		})
 	}
 
 	render() {
@@ -101,23 +104,32 @@ class CapturePanel extends React.Component {
 
 	render() {
 		const st = this.state.selectedTag
-		const css_node = { padding: '4px 8px' }
+		const css_node = { backgroundColor: '#ddd', marginBottom: '8px', padding: '4px 8px', borderRadius: '4px' }
 		const css_tag = { cursor: 'pointer', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '4px 8px', borderRadius: '16px', margin: '2px 0px', border: '2px solid green' }
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
-		const css_prop_frame = { position: 'absolute', left: '0px', bottom: '0px', maxHeight: '300px', width: '100%', backgroundColor: '#efefef', marginBottom: '16px', padding: '0px 8px', overflow: 'auto' }
+		const css_prop_frame = { position: 'absolute', left: '0px', bottom: '0px', maxHeight: '300px', width: '100%', backgroundColor: '#efefef', marginBottom: '16px', padding: '4px 8px', overflow: 'auto' }
 		const css_prop_section = { padding: '16px', borderTop: '1px solid gray', position: 'relative' }
 		const css_prop_section_title = { position: 'absolute', top: '-8px', padding: '0px 8px', backgroundColor: '#efefef' }
+		const indent = 32
+		const css_line = {
+			fontSize: '16px',
+			position: 'absolute',
+			left: '8px',
+			top: '12px',
+			color: 'green'
+		}
 
-		const func = (node) => {
-			let subs = node.children.map(n => func(n))
-			let tags = []; node.data.forEach((t, i) => {
+		const func = (node, i = 0, padding = 0) => {
+			let subs = node.children.map((n, i) => func(n, i, padding + indent))
+			let tags = [], lines=[]; node.data.forEach((t, i) => {
 				tags.push(<span key={i << 1} onClick={() => this.onTagClick(t)} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
 				(i < node.data.length - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
 			return (
-				<div style={css_node}>
-					<div>{tags}</div>
+				<div key={i} style={{ position: 'relative', paddingLeft: `${padding}px` }}>
+					{padding ? (<Icon style={css_line} name='icon-next' />) : null}
+					<div style={css_node}>{tags}</div>
 					{subs}
 				</div>
 			)
@@ -162,7 +174,7 @@ class CapturePanel extends React.Component {
 		}
 
 		return (
-			<div>
+			<div style={{ padding: '8px' }}>
 				{tree}
 				{divProperty}
 			</div>
@@ -271,8 +283,7 @@ class Tool extends React.Component {
 
 
 	render() {
-		const css = { position: 'absolute', pointerEvents: 'none' }
-		const css_highLight = Object.assign({}, css, { border: '1px dashed #FF7F00' })
+		const css_highLight = { border: '1px dashed #FF7F00' }
 
 		let mask = <Mask key={'mask'} rectGroups={[
 			{ style: {}, rects: this.state.rects, hole: true },

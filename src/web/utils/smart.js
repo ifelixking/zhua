@@ -14,7 +14,9 @@ class QNode {
 			index: false,
 			isFirst: false,
 			isLast: false,
-			attributes: []
+			attributes: [],
+
+			output: false,		// 
 		}
 	}
 	get tagName() { return this.element.tagName }
@@ -24,7 +26,7 @@ class QNode {
 	get isFirst() { return this.index === 0 }
 	get isLast() { return !this.element.parentElement || (this.index == this.element.parentElement.children.length - 1) }
 	get attributes() { return this.element.attributes && Array.from(this.element.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) }
-	get jQString() { 
+	get jQString() {
 		let expr = ''
 		this.config.tagName && (expr += this.tagName);
 		this.config.index && (expr += ':nth-child(' + (this.index + 1) + ')');
@@ -32,7 +34,7 @@ class QNode {
 		this.config.isLast && (expr += ':last-child');
 		this.config.innerText && (expr += `:contains('${this.innerText.trim()}')`)
 		expr += this.config.className.map((a) => { return this.className[a] ? ('.' + this.className[a]) : '' }).join('');
-		expr += this.config.attributes.map((a) => { return `[${this.attributes[a].name}='${decodeURI(this.attributes[a].value)}']`}).join('');
+		expr += this.config.attributes.map((a) => { return `[${this.attributes[a].name}='${decodeURI(this.attributes[a].value)}']` }).join('');
 		return expr
 	}
 }
@@ -60,14 +62,39 @@ export function queryElements(qNodes) {
 	return elements
 }
 
-export class QTree{
-	constructor(qNodeList){
+export class QTree {
+	constructor(qNodeList) {
 		this.root = {
-			data : qNodeList,
+			data: qNodeList,
 			children: []
 		}
 	}
 
-	
-
+	mergeElement(element) {
+		let branch = []
+		const func = function (block, itorEle) {
+			if (block.children) {
+				let result = block.children.find(b => func(b))
+				if (result) { return result }
+			}
+			for (let i = block.data.length - 1; i >= 0; --i) {
+				let node = block.data[i]
+				if (node.element == itorEle) {
+					if (branch.length) {
+						let old = block.data
+						block.data = old.slice(0, i+1)
+						let subBlock = { data: old.slice(i+1), children: block.children }
+						block.children = [subBlock, { data: branch, children: [] }]
+					} else {
+						node.config.output = true
+					}
+					return true
+				}
+			}
+		}
+		for (let itorEle = element; itorEle; branch.unshift(new QNode(itorEle)), itorEle = itorEle.parentElement) {
+			if (func(this.root, itorEle)) { break; }
+		}
+		return this
+	}
 }

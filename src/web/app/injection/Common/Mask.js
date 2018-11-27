@@ -28,7 +28,7 @@ export default class Mask extends React.Component {
 		let groups = this.props.rectGroups.map((group, i) => {
 			group.hole && holes.push(...(group.rects.map(r => `M${r.left} ${r.top} L${r.left} ${r.top + r.height} L${r.left + r.width} ${r.top + r.height} L${r.left + r.width} ${r.top} Z`)))
 			return (<div key={i}>{group.rects.map((rect, j) => {
-				const css_div = Object.assign({}, group.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
+				const css_div = Object.assign({}, group.style, { position: 'absolute', pointerEvents: 'none', left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, })
 				return (<div key={`s-${j}`} style={css_div} />)
 			})}</div>)
 		})

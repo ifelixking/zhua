@@ -4,6 +4,7 @@
 	font-size: 12px;
 	line-height: 12px;
 	font-weight: normal;
+	box-sizing: border-box;
 }
 
 .MainPanel-tab:hover{
