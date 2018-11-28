@@ -108,8 +108,8 @@ class CapturePanel extends React.Component {
 		const css_tag = { cursor: 'pointer', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '4px 8px', borderRadius: '16px', margin: '2px 0px', border: '2px solid green' }
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
-		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px' }
-		const css_prop_section = { padding: '16px', borderTop: '1px solid gray', position: 'relative' }
+		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px', position: 'relative', boxShadow:'0px -0px 20px #888' }
+		const css_prop_section = { padding: '8px', borderTop: '1px solid gray', position: 'relative' }
 		const css_prop_section_title = { position: 'absolute', top: '-8px', padding: '0px 8px', backgroundColor: '#efefef' }
 		const indent = 32
 		const css_line = {
@@ -122,8 +122,8 @@ class CapturePanel extends React.Component {
 
 		const func = (node, i = 0, padding = 0) => {
 			let subs = node.children.map((n, i) => func(n, i, indent))
-			let tags = [], lines=[]; node.data.forEach((t, i) => {
-				tags.push(<span key={i << 1} onClick={() => this.onTagClick(t)} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
+			let tags = [], lines = []; node.data.forEach((t, i) => {
+				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
 				(i < node.data.length - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
 			return (
@@ -171,15 +171,16 @@ class CapturePanel extends React.Component {
 
 			divProperty = (
 				<div style={css_prop_frame}>
-					<div style={{ padding: '16px' }}>{checks}</div>
+					<div style={{ padding: '8px' }}>{checks}</div>
 					{divClass}{divAttr}
+					<Icon name='icon-close' style={{ cursor:'pointer', position: 'absolute', right: '6px', top: '8px' }} onClick={() => this.onTagClick(null)} />
 				</div>
 			)
 		}
 
 		return (
-			<div style={{ padding: '8px 8px 16px 8px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-				<div style={{ flexGrow: '1', overflow: 'auto' }}>{tree}</div>
+			<div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+				<div onClick={() => this.onTagClick(null)} style={{ flexGrow: '1', overflow: 'auto', padding: '8px' }}>{tree}</div>
 				{divProperty}
 			</div>
 		)

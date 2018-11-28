@@ -7,6 +7,6 @@ export default class Icon extends React.Component{
 	}
 
 	render(){
-		return <i style={Object.assign({}, { fontSize: '16px' }, this.props.style)} className={utils.icon(this.props.name)} />
+		return <i style={Object.assign({}, { fontSize: '16px' }, this.props.style)} className={utils.icon(this.props.name)} onClick={this.props.onClick} />
 	}
 }
