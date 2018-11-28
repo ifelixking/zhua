@@ -108,7 +108,7 @@ class CapturePanel extends React.Component {
 		const css_tag = { cursor: 'pointer', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '4px 8px', borderRadius: '16px', margin: '2px 0px', border: '2px solid green' }
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
-		const css_prop_frame = { position: 'absolute', left: '0px', bottom: '0px', maxHeight: '300px', width: '100%', backgroundColor: '#efefef', marginBottom: '16px', padding: '4px 8px', overflow: 'auto' }
+		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px' }
 		const css_prop_section = { padding: '16px', borderTop: '1px solid gray', position: 'relative' }
 		const css_prop_section_title = { position: 'absolute', top: '-8px', padding: '0px 8px', backgroundColor: '#efefef' }
 		const indent = 32
@@ -121,7 +121,7 @@ class CapturePanel extends React.Component {
 		}
 
 		const func = (node, i = 0, padding = 0) => {
-			let subs = node.children.map((n, i) => func(n, i, padding + indent))
+			let subs = node.children.map((n, i) => func(n, i, indent))
 			let tags = [], lines=[]; node.data.forEach((t, i) => {
 				tags.push(<span key={i << 1} onClick={() => this.onTagClick(t)} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
 				(i < node.data.length - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
@@ -151,7 +151,9 @@ class CapturePanel extends React.Component {
 				divClass = (
 					<div style={css_prop_section}>
 						<span style={css_prop_section_title}>使用样式过滤:</span>
-						<CheckboxGroup options={st.className.map((name, i) => ({ label: name, value: i }))} />
+						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
+							<CheckboxGroup options={st.className.map((name, i) => ({ label: name, value: i }))} />
+						</div>
 					</div>
 				)
 			}
@@ -160,7 +162,9 @@ class CapturePanel extends React.Component {
 				divAttr = (
 					<div style={css_prop_section}>
 						<span style={css_prop_section_title}>使用属性过滤:</span>
-						<CheckboxGroup options={st.attributes.map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))} />
+						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
+							<CheckboxGroup options={st.attributes.map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))} />
+						</div>
 					</div>
 				)
 			}
@@ -174,8 +178,8 @@ class CapturePanel extends React.Component {
 		}
 
 		return (
-			<div style={{ padding: '8px' }}>
-				{tree}
+			<div style={{ padding: '8px 8px 16px 8px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+				<div style={{ flexGrow: '1', overflow: 'auto' }}>{tree}</div>
 				{divProperty}
 			</div>
 		)

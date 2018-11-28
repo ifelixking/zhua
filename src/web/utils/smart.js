@@ -74,17 +74,21 @@ export class QTree {
 		let branch = []
 		const func = function (block, itorEle) {
 			if (block.children) {
-				let result = block.children.find(b => func(b))
+				let result = block.children.find(b => func(b, itorEle))
 				if (result) { return result }
 			}
 			for (let i = block.data.length - 1; i >= 0; --i) {
 				let node = block.data[i]
 				if (node.element == itorEle) {
 					if (branch.length) {
-						let old = block.data
-						block.data = old.slice(0, i+1)
-						let subBlock = { data: old.slice(i+1), children: block.children }
-						block.children = [subBlock, { data: branch, children: [] }]
+						if (i < block.data.length - 1) {
+							let old = block.data
+							block.data = old.slice(0, i + 1)
+							let subBlock = { data: old.slice(i + 1), children: block.children }
+							block.children = [subBlock, { data: branch, children: [] }]
+						} else {
+							block.children.push({ data: branch, children: [] })
+						}
 					} else {
 						node.config.output = true
 					}
