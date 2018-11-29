@@ -9,7 +9,7 @@ import Styles from './index.css'
 	
 	let style = document.createElement('style'); style.type = 'text/css'; style.innerHTML = `
 		#${utils.ROOT_ELEMENT_ID} .ant-checkbox-wrapper{
-			line-height:26px
+			line-height:28px
 		}
 	`; document.head.appendChild(style); 
 

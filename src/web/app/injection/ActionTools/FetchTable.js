@@ -90,6 +90,7 @@ class CapturePanel extends React.Component {
 	constructor(props) {
 		super(props)
 		this.onTagClick = this.onTagClick.bind(this)
+		this.onTagConfigChange = this.onTagConfigChange.bind(this)
 		this.state = {
 			selectedTag: null
 		}
@@ -102,9 +103,14 @@ class CapturePanel extends React.Component {
 		})
 	}
 
+	onTagConfigChange(values){
+		
+	}
+
 	render() {
 		const st = this.state.selectedTag
-		const css_node = { backgroundColor: '#ddd', marginBottom: '8px', padding: '4px 8px', borderRadius: '4px' }
+		const css_node_up = { backgroundColor: '#ddd', padding: '4px 8px', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }
+		const css_node_down = { backgroundColor: 'gray', color: '#fff', marginBottom: '8px', padding: '4px 8px', borderBottomLeftRadius: '4px', borderBottomRightRadius: '4px' }
 		const css_tag = { cursor: 'pointer', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '4px 8px', borderRadius: '16px', margin: '2px 0px', border: '2px solid green' }
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
@@ -122,29 +128,35 @@ class CapturePanel extends React.Component {
 
 		const func = (node, i = 0, padding = 0) => {
 			let subs = node.children.map((n, i) => func(n, i, indent))
-			let tags = [], lines = []; node.data.forEach((t, i) => {
+			let tags = []; node.data.forEach((t, i) => {
 				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
 				(i < node.data.length - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
+			let jqString = utils.Smart.toQueryString(node.data)
 			return (
 				<div key={i} style={{ position: 'relative', paddingLeft: `${padding}px` }}>
 					{padding ? (<Icon style={css_line} name='icon-next' />) : null}
-					<div style={css_node}>{tags}</div>
+					<div>
+						<div style={css_node_up}>{tags}</div>
+						<div style={css_node_down}>{jqString}</div>
+					</div>
 					{subs}
 				</div>
 			)
 		}
 		let tree = func(this.props.qTree.root)
 
-
 		let divProperty = null
 		if (st) {
-			let options = [{ label: '使用标签', value: 'tag' }]
-			st.isFirst && !st.isLast && (options.push({ label: '选择第一个', value: 'first' }))
-			st.isLast && !st.isFirst && (options.push({ label: '选择最后一个', value: 'last' }))
-			!st.isLast && !st.isFirst && (options.push({ label: `选择第${st.index}个`, value: 'index' }))
-			st.innerText && st.innerText.length <= 16 && (options.push({ label: `选择内容为:"${st.innerText}"`, value: 'text' }))
-			let checks = (<CheckboxGroup options={options} />)
+			
+			let checks; {
+				let options = [{ label: '使用标签', value: 'tagName' }], values = []; st.config.tagName && values.push('tagName');
+				st.isFirst && !st.isLast && (options.push({ label: '选择第一个', value: 'isFirst' })); st.config.isFirst && values.push('isFirst');
+				st.isLast && !st.isFirst && (options.push({ label: '选择最后一个', value: 'isLast' })); st.config.isLast && values.push('isLast');
+				!st.isLast && !st.isFirst && (options.push({ label: `选择第${st.index}个`, value: 'index' })); st.config.index && values.push('index');
+				st.innerText && st.innerText.length <= 16 && (options.push({ label: `选择内容为:"${st.innerText}"`, value: 'innerText' })); st.config.innerText && values.push('innerText');
+				checks = (<CheckboxGroup options={options} value={values} onChange={this.onTagConfigChange}/>)
+			}
 
 			let divClass = null
 			if (st.className.length) {
