@@ -261,3 +261,4 @@ __pycache__/
 *.pyc
 /src/zhua/GeneratedFiles
 /package-lock.json
+/tmp

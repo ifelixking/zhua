@@ -1,12 +1,28 @@
 import React from 'react'
+import { connect } from 'react-redux';
+import Immutable from 'immutable'
 import * as utils from '../../utils'
 import ActionTools from './ActionTools'
 
-export default class PanelAction extends React.Component {
+export default connect(
+	(state) => {
+		return { actionStore: state.actionStore, currentActionInfo: state.currentActionInfo, maxActionID: state.maxActionID }
+	},
+	(dispatch) => {
+		return {
+			onActionClick: (currentActionInfo) => { dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo }) },
+			onCreateNextAction: (newAction, currentActionID) => { 
+				dispatch({ type: 'CREATE_NEXT_ACTION', newAction, currentActionID })
+				dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo: { type: 'action', id: newAction.get('id') } })
+			}
+		}
+	}
+)(class PanelAction extends React.Component {
 	constructor(props) {
 		super(props)
 
 		this.onFrameDivClick = this.onFrameDivClick.bind(this)
+		this.onBtnFetchTableClick = this.onBtnFetchTableClick.bind(this)
 
 		this.state = {}
 		this.config = {
@@ -27,11 +43,17 @@ export default class PanelAction extends React.Component {
 		}
 	}
 
+	onBtnFetchTableClick(qNodeList) {
+		let currentActionID = this.props.currentActionInfo.id
+		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: 'fetch-table', data: new utils.Smart.QTree(qNodeList) })
+		this.props.onCreateNextAction(newAction, currentActionID)
+	}
+
 	render() {
 
 		// buildUIActionStore
 		const { totalWidth, totalHeight, uiStart } = (() => {
-			const f = (action, uiList, parentStore, offset) => {
+			const func = (action, uiList, parentStore, offset) => {
 
 				let ui = { action }; uiList.push(ui)
 				const textSize = utils.getCachedSVGTextSize(action.get('type'))
@@ -40,8 +62,8 @@ export default class PanelAction extends React.Component {
 				// child
 				if (action.get('actionStore')) {
 					ui.children = []; let childOffset = { y: this.config.blockMargin.y, maxWidth: ui.blockSize.width }
-					const startAction = action.getIn(['actionStore', 'actions']).find(a => a.get('id') == action.getIn(['actionStore', 'start']))
-					ui.childStart = f(startAction, ui.children, action.get('actionStore'), childOffset)
+					let idx, startAction = action.getIn(['actionStore', 'actions']).find((a, i) => a.get('id') == action.getIn(['actionStore', 'start']) && (idx = i) != -1)
+					ui.childStart = func(startAction, ui.children, action.get('actionStore'), childOffset); ui.childStart.index = idx
 					ui.frameSize = { width: childOffset.maxWidth, height: ui.blockSize.height + childOffset.y }
 				}
 				ui.position = { /*x: this.config.blockPadding.x,*/ y: offset.y };
@@ -51,10 +73,10 @@ export default class PanelAction extends React.Component {
 
 				// next
 				if (action.get('next')) {
-					let uiNext = uiList.find(u => u.action.get('id') == action.get('next'))
+					let uiNext = uiList.find(u => u.action.get('id') == action.get('next'))		// 先
 					if (!uiNext) {
-						let actionNext = parentStore.get('actions').find(a => a.get('id') == action.get('next'))
-						uiNext = f(actionNext, uiList, parentStore, offset)
+						let idx, actionNext = parentStore.get('actions').find((a,i) => a.get('id') == action.get('next') && (idx = i) != -1)
+						uiNext = func(actionNext, uiList, parentStore, offset); uiNext.index = idx
 					} else {
 						offset.maxWidth += (this.config.lineWidth << 2)
 					}
@@ -63,15 +85,15 @@ export default class PanelAction extends React.Component {
 				return ui
 			}
 
-			let startAction = this.props.actionStore.get('actions').find(action => action.get('id') == this.props.actionStore.get('start'))
+			let startActionIndex, startAction = this.props.actionStore.get('actions').find((action, i) => action.get('id') == this.props.actionStore.get('start') && (startActionIndex = i) != -1)
 			let uiList = [], offset = { y: 10, maxWidth: 0 }
-			let uiStart = f(startAction, uiList, this.props.actionStore, offset)
+			let uiStart = func(startAction, uiList, this.props.actionStore, offset); uiStart.index = startActionIndex
 
 			return { totalWidth: offset.maxWidth, totalHeight: offset.y, uiStart }
 		})()
 
 		let blocks = [], line = 10, exists = []
-		const f = (ui, blocks, frameWidth) => {
+		const func = (ui, blocks, frameWidth, imPath) => {
 			const width = (ui.frameSize || ui.blockSize).width
 			const height = (ui.frameSize || ui.blockSize).height
 			ui.position.x = (frameWidth - width) >> 1
@@ -79,29 +101,29 @@ export default class PanelAction extends React.Component {
 			// child
 			let childBlocks = null
 			if (ui.children) {
-				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'innerNext' && ui.action.get('id') == this.props.currentActionInfo.action.get('id')
+				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'innerNext' && ui.action.get('id') == this.props.currentActionInfo.id
 				const x1 = (width >> 1), y1 = this.config.lineOffset;
 				const x2 = x1, y2 = ui.childStart.position.y - this.config.lineOffset - this.config.lineWidth;
-				childBlocks = [<Line data={{ type: 'innerNext', action: ui.action, childStart: ui.childStart.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={0}
+				childBlocks = [<Line data={{ type: 'innerNext', id: ui.action.get('id'), childStartId: ui.childStart.action.get('id') }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={0}
 					points={[{ x: x1, y: y1 }, { x: x2, y: y2 }]} onClick={this.props.onActionClick} />]
-				f(ui.childStart, childBlocks, width)
+				func(ui.childStart, childBlocks, width, [...imPath, 'actionStore', 'actions', ui.childStart.index])
 			}
 
 			// block
-			let blockHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'action' && ui.action.get('id') == this.props.currentActionInfo.action.get('id')
-			let block = <Block key={ui.action.get('id')} data={{ type: 'action', action: ui.action }} highLight={blockHighLight} onClick={this.props.onActionClick}
+			let blockHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'action' && ui.action.get('id') == this.props.currentActionInfo.id
+			let block = <Block key={ui.action.get('id')} data={{ type: 'action', id: ui.action.get('id'), imPath }} highLight={blockHighLight} onClick={this.props.onActionClick}
 				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.get('id') + '-' + ui.action.get('type')}>{childBlocks}</Block>
-			blocks.push(block); exists.push(ui.action.id)
+			blocks.push(block); exists.push(ui.action.get('id'))
 
 			// next
 			const x1 = ui.position.x + (width >> 1), y1 = ui.position.y + height + this.config.lineOffset;
-			let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'next' && ui.action.get('id') == this.props.currentActionInfo.action.get('id')
+			let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'next' && ui.action.get('id') == this.props.currentActionInfo.id
 			if (ui.next) {
 				const nextSize = ui.next.frameSize || ui.next.blockSize
 				const key = `${ui.action.get('id')}.${ui.next.action.get('id')}`
 				let points = []
 				if (exists.indexOf(ui.next.action.get('id')) == -1) {
-					f(ui.next, blocks, frameWidth)
+					func(ui.next, blocks, frameWidth, [...(imPath.slice(0,-1)), ui.next.index])
 					const x2 = ui.next.position.x + (nextSize.width >> 1), y2 = ui.next.position.y - this.config.lineOffset - this.config.lineWidth;
 					points.push(...[{ x: x1, y: y1 }, { x: x2, y: y2 }])
 				} else {
@@ -114,28 +136,34 @@ export default class PanelAction extends React.Component {
 					])
 				}
 
-				blocks.push(<Line data={{ type: 'next', action: ui.action, next: ui.next.action }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
+				blocks.push(<Line data={{ type: 'next', id: ui.action.get('id'), nextId: ui.next.action.get('id') }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
 			} else {
 				const key = `${ui.action.get('id')}.`
 				let points = [{ x: x1, y: y1 }, { x: x1, y: y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth }]
-				blocks.push(<Line data={{ type: 'next', action: ui.action, next: null }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
+				blocks.push(<Line data={{ type: 'next', id: ui.action.get('id'), next: null }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
 			}
 		}
-		f(uiStart, blocks, totalWidth)
+		func(uiStart, blocks, totalWidth, ['actions', uiStart.index])
 
 		// tool
 		let actionTool = null
 
 		if (this.props.currentActionInfo) {
+			let { action: currentAction } = utils.actionStoreFindAction(this.props.actionStore, this.props.currentActionInfo.id)
 			if (this.props.currentActionInfo.type == 'action') {
-				switch (this.props.currentActionInfo.action.get('type')) {
+				
+				switch (currentAction.get('type')) {
 					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
 					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
-					case 'fetch-table': { actionTool = <ActionTools.FetchTable actionStore={this.props.actionStore} action={this.props.currentActionInfo.action} /> } break;
+					case 'fetch-table': {
+						actionTool = <ActionTools.FetchTable
+							actionStore={this.props.actionStore}
+							action={currentAction} />
+					} break;
 				}
 			} else if (this.props.currentActionInfo.type == 'next') {
-				switch (this.props.currentActionInfo.action.get('type')) {
-					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.props.onActionCreate('fetch-table', new utils.Smart.QTree(qNodeList))} /> } break;
+				switch (currentAction.get('type')) {
+					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={this.onBtnFetchTableClick} /> } break;
 				}
 			}
 		}
@@ -155,7 +183,8 @@ export default class PanelAction extends React.Component {
 			</div>
 		)
 	}
-}
+})
+
 
 // ========================================================================================================================================================================================================================================================================================
 class Block extends React.Component {
