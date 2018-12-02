@@ -33,9 +33,13 @@ export default combineReducers({
 			case 'LOAD_ACTION_STORE': { debugger; return action.actionStore; }
 			case 'CREATE_NEXT_ACTION': {
 				let { path } = utils.actionStoreFindAction(actionStore, action.currentActionID)
-				return actionStore.updateIn(path.slice(0, path.length - 1), actions => {
-					return actions.push(action.newAction)
-				}).setIn([...path, 'next'], action.newAction.get('id'))
+				return actionStore
+					.updateIn(path.slice(0, path.length - 1), actions => { return actions.push(action.newAction) })
+					.setIn([...path, 'next'], action.newAction.get('id'))
+			}
+			case 'UPDATE_ACTION_STORE_BY_ACTION_DATA': {
+				let { path } = utils.actionStoreFindAction(actionStore, action.actionId)
+				return actionStore.setIn([...path, 'data'], action.data)
 			}
 			default: {
 				return actionStore

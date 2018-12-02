@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import { connect } from 'react-redux';
 import PanelGroup from '../Common/PanelGroup'
 import Styles from '../index.css'
 import * as utils from '../../../utils'
@@ -9,33 +10,46 @@ import 'antd/lib/Checkbox/style'
 import Icon from '../Common/Icon'
 import Mask from '../Common/Mask'
 
-
-export class FetchTable extends React.Component {
+export default connect(
+	state => {
+		return {
+			actionStore: state.actionStore,
+			actionInfo: utils.actionStoreFindAction(state.actionStore, state.currentActionInfo.id)
+		}
+	},
+	dispatch => {
+		return {
+			updateActionData: (actionId, data) => {
+				dispatch({ type: 'UPDATE_ACTION_STORE_BY_ACTION_DATA', actionId, data })
+			}
+		}
+	}
+)(class FetchTable extends React.Component {
 	constructor(props) {
 		super(props)
 		this.flushCapture = this.flushCapture.bind(this)
 		this.onCapture = this.onCapture.bind(this)
 		this.isValidElement = this.isValidElement.bind(this)
+		this.updateActionData = this.updateActionData.bind(this)
 		this.state = {
-			qTree: this.props.action.get('data'),
 			captureElements: []
 		}
-
 	}
 
 	componentWillReceiveProps(nextProps) {
-		let nextProps_data = nextProps.action.get('data')
-		if (nextProps_data != this.props.action.get('data')) {
+		let nextProps_data = nextProps.actionInfo.action.get('data')
+		if (nextProps_data != this.props.actionInfo.action.get('data')) {
 			this.flushCapture(nextProps_data)
 		}
 	}
 
 	componentDidMount() {
-		this.flushCapture(this.state.qTree)
+		let qTree = this.props.actionInfo.action.get('data')
+		this.flushCapture(qTree)
 	}
 
 	flushCapture(qTree) {
-		let elements = utils.Smart.queryElements(qTree.root.data)
+		let elements = utils.Smart.queryElements(qTree.get('data'))
 		this.setState({ captureElements: elements });
 	}
 
@@ -44,20 +58,25 @@ export class FetchTable extends React.Component {
 	}
 
 	onCapture(target) {
-		if (!this.isValidElement(target)) { return }
-		this.setState({
-			qTree: this.state.qTree.mergeElement(target)
-		})
+		// if (!this.isValidElement(target)) { return }
+		// this.setState({
+		// 	qTree: this.state.qTree.mergeElement(target)
+		// })
+	}
+
+	updateActionData(data) {
+		this.props.updateActionData(this.props.actionInfo.action.get('id'), data)
 	}
 
 	render() {
+		let qTree = this.props.actionInfo.action.get('data')
 		return (
 			<div>
 				<PanelGroup right={true} initSize={{ width: 400 }} initShow={true}>
-					<TablePanel></TablePanel>
-					<RawPanel></RawPanel>
-					<CapturePanel qTree={this.state.qTree}></CapturePanel>
-					<QueryPanel></QueryPanel>
+					<TablePanel />
+					<RawPanel />
+					<CapturePanel qTree={qTree} onUpdate={this.updateActionData} />
+					<QueryPanel />
 				</PanelGroup>
 				<Tool captureElements={this.state.captureElements} onCapture={this.onCapture} isValidElement={this.isValidElement} />
 			</div>
@@ -65,6 +84,8 @@ export class FetchTable extends React.Component {
 
 	}
 }
+)
+
 
 class TablePanel extends React.Component {
 	constructor(props) {
@@ -103,8 +124,13 @@ class CapturePanel extends React.Component {
 		})
 	}
 
-	onTagConfigChange(values){
-		
+	onTagConfigChange(values) {
+		let idx = this.props.qTree.get('data').indexOf(this.state.selectedTag)
+		this.props.onUpdate(this.props.qTree.updateIn(['data', idx], n=>{
+			return n.setIn(['config', 'tagName'], values.includes('tagName'))
+				.setIn(['config', 'index'], values.includes('index'))
+				.setIn(['config', 'isFirst'], values.includes('isFirst'))
+		}))
 	}
 
 	render() {
@@ -114,7 +140,7 @@ class CapturePanel extends React.Component {
 		const css_tag = { cursor: 'pointer', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '4px 8px', borderRadius: '16px', margin: '2px 0px', border: '2px solid green' }
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
-		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px', position: 'relative', boxShadow:'0px -0px 20px #888' }
+		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px', position: 'relative', boxShadow: '0px -0px 20px #888' }
 		const css_prop_section = { padding: '8px', borderTop: '1px solid gray', position: 'relative' }
 		const css_prop_section_title = { position: 'absolute', top: '-8px', padding: '0px 8px', backgroundColor: '#efefef' }
 		const indent = 32
@@ -127,12 +153,12 @@ class CapturePanel extends React.Component {
 		}
 
 		const func = (node, i = 0, padding = 0) => {
-			let subs = node.children.map((n, i) => func(n, i, indent))
-			let tags = []; node.data.forEach((t, i) => {
-				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={t == st ? css_tag_selected : css_tag}>{t.tagName}</span>);
-				(i < node.data.length - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
+			let subs = node.get('children').map((n, i) => func(n, i, indent))
+			let tags = []; node.get('data').forEach((t, i) => {
+				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={t == st ? css_tag_selected : css_tag}>{utils.Smart.QNode.tagName(t)}</span>);
+				(i < node.get('data').size - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
-			let jqString = utils.Smart.toQueryString(node.data)
+			let jqString = utils.Smart.toQueryString(node.get('data'))
 			return (
 				<div key={i} style={{ position: 'relative', paddingLeft: `${padding}px` }}>
 					{padding ? (<Icon style={css_line} name='icon-next' />) : null}
@@ -144,38 +170,38 @@ class CapturePanel extends React.Component {
 				</div>
 			)
 		}
-		let tree = func(this.props.qTree.root)
+		let tree = func(this.props.qTree)
 
 		let divProperty = null
 		if (st) {
-			
+
 			let checks; {
-				let options = [{ label: '使用标签', value: 'tagName' }], values = []; st.config.tagName && values.push('tagName');
-				st.isFirst && !st.isLast && (options.push({ label: '选择第一个', value: 'isFirst' })); st.config.isFirst && values.push('isFirst');
-				st.isLast && !st.isFirst && (options.push({ label: '选择最后一个', value: 'isLast' })); st.config.isLast && values.push('isLast');
-				!st.isLast && !st.isFirst && (options.push({ label: `选择第${st.index}个`, value: 'index' })); st.config.index && values.push('index');
-				st.innerText && st.innerText.length <= 16 && (options.push({ label: `选择内容为:"${st.innerText}"`, value: 'innerText' })); st.config.innerText && values.push('innerText');
-				checks = (<CheckboxGroup options={options} value={values} onChange={this.onTagConfigChange}/>)
+				let options = [{ label: '使用标签', value: 'tagName' }], values = []; st.getIn(['config', 'tagName']) && values.push('tagName');
+				utils.Smart.QNode.isFirst(st) && !utils.Smart.QNode.isLast(st) && (options.push({ label: '选择第一个', value: 'isFirst' })); st.getIn(['config', 'isFirst']) && values.push('isFirst');
+				utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: '选择最后一个', value: 'isLast' })); st.getIn(['config', 'isLast']) && values.push('isLast');
+				!utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: `选择第${utils.Smart.QNode.index(st)}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
+				utils.Smart.QNode.innerText(st) && utils.Smart.QNode.innerText(st).length <= 16 && (options.push({ label: `选择内容为:"${utils.Smart.QNode.innerText(st)}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
+				checks = (<CheckboxGroup options={options} value={values} onChange={this.onTagConfigChange} />)
 			}
 
 			let divClass = null
-			if (st.className.length) {
+			if (utils.Smart.QNode.className(st).length) {
 				divClass = (
 					<div style={css_prop_section}>
 						<span style={css_prop_section_title}>使用样式过滤:</span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
-							<CheckboxGroup options={st.className.map((name, i) => ({ label: name, value: i }))} />
+							<CheckboxGroup options={utils.Smart.QNode.className(st).map((name, i) => ({ label: name, value: i }))} />
 						</div>
 					</div>
 				)
 			}
 			let divAttr = null
-			if (st.attributes.length) {
+			if (utils.Smart.QNode.attributes(st).length) {
 				divAttr = (
 					<div style={css_prop_section}>
 						<span style={css_prop_section_title}>使用属性过滤:</span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
-							<CheckboxGroup options={st.attributes.map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))} />
+							<CheckboxGroup options={utils.Smart.QNode.attributes(st).map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))} />
 						</div>
 					</div>
 				)
@@ -185,7 +211,7 @@ class CapturePanel extends React.Component {
 				<div style={css_prop_frame}>
 					<div style={{ padding: '8px' }}>{checks}</div>
 					{divClass}{divAttr}
-					<Icon name='icon-close' style={{ cursor:'pointer', position: 'absolute', right: '6px', top: '8px' }} onClick={() => this.onTagClick(null)} />
+					<Icon name='icon-close' style={{ cursor: 'pointer', position: 'absolute', right: '6px', top: '8px' }} onClick={() => this.onTagClick(null)} />
 				</div>
 			)
 		}
@@ -198,6 +224,8 @@ class CapturePanel extends React.Component {
 		)
 	}
 }
+
+
 
 class QueryPanel extends React.Component {
 	constructor(props) {

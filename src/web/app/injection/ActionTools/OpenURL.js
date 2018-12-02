@@ -8,6 +8,7 @@ const Option = Select.Option;
 import 'antd/lib/Modal/style'
 import 'antd/lib/Select/style'
 import Icon from '../Common/Icon'
+import Immutable from 'immutable'
 
 export class OpenURL extends React.Component {
 	constructor(props) {
@@ -65,13 +66,13 @@ export class OpenURL extends React.Component {
 		let selectBefore = null
 		if (this.state.protocol) {
 			selectBefore = <Select value={this.state.protocol} style={{ width: 90 }} onChange={this.onProtocolChange}>
-				<Option className={Styles['z-index-dialog-popup']} value="http://">http://</Option>
-				<Option className={Styles['z-index-dialog-popup']} value="https://">https://</Option>
+				<Option className={Styles['z-index-dialog-popup']} value='http://'>http://</Option>
+				<Option className={Styles['z-index-dialog-popup']} value='https://'>https://</Option>
 			</Select>
 		}
 
 		return (
-			<Modal title="Open-URL" visible={this.state.showDialog} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
+			<Modal title='Open-URL' visible={this.state.showDialog} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
 				<Input addonBefore={selectBefore} value={this.state.inputURL} onChange={this.onURLChange} onPressEnter={this.onOK} />
 			</Modal>
 		)
@@ -97,29 +98,29 @@ export class OpenURLNext extends React.Component {
 			opElement: null,
 			opElementRect: {},
 			filterPosition: null,
-			qNodeList: [],
+			qNodeList: Immutable.List([]),
 			// showFilter : false,
 		}
 	}
 
 	onMouseMove(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		let highLight
-		if (this.state.selection.indexOf(e.target) != -1) {
-			highLight = []
-		} else {
-			highLight = [e.target]
-		}
-		this.setState({
-			highLight, highLightRects: highLight.map(ele => {
-				const { left, top, width, height } = ele.getBoundingClientRect()
-				return {
-					left: left + document.documentElement.scrollLeft,
-					top: top + document.documentElement.scrollTop,
-					width, height
-				}
-			})
-		})
+		// let highLight
+		// if (this.state.selection.indexOf(e.target) != -1) {
+		// 	highLight = []
+		// } else {
+		// 	highLight = [e.target]
+		// }
+		// this.setState({
+		// 	highLight, highLightRects: highLight.map(ele => {
+		// 		const { left, top, width, height } = ele.getBoundingClientRect()
+		// 		return {
+		// 			left: left + document.documentElement.scrollLeft,
+		// 			top: top + document.documentElement.scrollTop,
+		// 			width, height
+		// 		}
+		// 	})
+		// })
 		return false
 	}
 
@@ -207,24 +208,34 @@ export class OpenURLNext extends React.Component {
 	}
 
 	onFilterToggleCheck(idx, field) {
-		let qNodeList = [...this.state.qNodeList]
-		let node = qNodeList[idx]
-		switch (field) {
-			case 'tag': { node.config.tagName = !node.config.tagName } break
-			case 'f': { node.config.isFirst = !node.config.isFirst } break
-			case 'l': { node.config.isLast = !node.config.isLast } break
-			case 'i': { node.config.index = !node.config.index } break
-			case 't': { node.config.innerText = !node.config.innerText } break
-			default: {
-				if (field[0] == 'c') {
-					let i = parseInt(field.substr(2))
-					utils.toggleArray(node.config.className, i)
-				} else if (field[0] == 'a') {
-					let i = parseInt(field.substr(2))
-					utils.toggleArray(node.config.attributes, i)
-				} break
-			}
+		let qNodeList
+		if (field[0] == 'c') {
+			let i = parseInt(field.substr(2))
+			qNodeList = this.state.qNodeList.updateIn([idx, 'config', 'className'], v => utils.toggleIMList(v, i))
+		} else if (field[0] == 'a') {
+			let i = parseInt(field.substr(2))
+			qNodeList = this.state.qNodeList.updateIn([idx, 'config', 'attributes'], v => utils.toggleIMList(v, i))
+		} else {
+			qNodeList = this.state.qNodeList.updateIn([idx, 'config', field], v => !v)
 		}
+
+		// let node = qNodeList[idx]
+		// switch (field) {
+		// 	case 'tag': { qNodeList.setIn([idx, 'config', 'tagName'], v => !v) } break
+		// 	case 'f': { qNodeList.setIn([idx, 'config', 'isFirst'], v => !v) } break
+		// 	case 'l': { qNodeList.setIn([idx, 'config', 'isFirst'], v => !v) } break
+		// 	case 'i': { qNodeList.setIn([idx, 'config', 'isFirst'], v => !v) } break
+		// 	case 't': { qNodeList.setIn([idx, 'config', 'isFirst'], v => !v) } break
+		// 	default: {
+				// if (field[0] == 'c') {
+				// 	let i = parseInt(field.substr(2))
+				// 	utils.toggleArray(node.config.className, i)
+				// } else if (field[0] == 'a') {
+				// 	let i = parseInt(field.substr(2))
+				// 	utils.toggleArray(node.config.attributes, i)
+				// } break
+		// 	}
+		// }
 		this.flushByQNodeList(qNodeList)
 	}
 
@@ -280,7 +291,7 @@ class Filter extends React.Component {
 		if (e.target) {
 			const key = e.target.attributes['data-key']
 			if (key) {
-				let idx = utils.getElementRIndex(e.target.parentElement)
+				let idx = utils.getElementIndex(e.target.parentElement)
 				if (key.value == 'e-c') {
 					let explodeClassName = [...this.state.explodeClassName]
 					utils.toggleArray(explodeClassName, idx)
@@ -312,44 +323,45 @@ class Filter extends React.Component {
 			// tag
 			checkes.push(
 
-				<div key={'tag'} data-key={'tag'} style={n.config.tagName ? css_tag_check : css_tag_uncheck} title="标签">{n.tagName}</div>
+				<div key={'tag'} data-key={'tagName'} style={n.getIn(['config', 'tagName']) ? css_tag_check : css_tag_uncheck} title='标签'>{utils.Smart.QNode.tagName(n)}</div>
 
 			)
 			// [class]
 			{
 				let explode = this.state.explodeClassName.indexOf(i) != -1
-				let final = (n.className.length <= 3 || explode) ? n.className : n.className.slice(0, 3)
+				let n_className = utils.Smart.QNode.className(n)
+				let final = (n_className.length <= 3 || explode) ? n_className : n_className.slice(0, 3)
 				checkes.push(...final.map((a, j) => (
-					<div key={`c-${j}`} data-key={`c-${j}`} style={n.config.className.indexOf(j) != -1 ? css_check : css_uncheck} title={`样式:${a}`}>C</div>
+					<div key={`c-${j}`} data-key={`c-${j}`} style={n.getIn(['config','className']).indexOf(j) != -1 ? css_check : css_uncheck} title={`样式:${a}`}>C</div>
 				)))
-				if (n.className.length > 3) {
+				if (n_className.length > 3) {
 					checkes.push(<div key={'e-c'} data-key={'e-c'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')} />)
 				}
 			}
 			// first
-			n.isFirst && !n.isLast && checkes.push(
-				<div key={'f'} data-key={'f'} style={n.config.isFirst ? css_check : css_uncheck} title={'第一个'}>F</div>
+			utils.Smart.QNode.isFirst(n) && !utils.Smart.QNode.isLast(n) && checkes.push(
+				<div key={'f'} data-key={'isFirst'} style={n.getIn(['config','isFirst']) ? css_check : css_uncheck} title={'第一个'}>F</div>
 			)
 			// last
-			n.isLast && !n.isFirst && checkes.push(
-				<div key={'l'} data-key={'l'} style={n.config.isLast ? css_check : css_uncheck} title={'最后一个'}>L</div>
+			utils.Smart.QNode.isLast(n) && !utils.Smart.QNode.isFirst(n) && checkes.push(
+				<div key={'l'} data-key={'isLast'} style={n.getIn(['config','isLast']) ? css_check : css_uncheck} title={'最后一个'}>L</div>
 			)
 			// index
-			!n.isFirst && !n.isLast && checkes.push(
-				<div key={'i'} data-key={'i'} style={n.config.index ? css_check : css_uncheck} title={`第${n.index + 1}个`}>I</div>
+			!utils.Smart.QNode.isFirst(n) && !utils.Smart.QNode.isLast(n) && checkes.push(
+				<div key={'i'} data-key={'index'} style={n.getIn(['config','index']) ? css_check : css_uncheck} title={`第${utils.Smart.QNode.index(n) + 1}个`}>I</div>
 			)
 			// text
-			n.innerText && n.innerText.length <= 16 && checkes.push(
-				<div key={'t'} data-key={'t'} style={n.config.innerText ? css_check : css_uncheck} title={`文本:${n.innerText}`}>T</div>
+			utils.Smart.QNode.innerText(n) && utils.Smart.QNode.innerText(n).length <= 16 && checkes.push(
+				<div key={'t'} data-key={'innerText'} style={n.getIn(['config','innerText']) ? css_check : css_uncheck} title={`文本:${utils.Smart.QNode.innerText(n)}`}>T</div>
 			)
 			// [attributes]
 			{
 				let explode = this.state.explodeAttributes.indexOf(i) != -1
-				let final = (n.attributes.length <= 3 || explode) ? n.attributes : n.attributes.slice(0, 3)
+				let final = (utils.Smart.QNode.attributes(n).length <= 3 || explode) ? utils.Smart.QNode.attributes(n) : utils.Smart.QNode.attributes(n).slice(0, 3)
 				checkes.push(...final.map((a, j) => (
-					<div key={`a-${j}`} data-key={`a-${j}`} style={n.config.attributes.indexOf(j) != -1 ? css_check : css_uncheck} title={`属性:${a.name}=${decodeURI(a.value)}`}>A</div>
+					<div key={`a-${j}`} data-key={`a-${j}`} style={n.getIn(['config','attributes']).indexOf(j) != -1 ? css_check : css_uncheck} title={`属性:${a.name}=${decodeURI(a.value)}`}>A</div>
 				)))
-				if (n.attributes.length > 3) {
+				if (utils.Smart.QNode.attributes(n).length > 3) {
 					checkes.push(<div key={'e-a'} data-key={'e-a'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')} />)
 				}
 			}

@@ -107,6 +107,15 @@ export function isAncestors(element, target) {
 	return false
 }
 
+export function toggleIMList(list, value) {
+	let idx = list.indexOf(value)
+	if (idx == -1) {
+		return list.push(value)
+	} else {
+		return list.splice(idx, 1)
+	}
+}
+
 export function toggleArray(array, value) {
 	let idx = array.indexOf(value)
 	if (idx == -1) {

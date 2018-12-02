@@ -5,13 +5,13 @@ import * as utils from '../../utils'
 import ActionTools from './ActionTools'
 
 export default connect(
-	(state) => {
+	state => {
 		return { actionStore: state.actionStore, currentActionInfo: state.currentActionInfo, maxActionID: state.maxActionID }
 	},
-	(dispatch) => {
+	dispatch => {
 		return {
 			onActionClick: (currentActionInfo) => { dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo }) },
-			onCreateNextAction: (newAction, currentActionID) => { 
+			onCreateNextAction: (newAction, currentActionID) => {
 				dispatch({ type: 'CREATE_NEXT_ACTION', newAction, currentActionID })
 				dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo: { type: 'action', id: newAction.get('id') } })
 			}
@@ -45,7 +45,7 @@ export default connect(
 
 	onBtnFetchTableClick(qNodeList) {
 		let currentActionID = this.props.currentActionInfo.id
-		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: 'fetch-table', data: new utils.Smart.QTree(qNodeList) })
+		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: 'fetch-table', data: utils.Smart.QTree.createByQNodeList(qNodeList) })
 		this.props.onCreateNextAction(newAction, currentActionID)
 	}
 
@@ -75,7 +75,7 @@ export default connect(
 				if (action.get('next')) {
 					let uiNext = uiList.find(u => u.action.get('id') == action.get('next'))		// 先
 					if (!uiNext) {
-						let idx, actionNext = parentStore.get('actions').find((a,i) => a.get('id') == action.get('next') && (idx = i) != -1)
+						let idx, actionNext = parentStore.get('actions').find((a, i) => a.get('id') == action.get('next') && (idx = i) != -1)
 						uiNext = func(actionNext, uiList, parentStore, offset); uiNext.index = idx
 					} else {
 						offset.maxWidth += (this.config.lineWidth << 2)
@@ -123,7 +123,7 @@ export default connect(
 				const key = `${ui.action.get('id')}.${ui.next.action.get('id')}`
 				let points = []
 				if (exists.indexOf(ui.next.action.get('id')) == -1) {
-					func(ui.next, blocks, frameWidth, [...(imPath.slice(0,-1)), ui.next.index])
+					func(ui.next, blocks, frameWidth, [...(imPath.slice(0, -1)), ui.next.index])
 					const x2 = ui.next.position.x + (nextSize.width >> 1), y2 = ui.next.position.y - this.config.lineOffset - this.config.lineWidth;
 					points.push(...[{ x: x1, y: y1 }, { x: x2, y: y2 }])
 				} else {
@@ -151,14 +151,14 @@ export default connect(
 		if (this.props.currentActionInfo) {
 			let { action: currentAction } = utils.actionStoreFindAction(this.props.actionStore, this.props.currentActionInfo.id)
 			if (this.props.currentActionInfo.type == 'action') {
-				
+
 				switch (currentAction.get('type')) {
 					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
 					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
 					case 'fetch-table': {
-						actionTool = <ActionTools.FetchTable
-							actionStore={this.props.actionStore}
-							action={currentAction} />
+						actionTool = <ActionTools.FetchTable 
+							// actionStore={this.props.actionStore} actionInfo={{ action: currentAction, imPath: this.props.currentActionInfo.imPath }} 
+						/>
 					} break;
 				}
 			} else if (this.props.currentActionInfo.type == 'next') {
