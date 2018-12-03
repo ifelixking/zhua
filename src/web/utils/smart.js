@@ -8,7 +8,7 @@ export function findSimilarity(element) {
 
 export class QNode {
 
-	static create(element){
+	static create(element) {
 		let result = Immutable.Map({
 			element,
 			config: Immutable.Map({
@@ -19,7 +19,7 @@ export class QNode {
 				isFirst: false,
 				isLast: false,
 				attributes: Immutable.List([]),
-	
+
 				output: false,		// 	
 			})
 		})
@@ -74,7 +74,7 @@ export class QNode {
 		n.getIn(['config', 'isLast']) && (expr += ':last-child');
 		n.getIn(['config', 'innerText']) && (expr += `:contains('${QNode.innerText(n).trim()}')`)
 		expr += n.getIn(['config', 'className']).map((a) => { return QNode.className(n)[a] ? ('.' + QNode.className(n)[a]) : '' }).join('');
-		expr += n.getIn(['config', 'attributes']).map((a) => { return `[${QNode.attributes(n)[a].name}='${decodeURI(QNode.attributes(n)[a].value)}']` }).join('');
+		expr += n.getIn(['config', 'attributes']).map((a) => { return `[${QNode.attributes(n)[a].name}="${decodeURI(QNode.attributes(n)[a].value)}"]` }).join('');
 		return expr
 	}
 
@@ -155,36 +155,49 @@ export class QTree {
 	// 	}
 	// }
 
-	mergeElement(element) {
+	static mergeElement(qTree, element) {
 		let branch = []
 		const func = function (block, itorEle) {
-			if (block.children) {
-				let result = block.children.find(b => func(b, itorEle))
-				if (result) { return result }
+
+			const children = block.get('children')
+			for (let i = 0; i < children.size; ++i) {
+				let newBlock = func(children.get(i), itorEle)
+				if (newBlock) {
+					return block.setIn(['children', i], newBlock)
+				}
 			}
-			for (let i = block.data.length - 1; i >= 0; --i) {
-				let node = block.data[i]
-				if (node.element == itorEle) {
+
+			const qNodeList = block.get('data')
+			for (let i = qNodeList.size - 1; i >= 0; --i) {
+				let node = qNodeList.get(i)
+				if (node.get('element') == itorEle) {
 					if (branch.length) {
-						if (i < block.data.length - 1) {
-							let old = block.data
-							block.data = old.slice(0, i + 1)
-							let subBlock = { data: old.slice(i + 1), children: block.children }
-							block.children = [subBlock, { data: branch, children: [] }]
+						if (i < qNodeList.size - 1) {
+							// 分割 当前 节点 的 qNodeList 尾部, 到 这个新建的 子节点上, 并将 当前 节点的 children 移交给他
+							let subBlock = Immutable.Map({ data: qNodeList.slice(i + 1), children: block.get('children') })
+
+							// 创建 一个新的 节点, 包含目前收集的element(即:branch)
+							let newBranchBlock = Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })
+
+							return block.merge({
+								data: qNodeList.slice(0, i + 1),			// 当前节点的 qNodeList 要去掉尾部
+								children: Immutable.List([subBlock, newBranchBlock])	// 将原来的 children 替换为 新的 分枝
+							})
 						} else {
-							block.children.push({ data: branch, children: [] })
+							// branch 不为空, 但命中的是 某个 节点 的 qNodeList 的尾部, 则 直接将 branch 加到该 节点的 children 中 即可
+							return block.update('children', ch => ch.push(Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })))
 						}
 					} else {
-						// TODO:
-						node.config.output = true
+						// branch 是空的, 说明 element 就在已有的 qNodeList 里, 不用建立 branch, 直接设置这个节点里的元素为 要输出 即可
+						return block.setIn(['data', i, 'config', 'output'], true)
 					}
-					return true
 				}
 			}
 		}
+
 		for (let itorEle = element; itorEle; branch.unshift(QNode.create(itorEle)), itorEle = itorEle.parentElement) {
-			if (func(this.root, itorEle)) { break; }
+			let newQTree = func(qTree, itorEle)
+			if (newQTree) { return newQTree }
 		}
-		return this
 	}
 }

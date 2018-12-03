@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
 import PanelGroup from '../Common/PanelGroup'
+import Immutable from 'immutable'
 import Styles from '../index.css'
 import * as utils from '../../../utils'
 import { Checkbox } from 'antd';
@@ -58,10 +59,10 @@ export default connect(
 	}
 
 	onCapture(target) {
-		// if (!this.isValidElement(target)) { return }
-		// this.setState({
-		// 	qTree: this.state.qTree.mergeElement(target)
-		// })
+		if (!this.isValidElement(target)) { return }
+		let qTree = this.props.actionInfo.action.get('data')
+		let newQTree = utils.Smart.QTree.mergeElement(qTree, target)
+		newQTree && this.updateActionData(newQTree)
 	}
 
 	updateActionData(data) {
@@ -124,19 +125,33 @@ class CapturePanel extends React.Component {
 		})
 	}
 
-	onTagConfigChange(values) {
+	onTagConfigChange(values, type) {
+		// TODO: ...
 		let idx = this.props.qTree.get('data').indexOf(this.state.selectedTag)
-		this.props.onUpdate(this.props.qTree.updateIn(['data', idx], n=>{
-			return n.setIn(['config', 'tagName'], values.includes('tagName'))
-				.setIn(['config', 'index'], values.includes('index'))
-				.setIn(['config', 'isFirst'], values.includes('isFirst'))
+		this.props.onUpdate(this.props.qTree.updateIn(['data', idx], tag => {
+			let newSelectedTag = tag.update('config', c => {
+				switch (type) {
+					case 0:
+						return c.merge({
+							tagName: values.includes('tagName'),
+							index: values.includes('index'),
+							isFirst: values.includes('isFirst'),
+							isLast: values.includes('isLast'),
+							innerText: values.includes('innerText'),
+						})
+					case 1: return c.set('className', Immutable.List(values))
+					case 2: return c.set('attributes', Immutable.List(values))
+				}
+			})
+			this.setState({ selectedTag: newSelectedTag })
+			return newSelectedTag
 		}))
 	}
 
 	render() {
 		const st = this.state.selectedTag
 		const css_node_up = { backgroundColor: '#ddd', padding: '4px 8px', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }
-		const css_node_down = { backgroundColor: 'gray', color: '#fff', marginBottom: '8px', padding: '4px 8px', borderBottomLeftRadius: '4px', borderBottomRightRadius: '4px' }
+		const css_node_down = { backgroundColor: 'gray', color: '#fff', marginBottom: '8px', padding: '4px 8px', borderBottomLeftRadius: '4px', borderBottomRightRadius: '4px', lineHeight: '18px' }
 		const css_tag = { cursor: 'pointer', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '4px 8px', borderRadius: '16px', margin: '2px 0px', border: '2px solid green' }
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
@@ -155,7 +170,7 @@ class CapturePanel extends React.Component {
 		const func = (node, i = 0, padding = 0) => {
 			let subs = node.get('children').map((n, i) => func(n, i, indent))
 			let tags = []; node.get('data').forEach((t, i) => {
-				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={t == st ? css_tag_selected : css_tag}>{utils.Smart.QNode.tagName(t)}</span>);
+				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={(st == t) ? css_tag_selected : css_tag}>{utils.Smart.QNode.tagName(t)}</span>);
 				(i < node.get('data').size - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
 			let jqString = utils.Smart.toQueryString(node.get('data'))
@@ -179,29 +194,33 @@ class CapturePanel extends React.Component {
 				let options = [{ label: '使用标签', value: 'tagName' }], values = []; st.getIn(['config', 'tagName']) && values.push('tagName');
 				utils.Smart.QNode.isFirst(st) && !utils.Smart.QNode.isLast(st) && (options.push({ label: '选择第一个', value: 'isFirst' })); st.getIn(['config', 'isFirst']) && values.push('isFirst');
 				utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: '选择最后一个', value: 'isLast' })); st.getIn(['config', 'isLast']) && values.push('isLast');
-				!utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: `选择第${utils.Smart.QNode.index(st)}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
+				!utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: `选择第${utils.Smart.QNode.index(st) + 1}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
 				utils.Smart.QNode.innerText(st) && utils.Smart.QNode.innerText(st).length <= 16 && (options.push({ label: `选择内容为:"${utils.Smart.QNode.innerText(st)}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
-				checks = (<CheckboxGroup options={options} value={values} onChange={this.onTagConfigChange} />)
+				checks = (<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 0)} />)
 			}
 
 			let divClass = null
 			if (utils.Smart.QNode.className(st).length) {
+				let options = utils.Smart.QNode.className(st).map((name, i) => ({ label: name, value: i }))
+				let values = st.getIn(['config', 'className']).toArray()
 				divClass = (
 					<div style={css_prop_section}>
 						<span style={css_prop_section_title}>使用样式过滤:</span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
-							<CheckboxGroup options={utils.Smart.QNode.className(st).map((name, i) => ({ label: name, value: i }))} />
+							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 1)} />
 						</div>
 					</div>
 				)
 			}
 			let divAttr = null
 			if (utils.Smart.QNode.attributes(st).length) {
+				let options = utils.Smart.QNode.attributes(st).map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))
+				let values = st.getIn(['config', 'attributes']).toArray()
 				divAttr = (
 					<div style={css_prop_section}>
 						<span style={css_prop_section_title}>使用属性过滤:</span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
-							<CheckboxGroup options={utils.Smart.QNode.attributes(st).map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))} />
+							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 2)} />
 						</div>
 					</div>
 				)
