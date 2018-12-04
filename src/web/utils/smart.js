@@ -8,7 +8,7 @@ export function findSimilarity(element) {
 
 export class QNode {
 
-	static create(element) {
+	static create(element, output = null) {
 		let result = Immutable.Map({
 			element,
 			config: Immutable.Map({
@@ -20,8 +20,14 @@ export class QNode {
 				isLast: false,
 				attributes: Immutable.List([]),
 
-				output: false,		// 	
-			})
+				output
+				// {
+				// 	innerText: false,
+				// 	href: false,
+				// 	src: false,
+				// 	title: false
+				// }
+			}),
 		})
 		// QNode.defineWrapper(result)
 		return result;
@@ -117,7 +123,7 @@ export class QNode {
 
 export function analysePath(element) {
 	let qNodes = []
-	for (let itor = element; itor; itor = itor.parentElement) { qNodes.push(QNode.create(itor)); }
+	for (let itor = element; itor; itor = itor.parentElement) { qNodes.push(QNode.create(itor, itor == element ? { innerText: true } : null)); }
 	qNodes.reverse()
 	return Immutable.List(qNodes)
 }
@@ -155,6 +161,24 @@ export class QTree {
 	// 	}
 	// }
 
+	static updateByTag(qTree, tag, updater) {
+		const func = function (block) {
+			let idx = block.get('data').indexOf(tag)
+			if (idx != -1) {
+				return block.updateIn(['data', idx], tag => updater(tag))
+			} else {
+				const children = block.get('children')
+				for (let i = 0; i < children.size; ++i) {
+					let newSubBlock = func(children.get(i))
+					if (newSubBlock) {
+						return block.setIn(['children', i], newSubBlock)
+					}
+				}
+			}
+		}
+		return func(qTree)
+	}
+
 	static mergeElement(qTree, element) {
 		let branch = []
 		const func = function (block, itorEle) {
@@ -189,13 +213,13 @@ export class QTree {
 						}
 					} else {
 						// branch 是空的, 说明 element 就在已有的 qNodeList 里, 不用建立 branch, 直接设置这个节点里的元素为 要输出 即可
-						return block.setIn(['data', i, 'config', 'output'], true)
+						return block.setIn(['data', i, 'config', 'output'], { innerText: true })
 					}
 				}
 			}
 		}
 
-		for (let itorEle = element; itorEle; branch.unshift(QNode.create(itorEle)), itorEle = itorEle.parentElement) {
+		for (let itorEle = element; itorEle; branch.unshift(QNode.create(itorEle, itorEle == element ? { innerText: true } : null)), itorEle = itorEle.parentElement) {
 			let newQTree = func(qTree, itorEle)
 			if (newQTree) { return newQTree }
 		}

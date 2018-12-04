@@ -77,7 +77,6 @@ export default connect(
 					<TablePanel />
 					<RawPanel />
 					<CapturePanel qTree={qTree} onUpdate={this.updateActionData} />
-					<QueryPanel />
 				</PanelGroup>
 				<Tool captureElements={this.state.captureElements} onCapture={this.onCapture} isValidElement={this.isValidElement} />
 			</div>
@@ -126,10 +125,8 @@ class CapturePanel extends React.Component {
 	}
 
 	onTagConfigChange(values, type) {
-		// TODO: ...
-		let idx = this.props.qTree.get('data').indexOf(this.state.selectedTag)
-		this.props.onUpdate(this.props.qTree.updateIn(['data', idx], tag => {
-			let newSelectedTag = tag.update('config', c => {
+		const newQTree = utils.Smart.QTree.updateByTag(this.props.qTree, this.state.selectedTag, (tag) => {
+			let newTag = tag.update('config', c => {
 				switch (type) {
 					case 0:
 						return c.merge({
@@ -141,11 +138,18 @@ class CapturePanel extends React.Component {
 						})
 					case 1: return c.set('className', Immutable.List(values))
 					case 2: return c.set('attributes', Immutable.List(values))
+					case 3: return c.set('output', {
+						innerText: values.includes('innerText'),
+						href: values.includes('href'),
+						src: values.includes('src'),
+						title: values.includes('title'),
+					})
 				}
 			})
-			this.setState({ selectedTag: newSelectedTag })
-			return newSelectedTag
-		}))
+			this.setState({ selectedTag: newTag })
+			return newTag
+		})
+		this.props.onUpdate(newQTree)
 	}
 
 	render() {
@@ -157,6 +161,7 @@ class CapturePanel extends React.Component {
 		const css_next = { color: 'green' }
 		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px', position: 'relative', boxShadow: '0px -0px 20px #888' }
 		const css_prop_section = { padding: '8px', borderTop: '1px solid gray', position: 'relative' }
+		const css_prop_first_section = Object.assign({}, css_prop_section, { margin: '10px 20px 0px 0px' })
 		const css_prop_section_title = { position: 'absolute', top: '-8px', padding: '0px 8px', backgroundColor: '#efefef' }
 		const indent = 32
 		const css_line = {
@@ -190,13 +195,43 @@ class CapturePanel extends React.Component {
 		let divProperty = null
 		if (st) {
 
-			let checks; {
+			let outputChecks = null; {
+				let output = st.getIn(['config', 'output']), values = []
+				if (output) {
+					output && output.innerText && (values.push('innerText'))
+					output && output.href && (values.push('href'))
+					output && output.src && (values.push('src'))
+					output && output.title && (values.push('title'))
+					let element = st.get('element'), options = []
+					element.innerText && (options.push({ label: '文本', value: 'innerText' }));
+					element.href && (options.push({ label: '超链接', value: 'href' }));
+					element.src && (options.push({ label: '源地址', value: 'src' }));
+					element.title && (options.push({ label: '鼠标提示', value: 'title' }));
+					outputChecks = (
+						<div style={css_prop_first_section}>
+							<span style={css_prop_section_title}><div style={{ display: 'inline-block', padding: '2px 4px', color: '#fff', backgroundColor: 'green', borderRadius: '4px' }}>输出:</div></span>
+							<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
+								<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 3)} />
+							</div>
+						</div>
+					)
+				}
+			}
+
+			let basicChecks; {
 				let options = [{ label: '使用标签', value: 'tagName' }], values = []; st.getIn(['config', 'tagName']) && values.push('tagName');
 				utils.Smart.QNode.isFirst(st) && !utils.Smart.QNode.isLast(st) && (options.push({ label: '选择第一个', value: 'isFirst' })); st.getIn(['config', 'isFirst']) && values.push('isFirst');
 				utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: '选择最后一个', value: 'isLast' })); st.getIn(['config', 'isLast']) && values.push('isLast');
 				!utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: `选择第${utils.Smart.QNode.index(st) + 1}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
 				utils.Smart.QNode.innerText(st) && utils.Smart.QNode.innerText(st).length <= 16 && (options.push({ label: `选择内容为:"${utils.Smart.QNode.innerText(st)}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
-				checks = (<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 0)} />)
+				basicChecks = (
+					<div style={outputChecks ? css_prop_section : css_prop_first_section}>
+						<span style={css_prop_section_title}>筛选:</span>
+						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
+							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 0)} />
+						</div>
+					</div>
+				)
 			}
 
 			let divClass = null
@@ -205,7 +240,7 @@ class CapturePanel extends React.Component {
 				let values = st.getIn(['config', 'className']).toArray()
 				divClass = (
 					<div style={css_prop_section}>
-						<span style={css_prop_section_title}>使用样式过滤:</span>
+						<span style={css_prop_section_title}>使用样式筛选:</span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 1)} />
 						</div>
@@ -218,7 +253,7 @@ class CapturePanel extends React.Component {
 				let values = st.getIn(['config', 'attributes']).toArray()
 				divAttr = (
 					<div style={css_prop_section}>
-						<span style={css_prop_section_title}>使用属性过滤:</span>
+						<span style={css_prop_section_title}>使用属性筛选:</span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 2)} />
 						</div>
@@ -228,8 +263,7 @@ class CapturePanel extends React.Component {
 
 			divProperty = (
 				<div style={css_prop_frame}>
-					<div style={{ padding: '8px' }}>{checks}</div>
-					{divClass}{divAttr}
+					{outputChecks}{basicChecks}{divClass}{divAttr}
 					<Icon name='icon-close' style={{ cursor: 'pointer', position: 'absolute', right: '6px', top: '8px' }} onClick={() => this.onTagClick(null)} />
 				</div>
 			)
@@ -241,18 +275,6 @@ class CapturePanel extends React.Component {
 				{divProperty}
 			</div>
 		)
-	}
-}
-
-
-
-class QueryPanel extends React.Component {
-	constructor(props) {
-		super(props)
-	}
-	static title = "查询"
-	render() {
-		return <h1>查询</h1>
 	}
 }
 
