@@ -105,22 +105,22 @@ export class OpenURLNext extends React.Component {
 
 	onMouseMove(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		// let highLight
-		// if (this.state.selection.indexOf(e.target) != -1) {
-		// 	highLight = []
-		// } else {
-		// 	highLight = [e.target]
-		// }
-		// this.setState({
-		// 	highLight, highLightRects: highLight.map(ele => {
-		// 		const { left, top, width, height } = ele.getBoundingClientRect()
-		// 		return {
-		// 			left: left + document.documentElement.scrollLeft,
-		// 			top: top + document.documentElement.scrollTop,
-		// 			width, height
-		// 		}
-		// 	})
-		// })
+		let highLight
+		if (this.state.selection.indexOf(e.target) != -1) {
+			highLight = []
+		} else {
+			highLight = [e.target]
+		}
+		this.setState({
+			highLight, highLightRects: highLight.map(ele => {
+				const { left, top, width, height } = ele.getBoundingClientRect()
+				return {
+					left: left + document.documentElement.scrollLeft,
+					top: top + document.documentElement.scrollTop,
+					width, height
+				}
+			})
+		})
 		return false
 	}
 

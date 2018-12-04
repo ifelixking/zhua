@@ -50,6 +50,7 @@ export default connect(
 	}
 
 	flushCapture(qTree) {
+		// TODO: 
 		let elements = utils.Smart.queryElements(qTree.get('data'))
 		this.setState({ captureElements: elements });
 	}
@@ -160,9 +161,11 @@ class CapturePanel extends React.Component {
 		const css_tag_selected = Object.assign({}, css_tag, { backgroundColor: '#fff', color: 'green' })
 		const css_next = { color: 'green' }
 		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px', position: 'relative', boxShadow: '0px -0px 20px #888' }
-		const css_prop_section = { padding: '8px', borderTop: '1px solid gray', position: 'relative' }
+		const css_prop_section = { padding: '8px', borderTop: '1px solid gray', position: 'relative', margin: '8px 0px 0px 0px' }
 		const css_prop_first_section = Object.assign({}, css_prop_section, { margin: '10px 20px 0px 0px' })
-		const css_prop_section_title = { position: 'absolute', top: '-8px', padding: '0px 8px', backgroundColor: '#efefef' }
+		const css_prop_section_title = { position: 'absolute', top: '-10px', padding: '0px 8px', backgroundColor: '#efefef', fontWeight:'bold' }
+		const css_prop_section_title_text_0 = { display: 'inline-block', padding: '3px 6px 4px 6px', color: '#fff', backgroundColor: 'green', borderRadius: '4px' }
+		const css_prop_section_title_text_1 = { display: 'inline-block', padding: '3px 6px 4px 6px', color: '#fff', backgroundColor: '#555', borderRadius: '4px' }
 		const indent = 32
 		const css_line = {
 			fontSize: '16px',
@@ -209,7 +212,7 @@ class CapturePanel extends React.Component {
 					element.title && (options.push({ label: '鼠标提示', value: 'title' }));
 					outputChecks = (
 						<div style={css_prop_first_section}>
-							<span style={css_prop_section_title}><div style={{ display: 'inline-block', padding: '2px 4px', color: '#fff', backgroundColor: 'green', borderRadius: '4px' }}>输出:</div></span>
+							<span style={css_prop_section_title}><div style={css_prop_section_title_text_0}>输出:</div></span>
 							<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 								<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 3)} />
 							</div>
@@ -226,7 +229,7 @@ class CapturePanel extends React.Component {
 				utils.Smart.QNode.innerText(st) && utils.Smart.QNode.innerText(st).length <= 16 && (options.push({ label: `选择内容为:"${utils.Smart.QNode.innerText(st)}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
 				basicChecks = (
 					<div style={outputChecks ? css_prop_section : css_prop_first_section}>
-						<span style={css_prop_section_title}>筛选:</span>
+						<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>筛选:</div></span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 0)} />
 						</div>
@@ -240,7 +243,7 @@ class CapturePanel extends React.Component {
 				let values = st.getIn(['config', 'className']).toArray()
 				divClass = (
 					<div style={css_prop_section}>
-						<span style={css_prop_section_title}>使用样式筛选:</span>
+					<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>使用样式筛选:</div></span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 1)} />
 						</div>
@@ -253,7 +256,7 @@ class CapturePanel extends React.Component {
 				let values = st.getIn(['config', 'attributes']).toArray()
 				divAttr = (
 					<div style={css_prop_section}>
-						<span style={css_prop_section_title}>使用属性筛选:</span>
+						<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>使用属性筛选:</div></span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 2)} />
 						</div>
