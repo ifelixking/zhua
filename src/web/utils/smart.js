@@ -139,9 +139,54 @@ export function toQueryString(qNodes) {
 	// return qNodes.map(n => n.jQString).join(' ')
 }
 
-export function queryElements(qNodes) {
-	let elements = $(toQueryString(qNodes)).toArray()
-	return elements
+export function queryElements(qTree) {
+	const func = function (scopeElement, subBlocks) {
+		return subBlocks.toArray().map((block, i) => {
+			return {
+				block,
+				elements: $(scopeElement).find('>' + toQueryString(block.get('data'))).toArray().map((element, j) => {
+					return {
+						element,
+						children: func(element, block.get('children'))
+					}
+				})
+			}
+		})
+	}
+	return {
+		block: qTree,
+		elements: $(toQueryString(qTree.get('data'))).toArray().map((element, i) => {
+			return { element, children: func(element, qTree.get('children')) }
+		})
+	}
+
+	// let rootElements = $(toQueryString(qTree.get('data'))).toArray()
+
+
+	// let jqStr = toQueryString(block.get('data'))
+	// let result = {element: scopeElement, jqStr}
+	// const childBlocks = block.get('children')
+	// result.children = $(scopeElement).children($(jqStr)).toArray().map((childEle,i) => { 			
+	// 	return {
+	// 		name: `${jsStr} - ${i}`,
+	// 		element: childEle,
+	// 		children: childBlocks.map((childBlock,j)=>{
+	// 			func(childEle, childBlock)
+	// 		})
+	// 	}
+	// })
+
+	// let rawNodes = rootElements.map((scopeElement, i) => {
+	// 	let node = { element: scopeElement,  children: [] }
+
+	// 	qTree.get('children').map(block=>{
+
+	// 	})
+
+	// 	return node
+	// })
+
+	// return rawNodes
 }
 
 export class QTree {

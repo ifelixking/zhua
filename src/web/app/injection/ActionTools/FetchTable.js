@@ -7,7 +7,9 @@ import Styles from '../index.css'
 import * as utils from '../../../utils'
 import { Checkbox } from 'antd';
 const CheckboxGroup = Checkbox.Group;
-import 'antd/lib/Checkbox/style'
+import { Tree } from 'antd';
+const { TreeNode } = Tree;
+import 'antd/lib/Tree/style'
 import Icon from '../Common/Icon'
 import Mask from '../Common/Mask'
 
@@ -33,7 +35,8 @@ export default connect(
 		this.isValidElement = this.isValidElement.bind(this)
 		this.updateActionData = this.updateActionData.bind(this)
 		this.state = {
-			captureElements: []
+			captureElements: [],
+			rawTree: null
 		}
 	}
 
@@ -50,9 +53,8 @@ export default connect(
 	}
 
 	flushCapture(qTree) {
-		// TODO: 
-		let elements = utils.Smart.queryElements(qTree.get('data'))
-		this.setState({ captureElements: elements });
+		let rawTree = utils.Smart.queryElements(qTree)
+		this.setState({ rawTree })
 	}
 
 	isValidElement(target) {
@@ -76,7 +78,7 @@ export default connect(
 			<div>
 				<PanelGroup right={true} initSize={{ width: 400 }} initShow={true}>
 					<TablePanel />
-					<RawPanel />
+					<RawPanel rawTree={this.state.rawTree} />
 					<CapturePanel qTree={qTree} onUpdate={this.updateActionData} />
 				</PanelGroup>
 				<Tool captureElements={this.state.captureElements} onCapture={this.onCapture} isValidElement={this.isValidElement} />
@@ -84,9 +86,7 @@ export default connect(
 		)
 
 	}
-}
-)
-
+})
 
 class TablePanel extends React.Component {
 	constructor(props) {
@@ -102,9 +102,22 @@ class RawPanel extends React.Component {
 	constructor(props) {
 		super(props)
 	}
+
 	static title = "原始"
+
 	render() {
-		return <h1>原始</h1>
+		const func = function(nb){			
+			let children = nb.elements.map((item, i) => { 
+				return (<TreeNode title={item.element.tagName}>{
+					item.children.map((subBlock, i) => { 
+						return func(subBlock)
+					})
+				}</TreeNode>)
+			})
+			return (<TreeNode title={utils.Smart.toQueryString(nb.block.get('data'))}>{children}</TreeNode>)
+		}
+		let node = this.props.rawTree && func(this.props.rawTree)
+		return <div style={{ height: '100%', overflow: 'auto' }}><Tree>{node}</Tree></div>		
 	}
 }
 
@@ -163,7 +176,7 @@ class CapturePanel extends React.Component {
 		const css_prop_frame = { backgroundColor: '#efefef', padding: '4px 8px', position: 'relative', boxShadow: '0px -0px 20px #888' }
 		const css_prop_section = { padding: '8px', borderTop: '1px solid gray', position: 'relative', margin: '8px 0px 0px 0px' }
 		const css_prop_first_section = Object.assign({}, css_prop_section, { margin: '10px 20px 0px 0px' })
-		const css_prop_section_title = { position: 'absolute', top: '-10px', padding: '0px 8px', backgroundColor: '#efefef', fontWeight:'bold' }
+		const css_prop_section_title = { position: 'absolute', top: '-10px', padding: '0px 8px', backgroundColor: '#efefef', fontWeight: 'bold' }
 		const css_prop_section_title_text_0 = { display: 'inline-block', padding: '3px 6px 4px 6px', color: '#fff', backgroundColor: 'green', borderRadius: '4px' }
 		const css_prop_section_title_text_1 = { display: 'inline-block', padding: '3px 6px 4px 6px', color: '#fff', backgroundColor: '#555', borderRadius: '4px' }
 		const indent = 32
@@ -243,7 +256,7 @@ class CapturePanel extends React.Component {
 				let values = st.getIn(['config', 'className']).toArray()
 				divClass = (
 					<div style={css_prop_section}>
-					<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>使用样式筛选:</div></span>
+						<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>使用样式筛选:</div></span>
 						<div style={{ maxHeight: '100px', overflowY: 'auto' }}>
 							<CheckboxGroup options={options} value={values} onChange={(values) => this.onTagConfigChange(values, 1)} />
 						</div>
