@@ -106,18 +106,34 @@ class RawPanel extends React.Component {
 	static title = "原始"
 
 	render() {
-		const func = function(nb){			
-			let children = nb.elements.map((item, i) => { 
-				return (<TreeNode title={item.element.tagName}>{
-					item.children.map((subBlock, i) => { 
-						return func(subBlock)
-					})
-				}</TreeNode>)
+		const output = function (n, element) {
+			let output = n.get('data').last().getIn(['config', 'output'])
+			if (!output) { return element.innerText }
+			if (output.href) { return element.href }
+			if (output.src) { return element.src }
+			if (output.title) { return element.title }
+			return element.innerText
+		}
+
+		const css_node_query = { cursor: 'default', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '2px 4px', borderRadius: '12px', margin: '2px 0px', border: '2px solid green' }
+
+		const func = function (nb, idx = 0) {
+			let children = nb.elements.map((item, i) => {
+				let strOriTitle = output(nb.block, item.element);
+				let strTitle = strOriTitle
+				strOriTitle.length > 15 && (strTitle = strOriTitle.substr(0, 15) + '...');
+				let css = { lineHeight: '24px' }
+				if (strTitle.length == 0) { strTitle = '[没有文本]'; css.color = '#aaa' }
+				if (item.children.length && !nb.block.get('data').last().getIn(['config', 'output'])) { css.fontStyle = 'italic' } else { css.fontWeight = 'bold' }
+				let domTitle = (<div title={strOriTitle} style={css}>{strTitle}</div>)
+				return (<TreeNode key={`${idx}-${i}`} selectable={false} title={domTitle}>{item.children.map((subBlock, i) => { return func(subBlock, `${idx}-${i}`) })}</TreeNode>)
 			})
-			return (<TreeNode title={utils.Smart.toQueryString(nb.block.get('data'))}>{children}</TreeNode>)
+			let strTitle = utils.Smart.toQueryString(nb.block.get('data'))
+			let domTitle = (<div style={css_node_query}>{strTitle}</div>)
+			return (<TreeNode key={`${idx}-r`} selectable={false} title={domTitle}>{children}</TreeNode>)
 		}
 		let node = this.props.rawTree && func(this.props.rawTree)
-		return <div style={{ height: '100%', overflow: 'auto' }}><Tree>{node}</Tree></div>		
+		return <div style={{ height: '100%', overflow: 'auto' }}><Tree>{node}</Tree></div>
 	}
 }
 

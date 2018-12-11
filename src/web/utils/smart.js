@@ -33,38 +33,6 @@ export class QNode {
 		return result;
 	}
 
-	// static defineWrapper(qNode){
-	// 	qNode.__defineGetter__("config", function () { return this.get('config') })
-	// 	qNode.__defineGetter__("tagName", function () { return this.get('element').tagName })
-	// 	qNode.__defineGetter__("innerText", function () { return this.get('element').innerText })
-	// 	qNode.__defineGetter__("className", function () { return this.get('element').className.split(' ').filter(a => a) })
-	// 	qNode.__defineGetter__("index", function () { return this.get('element').parentElement ? Array.from(this.get('element').parentElement.children).indexOf(this.get('element')) : 0 })
-	// 	qNode.__defineGetter__("isFirst", function () { return this.index === 0 })
-	// 	qNode.__defineGetter__("isLast", function () { return !this.get('element').parentElement || (this.index == this.get('element').parentElement.children.length - 1) })
-	// 	qNode.__defineGetter__("attributes", function () { return this.get('element').attributes && Array.from(this.get('element').attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) })
-	// 	qNode.__defineGetter__("jQString", function () {
-	// 		let expr = ''
-	// 		this.getIn(['config', 'tagName']) && (expr += this.tagName);
-	// 		this.getIn(['config', 'index']) && (expr += ':nth-child(' + (this.index + 1) + ')');
-	// 		this.getIn(['config', 'isFirst']) && (expr += ':first-child');
-	// 		this.getIn(['config', 'isLast']) && (expr += ':last-child');
-	// 		this.getIn(['config', 'innerText']) && (expr += `:contains('${this.innerText.trim()}')`)
-	// 		expr += this.getIn(['config', 'className']).map((a) => { return this.className[a] ? ('.' + this.className[a]) : '' }).join('');
-	// 		expr += this.getIn(['config', 'attributes']).map((a) => { return `[${this.attributes[a].name}='${decodeURI(this.attributes[a].value)}']` }).join('');
-	// 		return expr
-	// 	})
-
-	// 	let config = qNode.get('config')
-	// 	config.__defineGetter__("tagName", function () { return this.get('tagName') })
-	// 	config.__defineGetter__("innerText", function () { return this.get('innerText') })
-	// 	config.__defineGetter__("className", function () { return this.get('className') })
-	// 	config.__defineGetter__("index", function () { return this.get('index') })
-	// 	config.__defineGetter__("isFirst", function () { return this.get('isFirst') })
-	// 	config.__defineGetter__("isLast", function () { return this.get('isLast') })
-	// 	config.__defineGetter__("attributes", function () { return this.get('attributes') })
-	// 	config.__defineGetter__("output", function () { return this.get('output') })
-	// }
-
 	static tagName(n) { return n.get('element').tagName }
 	static innerText(n) { return n.get('element').innerText }
 	static className(n) { return n.get('element').className.split(' ').filter(a => a) }
@@ -72,6 +40,7 @@ export class QNode {
 	static isFirst(n) { return QNode.index(n) === 0 }
 	static isLast(n) { let ele = n.get('element'); return !ele.parentElement || (this.index == ele.parentElement.children.length - 1) }
 	static attributes(n) { let ele = n.get('element'); return ele.attributes && Array.from(ele.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) }
+
 	static jQString(n) {
 		let expr = ''
 		n.getIn(['config', 'tagName']) && (expr += QNode.tagName(n));
