@@ -98,12 +98,44 @@ class TablePanel extends React.Component {
 	}
 }
 
-class RawPanel extends React.Component {
+const RawPanel = connect(
+	state => {
+		return {
+			expandedKeys: state.rawPanel_expandedKeys,
+		}
+	},
+	dispatch=>{
+		return {
+			onExpand: (expandedKeys)=>{
+				dispatch({ type: 'RAWPANEL_ONEXPAND', expandedKeys })
+			}
+		}
+	}
+)(class extends React.Component {
 	constructor(props) {
 		super(props)
+		this.onExpand = this.onExpand.bind(this)
+		this.onSelect = this.onSelect.bind(this)
 	}
 
 	static title = "原始"
+
+	onExpand(expandedKeys, { expanded, node }) {
+		if (expanded && !node.props.eventKey.startsWith('r-')){
+			let finalExpandedKeys = [...expandedKeys]
+			node.props.children.forEach(child=>{ !expandedKeys.includes(child.key) && (finalExpandedKeys.push(child.key))})
+			expandedKeys = finalExpandedKeys;
+		}
+		this.props.onExpand(expandedKeys)
+	}
+
+	onSelect(selectedKeys, {selected, selectedNodes, node, event}){
+		const key = selectedKeys[0]
+		let expandedKeys = [...this.props.expandedKeys]
+		let idx = expandedKeys.indexOf(key)
+		if (idx != -1) { expandedKeys.splice(idx, 1) } else { expandedKeys.push(key) }
+		this.onExpand(expandedKeys, { expanded: idx == -1, node })
+	}
 
 	render() {
 		const output = function (n, element) {
@@ -115,27 +147,30 @@ class RawPanel extends React.Component {
 			return element.innerText
 		}
 
-		const css_node_query = { cursor: 'default', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '2px 4px', borderRadius: '12px', margin: '2px 0px', border: '2px solid green' }
+		const css_node_query = {
+			cursor: 'default', display: 'inline-block', backgroundColor: 'green', color: 'white', padding: '2px 4px', maxWidth: '100%',
+			borderRadius: '12px', margin: '2px 0px', border: '2px solid green', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+		}
 
 		const func = function (nb, idx = 0) {
 			let children = nb.elements.map((item, i) => {
 				let strOriTitle = output(nb.block, item.element);
 				let strTitle = strOriTitle
-				strOriTitle.length > 15 && (strTitle = strOriTitle.substr(0, 15) + '...');
-				let css = { lineHeight: '24px' }
+				let css = { lineHeight: '24px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
 				if (strTitle.length == 0) { strTitle = '[没有文本]'; css.color = '#aaa' }
-				if (item.children.length && !nb.block.get('data').last().getIn(['config', 'output'])) { css.fontStyle = 'italic' } else { css.fontWeight = 'bold' }
-				let domTitle = (<div title={strOriTitle} style={css}>{strTitle}</div>)
-				return (<TreeNode key={`${idx}-${i}`} selectable={false} title={domTitle}>{item.children.map((subBlock, i) => { return func(subBlock, `${idx}-${i}`) })}</TreeNode>)
+				if (item.children.length && !nb.block.get('data').last().getIn(['config', 'output'])) { css.fontStyle = 'italic', css.color = '#aaa' } else { css.fontWeight = 'bold' }
+				if (idx && nb.elements.length > 1) { css.color = '#d00', css.fontStyle = 'italic' }
+				let domTitle = (<div title={strOriTitle} style={css}>{strTitle}</div>)				
+				return (<TreeNode key={`${idx}-${i}`} title={domTitle}>{item.children.map((subBlock, j) => { return func(subBlock, `${idx}-${i}-${j}`) })}</TreeNode>)
 			})
 			let strTitle = utils.Smart.toQueryString(nb.block.get('data'))
-			let domTitle = (<div style={css_node_query}>{strTitle}</div>)
-			return (<TreeNode key={`${idx}-r`} selectable={false} title={domTitle}>{children}</TreeNode>)
+			let domTitle = (<div title={strTitle} style={css_node_query}>{strTitle}</div>)
+			return (<TreeNode key={`r-${idx}`} title={domTitle}>{children}</TreeNode>)
 		}
 		let node = this.props.rawTree && func(this.props.rawTree)
-		return <div style={{ height: '100%', overflow: 'auto' }}><Tree>{node}</Tree></div>
+		return <div style={{ height: '100%', overflow: 'auto' }}><Tree showLine selectedKeys={[]} expandedKeys={this.props.expandedKeys} onExpand={this.onExpand} onSelect={this.onSelect}>{node}</Tree></div>
 	}
-}
+})
 
 class CapturePanel extends React.Component {
 	constructor(props) {

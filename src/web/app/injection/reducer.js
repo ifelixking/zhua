@@ -60,5 +60,10 @@ export default combineReducers({
 	},
 	currentActionInfo: (currentActionInfo = null, action) => {
 		return action.type == 'CHANGE_CURRENT_ACTION_INFO' ? action.currentActionInfo : currentActionInfo
+	},
+
+	// ====================
+	rawPanel_expandedKeys: (expandedKeys = ['r-0'], action) => {
+		return action.type == 'RAWPANEL_ONEXPAND' ? action.expandedKeys : expandedKeys
 	}
 })
