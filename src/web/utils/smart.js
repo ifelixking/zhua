@@ -53,41 +53,6 @@ export class QNode {
 		return expr
 	}
 
-
-	// constructor(element) {
-	// 	this.element = element
-	// 	this.config = {
-	// 		tagName: true,
-	// 		innerText: false,
-	// 		className: [],
-	// 		index: false,
-	// 		isFirst: false,
-	// 		isLast: false,
-	// 		attributes: [],
-
-	// 		output: false,		// 
-	// 	}
-	// }
-
-	// get tagName() { return this.element.tagName }
-	// get innerText() { return this.element.innerText }
-	// get className() { return this.element.className.split(' ').filter(a => a) }
-	// get index() { return this.element.parentElement ? Array.from(this.element.parentElement.children).indexOf(this.element) : 0 }
-	// get isFirst() { return this.index === 0 }
-	// get isLast() { return !this.element.parentElement || (this.index == this.element.parentElement.children.length - 1) }
-	// get attributes() { return this.element.attributes && Array.from(this.element.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) }
-	// get jQString() {
-	// 	let expr = ''
-	// 	this.config.tagName && (expr += this.tagName);
-	// 	this.config.index && (expr += ':nth-child(' + (this.index + 1) + ')');
-	// 	this.config.isFirst && (expr += ':first-child');
-	// 	this.config.isLast && (expr += ':last-child');
-	// 	this.config.innerText && (expr += `:contains('${this.innerText.trim()}')`)
-	// 	expr += this.config.className.map((a) => { return this.className[a] ? ('.' + this.className[a]) : '' }).join('');
-	// 	expr += this.config.attributes.map((a) => { return `[${this.attributes[a].name}='${decodeURI(this.attributes[a].value)}']` }).join('');
-	// 	return expr
-	// }
-
 }
 
 export function analysePath(element) {
@@ -193,7 +158,8 @@ export class QTree {
 		return func(qTree)
 	}
 
-	static mergeElement(qTree, element) {
+	// TODO: 立刻JQuery，如果发现歧义冲突，尝试解决
+	static mergeElement(qTree, element, tryResolveConflict = true) {
 		let branch = []
 		const func = function (block, itorEle) {
 
@@ -209,19 +175,26 @@ export class QTree {
 			for (let i = qNodeList.size - 1; i >= 0; --i) {
 				let node = qNodeList.get(i)
 				if (node.get('element') == itorEle) {
+					
 					if (branch.length) {
 						if (i < qNodeList.size - 1) {
 							// 分割 当前 节点 的 qNodeList 尾部, 到 这个新建的 子节点上, 并将 当前 节点的 children 移交给他
 							let subBlock = Immutable.Map({ data: qNodeList.slice(i + 1), children: block.get('children') })
 
+							QTree.resolveConflict(itorEle, branch)
+
 							// 创建 一个新的 节点, 包含目前收集的element(即:branch)
 							let newBranchBlock = Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })
+							
 
 							return block.merge({
 								data: qNodeList.slice(0, i + 1),			// 当前节点的 qNodeList 要去掉尾部
 								children: Immutable.List([subBlock, newBranchBlock])	// 将原来的 children 替换为 新的 分枝
 							})
 						} else {
+
+							QTree.resolveConflict(itorEle, branch)
+
 							// branch 不为空, 但命中的是 某个 节点 的 qNodeList 的尾部, 则 直接将 branch 加到该 节点的 children 中 即可
 							return block.update('children', ch => ch.push(Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })))
 						}
@@ -233,9 +206,36 @@ export class QTree {
 			}
 		}
 
+		
 		for (let itorEle = element; itorEle; branch.unshift(QNode.create(itorEle, itorEle == element ? { innerText: true } : null)), itorEle = itorEle.parentElement) {
 			let newQTree = func(qTree, itorEle)
 			if (newQTree) { return newQTree }
 		}
 	}
+
+	static resolveConflict(parentElement, qNodes) {
+
+		// TODO: 要 沿 qNode 向上 唯一化 结果
+		for (let i = 0; i < 2; ++i) {
+
+			let jqString = toQueryString(qNodes)
+			let elements = $(parentElement).find('>' + jqString)
+			if (elements.length == 1) { return true; } if (elements.length == 0) { throw 'z-err 1'; }
+
+			switch (i) {
+				case 0: {
+					let node = qNodes[qNodes.length - 1]
+					let classNames = QNode.className(node)
+					let newNode = node.setIn(['config', 'className'], Immutable.List(classNames.map((c, i) => i)))
+					qNodes[qNodes.length - 1] = newNode
+				} break;
+				case 1: {
+					let node = qNodes[qNodes.length - 1]
+					let newNode = node.setIn(['config', 'index'], true)
+					qNodes[qNodes.length - 1] = newNode
+				} break;
+			}
+		}
+	}
+
 }
