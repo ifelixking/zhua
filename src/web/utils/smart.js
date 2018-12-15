@@ -179,21 +179,28 @@ export class QTree {
 					if (branch.length) {
 						if (i < qNodeList.size - 1) {
 							// 分割 当前 节点 的 qNodeList 尾部, 到 这个新建的 子节点上, 并将 当前 节点的 children 移交给他
-							let subBlock = Immutable.Map({ data: qNodeList.slice(i + 1), children: block.get('children') })
-
-							QTree.resolveConflict(itorEle, branch)
+							let subBranch = qNodeList.slice(i + 1).toArray()
+							!QTree.resolveConflict(itorEle, subBranch) && (console.warn('ambiguity'))		// 有分支产生 就需要作消除歧义的处理
+							let subBlock = Immutable.Map({ data: Immutable.List(subBranch), children: block.get('children') })
 
 							// 创建 一个新的 节点, 包含目前收集的element(即:branch)
+							!QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))		// 新分支 作消除歧义处理
 							let newBranchBlock = Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })
 							
-
+							// 根分支处理，sub分支 和 new分支 作为 子分支 挂在 根分支上
+							let rootBranch = qNodeList.slice(0, i + 1).toArray()
+							// 注: 如果是 qTree 的根分支, 则不需要处理 歧义
+							if (block != qTree) {
+								let rootBranchParentElement = qNodeList.getIn([0, 'element']).parentElement
+								!QTree.resolveConflict(rootBranchParentElement, rootBranch) && (console.warn('ambiguity'));		// 这个 重构出的根分支 同样 要作消除歧义处理
+							}
 							return block.merge({
-								data: qNodeList.slice(0, i + 1),			// 当前节点的 qNodeList 要去掉尾部
-								children: Immutable.List([subBlock, newBranchBlock])	// 将原来的 children 替换为 新的 分枝
+								data: Immutable.List(rootBranch),			// 当前节点的 qNodeList 要去掉尾部
+								children: Immutable.List([subBlock, newBranchBlock])	// 将原来的 children 替换为 新的 分支
 							})
 						} else {
 
-							QTree.resolveConflict(itorEle, branch)
+							!QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))
 
 							// branch 不为空, 但命中的是 某个 节点 的 qNodeList 的尾部, 则 直接将 branch 加到该 节点的 children 中 即可
 							return block.update('children', ch => ch.push(Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })))
@@ -215,26 +222,49 @@ export class QTree {
 
 	static resolveConflict(parentElement, qNodes) {
 
-		// TODO: 要 沿 qNode 向上 唯一化 结果
-		for (let i = 0; i < 2; ++i) {
+		for (let j = qNodes.length - 1; j >= 0; --j) {
+			let oldNode = qNodes[j]
 
-			let jqString = toQueryString(qNodes)
-			let elements = $(parentElement).find('>' + jqString)
-			if (elements.length == 1) { return true; } if (elements.length == 0) { throw 'z-err 1'; }
+			// 
+			L_TRY_MODIFY:
+			for (let i = 0; i < 3; ++i) {
 
-			switch (i) {
-				case 0: {
-					let node = qNodes[qNodes.length - 1]
-					let classNames = QNode.className(node)
-					let newNode = node.setIn(['config', 'className'], Immutable.List(classNames.map((c, i) => i)))
-					qNodes[qNodes.length - 1] = newNode
-				} break;
-				case 1: {
-					let node = qNodes[qNodes.length - 1]
-					let newNode = node.setIn(['config', 'index'], true)
-					qNodes[qNodes.length - 1] = newNode
-				} break;
+				switch (i) {
+					case 0: { 
+						// 不做任何改变
+					} break;
+					case 1: {
+						// 尝试修改 classname
+						let classNames = QNode.className(oldNode)
+						let newNode = oldNode.setIn(['config', 'className'], Immutable.List(classNames.map((c, i) => i)))
+						qNodes[j] = newNode
+					} break;
+					case 2: {
+						// 尝试使用 索引
+						let newNode = oldNode.setIn(['config', 'index'], true)
+						qNodes[j] = newNode
+					} break;
+				}
+
+				let jqString = toQueryString(qNodes)
+				let elements = parentElement ? $(parentElement).find('>' + jqString) : $(jqString)
+
+				// 如果筛选后没有结果了 就回滚修改
+				if (elements.length == 0) {
+					// 断言不能是没修改 就查不到东西
+					if (i == 0) { throw 'assert 1' }
+					// 回滚, 放弃这次修改
+					qNodes[j] = oldNode
+
+					break L_TRY_MODIFY;
+				}
+
+				// 没有歧义了
+				if (elements.length == 1) { return true; }
+
+				// 仍然后歧义，继续向上修改
 			}
+
 		}
 	}
 
