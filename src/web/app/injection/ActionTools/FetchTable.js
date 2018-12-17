@@ -3,13 +3,12 @@ import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
 import PanelGroup from '../Common/PanelGroup'
 import Immutable from 'immutable'
-import Styles from '../index.css'
 import * as utils from '../../../utils'
-import { Checkbox } from 'antd';
+import { Tree, Checkbox, Table } from 'antd';
 const CheckboxGroup = Checkbox.Group;
-import { Tree } from 'antd';
 const { TreeNode } = Tree;
 import 'antd/lib/Tree/style'
+import 'antd/lib/Table/style'
 import Icon from '../Common/Icon'
 import Mask from '../Common/Mask'
 
@@ -90,29 +89,60 @@ export default connect(
 
 class TablePanel extends React.Component {
 	constructor(props) {
-		super(props)
+		super(props)	
 		this.flushCache = this.flushCache.bind(this)
 		this.cache_dataSource = []
 		this.cache_columns = []
 		this.flushCache(this.props.rawTree)
 	}
 
-	flushCache(tree) {
-		this.cache_columns = []
+	static title = "表格"
 
-		let block = tree.block
-		let output = block.get('data').last().getIn(['config', 'output'])
-		if (!output && block.get('children').size == 0) { output = { innerText: true } }
+	getColumns(rawTree) {
+		let colmuns = [];
 
-		this.cache_dataSource = tree.elements.map((item, i)=>{
-			let row = {}
-
-			if (output){
-				if (output.innerText)
+		if (rawTree) {
+			const func = function (node) {
+				utils.Smart.toQueryString(node.block.get('data'))
 			}
 
+
+		}
+
+		return colmuns
+	}
+
+	flushCache(tree) {
+		this.cache_columns = this.getColumns(tree)
+		if (!tree) { this.cache_dataSource = []; return }
 		
 
+		const getOutput = function(block){
+			let output = block.get('data').last().getIn(['config', 'output'])
+			if (!output && block.get('children').size == 0) { output = { innerText: true } }
+			return output
+		}
+
+		const processItem = function (item, row, output, baseKey) {
+			const element = item.element
+			if (output) {
+				if (output.innerText !== false) { row[`${baseKey}~innerText`] = element.innerText }
+				if (output.href) { row[`${baseKey}~href`] = element.href }
+				if (output.src) { row[`${baseKey}~src`] = element.src }
+				if (output.title) { row[`${baseKey}~title`] = element.title }
+			}
+			item.children.forEach((subNode, j) => {
+				if (subNode.elements.length == 0) { return }
+				let theKey = utils.Smart.toQueryString(subNode.block.get('data'))
+				processItem(subNode.elements[0], row, getOutput(subNode.block), `${baseKey}>${theKey}`)
+			})
+		}
+
+		let output = getOutput(tree.block)
+		let baseKey = utils.Smart.toQueryString(tree.block.get('data'))
+		this.cache_dataSource = tree.elements.map((item, i) => {
+			let row = { key: i }; processItem(item, row, output, baseKey)
+			return row
 		})
 	}
 
@@ -123,7 +153,7 @@ class TablePanel extends React.Component {
 	}
 	
 	render() {
-		return <h1>表格</h1>
+		return <Table dataSource={this.cache_dataSource} columns={this.cache_columns} />
 	}
 }
 
