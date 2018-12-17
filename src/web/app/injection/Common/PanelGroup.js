@@ -16,6 +16,7 @@ export default class PanelGroup extends React.Component {
 		this.onMainBtnMove = this.onMainBtnMove.bind(this)
 		this.onPanelChange = this.onPanelChange.bind(this)
 		this.onPanelResize = this.onPanelResize.bind(this)
+		this.props.onPanelResize && this.props.onPanelResize({ width, height })
 	}
 
 	onMainBtnClick() {
@@ -38,6 +39,7 @@ export default class PanelGroup extends React.Component {
 
 	onPanelResize(newSize) {
 		this.setState({ panelSize: newSize })
+		this.props.onPanelResize && this.props.onPanelResize(newSize)
 	}
 
 	render() {
@@ -70,7 +72,7 @@ class MainPanel extends React.Component {
 		const onMouseMove = (e) => {
 			e.stopPropagation()
 			let pt = { x: e.clientX, y: e.clientY }
-			let newSize = { width: this.props.size.width + pt.x - lastPt.x, height: this.props.size.height + pt.y - lastPt.y }
+			let newSize = { width: this.props.size.width + (this.props.right ? (lastPt.x - pt.x) : (pt.x - lastPt.x)), height: this.props.size.height + pt.y - lastPt.y }
 			if (newSize.width < this.props.miniSize.width) {
 				newSize.width = this.props.miniSize.width
 			} else {
@@ -104,12 +106,19 @@ class MainPanel extends React.Component {
 		let css_frame = {
 			position: 'fixed', borderRadius: '4px', boxShadow: '0px 0px 5px #888888',
 			width: `${this.props.size.width}px`, height: `${this.props.size.height}px`, backgroundColor: '#fff',
-			top: `${this.props.position.y + posOffset}px`, textAlign:'left',
+			top: `${this.props.position.y + posOffset}px`, textAlign: 'left',
 		}
+		let css_strip = { position: 'absolute', width: '0px', height: '0px', backgroundColor: 'transparent', bottom: '0px', borderWidth: '8px 8px 8px 8px', borderStyle: 'solid' }
 		if (this.props.right) {
 			css_frame.right = `${this.props.position.x + posOffset}px`
+			css_strip.left = '0px'
+			css_strip.borderColor = 'transparent transparent #FF7F00 #FF7F00'
+			css_strip.cursor = 'sw-resize'
 		} else {
 			css_frame.left = `${this.props.position.x + posOffset}px`
+			css_strip.right = '0px'
+			css_strip.borderColor = 'transparent #FF7F00 #FF7F00 transparent'
+			css_strip.cursor = 'se-resize'
 		}
 
 		const css_tab = {
@@ -135,7 +144,7 @@ class MainPanel extends React.Component {
 				<div style={{ width: '100%', height: 'calc(100% - 40px)' }}>
 					{this.props.children[current_idx]}
 				</div>
-				<div onMouseDown={this.onMouseDownForResize} style={{ cursor: 'se-resize', position: 'absolute', width: '0px', height: '0px', backgroundColor: 'transparent', right: '0px', bottom: '0px', borderWidth: '8px 8px 8px 8px', borderColor: 'transparent #FF7F00 #FF7F00 transparent', borderStyle: 'solid' }} />
+				<div onMouseDown={this.onMouseDownForResize} style={css_strip} />
 			</div>
 		)
 	}

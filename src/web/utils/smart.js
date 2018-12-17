@@ -41,6 +41,8 @@ export class QNode {
 	static isLast(n) { let ele = n.get('element'); return !ele.parentElement || (this.index == ele.parentElement.children.length - 1) }
 	static attributes(n) { let ele = n.get('element'); return ele.attributes && Array.from(ele.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) }
 
+
+
 	static jQString(n) {
 		let expr = ''
 		n.getIn(['config', 'tagName']) && (expr += QNode.tagName(n));
@@ -133,12 +135,12 @@ export class QTree {
 		return result
 	}
 
-	// constructor(qNodeList) {
-	// 	this.root = {
-	// 		data: qNodeList,
-	// 		children: []
-	// 	}
-	// }
+	static getNodeOutput(node) {
+		const data = node.get('data'); if (!data || !data.size) { return }
+		let output = data.last().getIn(['config', 'output'])
+		if (!output && node.get('children').size == 0) { output = { innerText: true } }
+		return output
+	}
 
 	static updateByTag(qTree, tag, updater) {
 		const func = function (block) {
@@ -157,7 +159,6 @@ export class QTree {
 		}
 		return func(qTree)
 	}
-
 
 	static mergeElement(qTree, element, tryResolveConflict = true) {
 		let branch = []

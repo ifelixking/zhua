@@ -11,6 +11,7 @@ import 'antd/lib/Tree/style'
 import 'antd/lib/Table/style'
 import Icon from '../Common/Icon'
 import Mask from '../Common/Mask'
+import Styles from '../index.css'
 
 export default connect(
 	state => {
@@ -33,9 +34,11 @@ export default connect(
 		this.onCapture = this.onCapture.bind(this)
 		this.isValidElement = this.isValidElement.bind(this)
 		this.updateActionData = this.updateActionData.bind(this)
+		this.onPanelResize = this.onPanelResize.bind(this)
 		this.state = {
 			captureElements: [],
-			rawTree: null
+			rawTree: null,
+			panelHeight: 300,
 		}
 	}
 
@@ -71,12 +74,16 @@ export default connect(
 		this.props.updateActionData(this.props.actionInfo.action.get('id'), data)
 	}
 
+	onPanelResize(size){
+		this.setState({ panelHeight: size.height })
+	}
+
 	render() {
 		let qTree = this.props.actionInfo.action.get('data')
 		return (
 			<div>
-				<PanelGroup right={true} initSize={{ width: 400 }} initShow={true}>
-					<TablePanel rawTree={this.state.rawTree} />
+				<PanelGroup right={true} initSize={{ width: 400 }} initShow={true} onPanelResize={this.onPanelResize}>
+					<TablePanel rawTree={this.state.rawTree} height={this.state.panelHeight - 78} />
 					<RawPanel rawTree={this.state.rawTree} />
 					<CapturePanel qTree={qTree} onUpdate={this.updateActionData} />
 				</PanelGroup>
@@ -89,7 +96,7 @@ export default connect(
 
 class TablePanel extends React.Component {
 	constructor(props) {
-		super(props)	
+		super(props)
 		this.flushCache = this.flushCache.bind(this)
 		this.cache_dataSource = []
 		this.cache_columns = []
@@ -100,28 +107,28 @@ class TablePanel extends React.Component {
 
 	getColumns(rawTree) {
 		let colmuns = [];
-
 		if (rawTree) {
-			const func = function (node) {
-				utils.Smart.toQueryString(node.block.get('data'))
+			const func = function (node, baseKey = null) {
+				let theKey = (baseKey ? (baseKey + '>') : '') + utils.Smart.toQueryString(node.get('data'))
+				let output = utils.Smart.QTree.getNodeOutput(node)
+				if (output) {
+					if (output.innerText !== false) { let key = `${theKey}~innerText`; colmuns.push({ title: '文本', key, dataIndex: key, width: 100 }) }
+					if (output.href) { let key = `${theKey}~href`; colmuns.push({ title: '超链接', key, dataIndex: key, width: 100 }) }
+					if (output.src) { let key = `${theKey}~src`; colmuns.push({ title: '源地址', key, dataIndex: key, width: 100 }) }
+					if (output.title) { let key = `${theKey}~title`; colmuns.push({ title: '提示文本', key, dataIndex: key, width: 100 }) }
+				}
+				node.get('children').forEach((childNode) => {
+					func(childNode, theKey)
+				})
 			}
-
-
+			func(rawTree.block)
 		}
-
 		return colmuns
 	}
 
 	flushCache(tree) {
 		this.cache_columns = this.getColumns(tree)
 		if (!tree) { this.cache_dataSource = []; return }
-		
-
-		const getOutput = function(block){
-			let output = block.get('data').last().getIn(['config', 'output'])
-			if (!output && block.get('children').size == 0) { output = { innerText: true } }
-			return output
-		}
 
 		const processItem = function (item, row, output, baseKey) {
 			const element = item.element
@@ -134,11 +141,11 @@ class TablePanel extends React.Component {
 			item.children.forEach((subNode, j) => {
 				if (subNode.elements.length == 0) { return }
 				let theKey = utils.Smart.toQueryString(subNode.block.get('data'))
-				processItem(subNode.elements[0], row, getOutput(subNode.block), `${baseKey}>${theKey}`)
+				processItem(subNode.elements[0], row, utils.Smart.QTree.getNodeOutput(subNode.block), `${baseKey}>${theKey}`)
 			})
 		}
 
-		let output = getOutput(tree.block)
+		let output = utils.Smart.QTree.getNodeOutput(tree.block)
 		let baseKey = utils.Smart.toQueryString(tree.block.get('data'))
 		this.cache_dataSource = tree.elements.map((item, i) => {
 			let row = { key: i }; processItem(item, row, output, baseKey)
@@ -151,9 +158,12 @@ class TablePanel extends React.Component {
 			this.flushCache(nextProps.rawTree)
 		}
 	}
-	
+
 	render() {
-		return <Table dataSource={this.cache_dataSource} columns={this.cache_columns} />
+		return <Table size="middle" bordered scroll={{y:this.props.height}} pagination={false} dataSource={this.cache_dataSource} columns={this.cache_columns} rowClassName={(rec, idx)=>{
+			debugger;
+			
+		}}/>
 	}
 }
 
@@ -163,9 +173,9 @@ const RawPanel = connect(
 			expandedKeys: state.rawPanel_expandedKeys,
 		}
 	},
-	dispatch=>{
+	dispatch => {
 		return {
-			onExpand: (expandedKeys)=>{
+			onExpand: (expandedKeys) => {
 				dispatch({ type: 'RAWPANEL_ONEXPAND', expandedKeys })
 			}
 		}
@@ -180,15 +190,15 @@ const RawPanel = connect(
 	static title = "原始"
 
 	onExpand(expandedKeys, { expanded, node }) {
-		if (expanded && !node.props.eventKey.startsWith('r-')){
+		if (expanded && !node.props.eventKey.startsWith('r-')) {
 			let finalExpandedKeys = [...expandedKeys]
-			node.props.children.forEach(child=>{ !expandedKeys.includes(child.key) && (finalExpandedKeys.push(child.key))})
+			node.props.children.forEach(child => { !expandedKeys.includes(child.key) && (finalExpandedKeys.push(child.key)) })
 			expandedKeys = finalExpandedKeys;
 		}
 		this.props.onExpand(expandedKeys)
 	}
 
-	onSelect(selectedKeys, {selected, selectedNodes, node, event}){
+	onSelect(selectedKeys, { selected, selectedNodes, node, event }) {
 		const key = selectedKeys[0]
 		let expandedKeys = [...this.props.expandedKeys]
 		let idx = expandedKeys.indexOf(key)
@@ -219,7 +229,7 @@ const RawPanel = connect(
 				if (strTitle.length == 0) { strTitle = '[没有文本]'; css.color = '#aaa' }
 				if (item.children.length && !nb.block.get('data').last().getIn(['config', 'output'])) { css.fontStyle = 'italic', css.color = '#aaa' } else { css.fontWeight = 'bold' }
 				if (idx && nb.elements.length > 1) { css.color = '#d00', css.fontStyle = 'italic' }
-				let domTitle = (<div title={strOriTitle} style={css}>{strTitle}</div>)				
+				let domTitle = (<div title={strOriTitle} style={css}>{strTitle}</div>)
 				return (<TreeNode key={`${idx}-${i}`} title={domTitle}>{item.children.map((subBlock, j) => { return func(subBlock, `${idx}-${i}-${j}`) })}</TreeNode>)
 			})
 			let strTitle = utils.Smart.toQueryString(nb.block.get('data'))
