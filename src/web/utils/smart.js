@@ -158,7 +158,7 @@ export class QTree {
 		return func(qTree)
 	}
 
-	// TODO: 立刻JQuery，如果发现歧义冲突，尝试解决
+
 	static mergeElement(qTree, element, tryResolveConflict = true) {
 		let branch = []
 		const func = function (block, itorEle) {
@@ -180,17 +180,17 @@ export class QTree {
 						if (i < qNodeList.size - 1) {
 							// 分割 当前 节点 的 qNodeList 尾部, 到 这个新建的 子节点上, 并将 当前 节点的 children 移交给他
 							let subBranch = qNodeList.slice(i + 1).toArray()
-							!QTree.resolveConflict(itorEle, subBranch) && (console.warn('ambiguity'))		// 有分支产生 就需要作消除歧义的处理
+							tryResolveConflict && !QTree.resolveConflict(itorEle, subBranch) && (console.warn('ambiguity'))		// 有分支产生 就需要作消除歧义的处理
 							let subBlock = Immutable.Map({ data: Immutable.List(subBranch), children: block.get('children') })
 
 							// 创建 一个新的 节点, 包含目前收集的element(即:branch)
-							!QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))		// 新分支 作消除歧义处理
+							tryResolveConflict && !QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))		// 新分支 作消除歧义处理
 							let newBranchBlock = Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })
 							
 							// 根分支处理，sub分支 和 new分支 作为 子分支 挂在 根分支上
 							let rootBranch = qNodeList.slice(0, i + 1).toArray()
 							// 注: 如果是 qTree 的根分支, 则不需要处理 歧义
-							if (block != qTree) {
+							if (tryResolveConflict && block != qTree) {
 								let rootBranchParentElement = qNodeList.getIn([0, 'element']).parentElement
 								!QTree.resolveConflict(rootBranchParentElement, rootBranch) && (console.warn('ambiguity'));		// 这个 重构出的根分支 同样 要作消除歧义处理
 							}
@@ -200,7 +200,7 @@ export class QTree {
 							})
 						} else {
 
-							!QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))
+							tryResolveConflict && !QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))
 
 							// branch 不为空, 但命中的是 某个 节点 的 qNodeList 的尾部, 则 直接将 branch 加到该 节点的 children 中 即可
 							return block.update('children', ch => ch.push(Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })))

@@ -77,7 +77,7 @@ export default connect(
 		return (
 			<div>
 				<PanelGroup right={true} initSize={{ width: 400 }} initShow={true}>
-					<TablePanel />
+					<TablePanel rawTree={this.state.rawTree} />
 					<RawPanel rawTree={this.state.rawTree} />
 					<CapturePanel qTree={qTree} onUpdate={this.updateActionData} />
 				</PanelGroup>
@@ -91,8 +91,37 @@ export default connect(
 class TablePanel extends React.Component {
 	constructor(props) {
 		super(props)
+		this.flushCache = this.flushCache.bind(this)
+		this.cache_dataSource = []
+		this.cache_columns = []
+		this.flushCache(this.props.rawTree)
 	}
-	static title = "表格"
+
+	flushCache(tree) {
+		this.cache_columns = []
+
+		let block = tree.block
+		let output = block.get('data').last().getIn(['config', 'output'])
+		if (!output && block.get('children').size == 0) { output = { innerText: true } }
+
+		this.cache_dataSource = tree.elements.map((item, i)=>{
+			let row = {}
+
+			if (output){
+				if (output.innerText)
+			}
+
+		
+
+		})
+	}
+
+	componentWillReceiveProps(nextProps) {
+		if (nextProps.rawTree != this.props.rawTree) {
+			this.flushCache(nextProps.rawTree)
+		}
+	}
+	
 	render() {
 		return <h1>表格</h1>
 	}
