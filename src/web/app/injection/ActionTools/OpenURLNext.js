@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import * as utils from '../../../utils'
+import * as Smart from '../../../smart'
 import Mask from '../Common/Mask'
 import Icon from '../Common/Icon'
 import Immutable from 'immutable'
@@ -58,7 +59,7 @@ export default class OpenURLNext extends React.Component {
 
 	onClick(e) {
 		if (utils.eventFilterRoot(e)) { return true }
-		const qNodeList = utils.Smart.analysePath(e.target)
+		const qNodeList = Smart.analysePath(e.target)
 		this.flushByQNodeList(qNodeList)
 		const opElementRect = e.target.getBoundingClientRect()
 		this.setState({
@@ -121,7 +122,7 @@ export default class OpenURLNext extends React.Component {
 	}
 
 	flushByQNodeList(qNodeList) {
-		let jqExpr = utils.Smart.toQueryString(qNodeList)
+		let jqExpr = Smart.toQueryString(qNodeList)
 		let selection = $(jqExpr).toArray()
 		const selectionRects = selection.map((ele) => {
 			const { left, top, width, height } = ele.getBoundingClientRect()
@@ -254,13 +255,13 @@ class Filter extends React.Component {
 			// tag
 			checkes.push(
 
-				<div key={'tag'} data-key={'tagName'} style={n.getIn(['config', 'tagName']) ? css_tag_check : css_tag_uncheck} title='标签'>{utils.Smart.QNode.tagName(n)}</div>
+				<div key={'tag'} data-key={'tagName'} style={n.getIn(['config', 'tagName']) ? css_tag_check : css_tag_uncheck} title='标签'>{n.get('tagName')}</div>
 
 			)
 			// [class]
 			{
 				let explode = this.state.explodeClassName.indexOf(i) != -1
-				let n_className = utils.Smart.QNode.className(n)
+				let n_className = n.get('className')
 				let final = (n_className.length <= 3 || explode) ? n_className : n_className.slice(0, 3)
 				checkes.push(...final.map((a, j) => (
 					<div key={`c-${j}`} data-key={`c-${j}`} style={n.getIn(['config','className']).indexOf(j) != -1 ? css_check : css_uncheck} title={`样式:${a}`}>C</div>
@@ -270,29 +271,29 @@ class Filter extends React.Component {
 				}
 			}
 			// first
-			utils.Smart.QNode.isFirst(n) && !utils.Smart.QNode.isLast(n) && checkes.push(
+			n.get('isFirst') && !n.get('isLast') && checkes.push(
 				<div key={'f'} data-key={'isFirst'} style={n.getIn(['config','isFirst']) ? css_check : css_uncheck} title={'第一个'}>F</div>
 			)
 			// last
-			utils.Smart.QNode.isLast(n) && !utils.Smart.QNode.isFirst(n) && checkes.push(
+			n.get('isLast') && !n.get('isFirst') && checkes.push(
 				<div key={'l'} data-key={'isLast'} style={n.getIn(['config','isLast']) ? css_check : css_uncheck} title={'最后一个'}>L</div>
 			)
 			// index
-			!utils.Smart.QNode.isFirst(n) && !utils.Smart.QNode.isLast(n) && checkes.push(
-				<div key={'i'} data-key={'index'} style={n.getIn(['config','index']) ? css_check : css_uncheck} title={`第${utils.Smart.QNode.index(n) + 1}个`}>I</div>
+			!n.get('isFirst') && !n.get('isLast') && checkes.push(
+				<div key={'i'} data-key={'index'} style={n.getIn(['config','index']) ? css_check : css_uncheck} title={`第${n.get('index') + 1}个`}>I</div>
 			)
 			// text
-			utils.Smart.QNode.innerText(n) && utils.Smart.QNode.innerText(n).length <= 16 && checkes.push(
-				<div key={'t'} data-key={'innerText'} style={n.getIn(['config','innerText']) ? css_check : css_uncheck} title={`文本:${utils.Smart.QNode.innerText(n)}`}>T</div>
+			n.get('innerText') && n.get('innerText').length <= 16 && checkes.push(
+				<div key={'t'} data-key={'innerText'} style={n.getIn(['config','innerText']) ? css_check : css_uncheck} title={`文本:${n.get('innerText')}`}>T</div>
 			)
 			// [attributes]
 			{
 				let explode = this.state.explodeAttributes.indexOf(i) != -1
-				let final = (utils.Smart.QNode.attributes(n).length <= 3 || explode) ? utils.Smart.QNode.attributes(n) : utils.Smart.QNode.attributes(n).slice(0, 3)
+				let final = (n.get('attributes').length <= 3 || explode) ? n.get('attributes') : n.get('attributes').slice(0, 3)
 				checkes.push(...final.map((a, j) => (
 					<div key={`a-${j}`} data-key={`a-${j}`} style={n.getIn(['config','attributes']).indexOf(j) != -1 ? css_check : css_uncheck} title={`属性:${a.name}=${decodeURI(a.value)}`}>A</div>
 				)))
-				if (utils.Smart.QNode.attributes(n).length > 3) {
+				if (n.get('attributes').length > 3) {
 					checkes.push(<div key={'e-a'} data-key={'e-a'} style={css_explode} className={utils.icon(explode ? 'icon-collape' : 'icon-explode')} />)
 				}
 			}

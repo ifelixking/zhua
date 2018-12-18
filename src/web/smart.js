@@ -9,8 +9,27 @@ export function findSimilarity(element) {
 export class QNode {
 
 	static create(element, output = null) {
+
+		let index, isFirst, isLast
+		if (element.parentElement){
+			index = Array.from(ele.parentElement.children).indexOf(element)
+			isFirst = index == 0
+			isLast = index == ele.parentElement.children.length - 1
+		} else {
+			index = 0, isFirst = true, isLast = true
+		}
+
 		let result = Immutable.Map({
-			element,
+			// element,
+			
+			tagName: element.tagName, innerText: element.innerText, index, isFirst, isLast,
+			className: element.className.split(' ').filter(a => a),
+			attributes: Array.from(element.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })),
+
+			href: element.href,
+			title: element.title,
+			src: element.src,			
+
 			config: Immutable.Map({
 				tagName: true,
 				innerText: false,
@@ -28,20 +47,18 @@ export class QNode {
 				// 	title: false
 				// }
 			}),
-		})
-		// QNode.defineWrapper(result)
+			
+		})		
 		return result;
 	}
 
-	static tagName(n) { return n.get('element').tagName }
-	static innerText(n) { return n.get('element').innerText }
-	static className(n) { return n.get('element').className.split(' ').filter(a => a) }
-	static index(n) { let ele = n.get('element'); return ele.parentElement ? Array.from(ele.parentElement.children).indexOf(ele) : 0 }
-	static isFirst(n) { return QNode.index(n) === 0 }
-	static isLast(n) { let ele = n.get('element'); return !ele.parentElement || (this.index == ele.parentElement.children.length - 1) }
-	static attributes(n) { let ele = n.get('element'); return ele.attributes && Array.from(ele.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) }
-
-
+	// static tagName(n) { return n.get('element').tagName }
+	// static innerText(n) { return n.get('element').innerText }
+	// static className(n) { return n.get('element').className.split(' ').filter(a => a) }
+	// static index(n) { let ele = n.get('element'); return ele.parentElement ? Array.from(ele.parentElement.children).indexOf(ele) : 0 }
+	// static isFirst(n) { return QNode.index(n) === 0 }
+	// static isLast(n) { let ele = n.get('element'); return !ele.parentElement || (this.index == ele.parentElement.children.length - 1) }
+	// static attributes(n) { let ele = n.get('element'); return ele.attributes && Array.from(ele.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })) }
 
 	static jQString(n) {
 		let expr = ''

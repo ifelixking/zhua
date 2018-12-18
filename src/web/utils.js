@@ -1,7 +1,4 @@
-import Icons from '../res/iconfont/iconfont.css'
-import * as _Smart from './smart'
-export const Smart = _Smart
-
+import Icons from './res/iconfont/iconfont.css'
 
 let g_svgDOM_hidden = null
 export function getSVGTextSize(text) {
@@ -92,8 +89,9 @@ export function icon(name, extStyles = []) {
 	return [Icons.iconfont, Icons[name], ...extStyles].join(' ')
 }
 
-export function getElementIndex(element) {
+export function getElementIndex(element, rootIndex = 0) {
 	if (element && element.parentElement) { return Array.from(element.parentElement.children).indexOf(element) }
+	return !element.parentElement && rootIndex
 }
 
 export function getElementRIndex(element) {

@@ -2,6 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux';
 import Immutable from 'immutable'
 import * as utils from '../../utils'
+import * as Smart from '../../smart'
 import ActionTools from './ActionTools'
 
 export default connect(
@@ -45,7 +46,7 @@ export default connect(
 
 	onCreate(qNodeList, type) {
 		let currentActionID = this.props.currentActionInfo.id
-		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: utils.Smart.QTree.createByQNodeList(qNodeList) })
+		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: Smart.QTree.createByQNodeList(qNodeList) })
 		this.props.onCreateNextAction(newAction, currentActionID)
 	}
 

@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import PanelGroup from '../Common/PanelGroup'
 import Immutable from 'immutable'
 import * as utils from '../../../utils'
+import * as Smart from '../../../smart'
 import { Tree, Checkbox, Table } from 'antd';
 const CheckboxGroup = Checkbox.Group;
 const { TreeNode } = Tree;
@@ -54,7 +55,7 @@ export default connect(
 	}
 
 	flushCapture(qTree) {
-		let rawTree = utils.Smart.queryElements(qTree)
+		let rawTree = Smart.queryElements(qTree)
 		this.setState({ rawTree })
 	}
 
@@ -65,7 +66,7 @@ export default connect(
 	onCapture(target) {
 		if (!this.isValidElement(target)) { return }
 		let qTree = this.props.actionInfo.action.get('data')
-		let newQTree = utils.Smart.QTree.mergeElement(qTree, target)
+		let newQTree = Smart.QTree.mergeElement(qTree, target)
 		newQTree && this.updateActionData(newQTree)
 	}
 
@@ -108,8 +109,8 @@ class TablePanel extends React.Component {
 		let colmuns = [];
 		if (rawTree) {
 			const func = function (node, baseKey = null) {
-				let theKey = (baseKey ? (baseKey + '>') : '') + utils.Smart.toQueryString(node.get('data'))
-				let output = utils.Smart.QTree.getNodeOutput(node)
+				let theKey = (baseKey ? (baseKey + '>') : '') + Smart.toQueryString(node.get('data'))
+				let output = Smart.QTree.getNodeOutput(node)
 				if (output) {
 					if (output.innerText !== false) { let key = `${theKey}~innerText`; colmuns.push({ title: '文本', key, dataIndex: key, width: 100 }) }
 					if (output.href) { let key = `${theKey}~href`; colmuns.push({ title: '超链接', key, dataIndex: key, width: 100 }) }
@@ -139,13 +140,13 @@ class TablePanel extends React.Component {
 			}
 			item.children.forEach((subNode, j) => {
 				if (subNode.elements.length == 0) { return }
-				let theKey = utils.Smart.toQueryString(subNode.block.get('data'))
-				processItem(subNode.elements[0], row, utils.Smart.QTree.getNodeOutput(subNode.block), `${baseKey}>${theKey}`)
+				let theKey = Smart.toQueryString(subNode.block.get('data'))
+				processItem(subNode.elements[0], row, Smart.QTree.getNodeOutput(subNode.block), `${baseKey}>${theKey}`)
 			})
 		}
 
-		let output = utils.Smart.QTree.getNodeOutput(tree.block)
-		let baseKey = utils.Smart.toQueryString(tree.block.get('data'))
+		let output = Smart.QTree.getNodeOutput(tree.block)
+		let baseKey = Smart.toQueryString(tree.block.get('data'))
 		this.cache_dataSource = tree.elements.map((item, i) => {
 			let row = { key: i }; processItem(item, row, output, baseKey)
 			return row
@@ -228,7 +229,7 @@ const RawPanel = connect(
 				let domTitle = (<div title={strOriTitle} style={css}>{strTitle}</div>)
 				return (<TreeNode key={`${idx}-${i}`} title={domTitle}>{item.children.map((subBlock, j) => { return func(subBlock, `${idx}-${i}-${j}`) })}</TreeNode>)
 			})
-			let strTitle = utils.Smart.toQueryString(nb.block.get('data'))
+			let strTitle = Smart.toQueryString(nb.block.get('data'))
 			let domTitle = (<div title={strTitle} style={css_node_query}>{strTitle}</div>)
 			return (<TreeNode key={`r-${idx}`} title={domTitle}>{children}</TreeNode>)
 		}
@@ -255,7 +256,7 @@ class CapturePanel extends React.Component {
 	}
 
 	onTagConfigChange(values, type) {
-		const newQTree = utils.Smart.QTree.updateByTag(this.props.qTree, this.state.selectedTag, (tag) => {
+		const newQTree = Smart.QTree.updateByTag(this.props.qTree, this.state.selectedTag, (tag) => {
 			let newTag = tag.update('config', c => {
 				switch (type) {
 					case 0:
@@ -307,10 +308,10 @@ class CapturePanel extends React.Component {
 		const func = (node, i = 0, padding = 0) => {
 			let subs = node.get('children').map((n, i) => func(n, i, indent))
 			let tags = []; node.get('data').forEach((t, i) => {
-				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={(st == t) ? css_tag_selected : css_tag}>{utils.Smart.QNode.tagName(t)}</span>);
+				tags.push(<span key={i << 1} onClick={(e) => { e.stopPropagation(); this.onTagClick(t) }} style={(st == t) ? css_tag_selected : css_tag}>{t.get('tagName')}</span>);
 				(i < node.get('data').size - 1) && tags.push(<Icon key={(i << 1) + 1} style={css_next} name='icon-next' />)
 			})
-			let jqString = utils.Smart.toQueryString(node.get('data'))
+			let jqString = Smart.toQueryString(node.get('data'))
 			return (
 				<div key={i} style={{ position: 'relative', paddingLeft: `${padding}px` }}>
 					{padding ? (<Icon style={css_line} name='icon-next' />) : null}
@@ -334,11 +335,11 @@ class CapturePanel extends React.Component {
 					output && output.href && (values.push('href'))
 					output && output.src && (values.push('src'))
 					output && output.title && (values.push('title'))
-					let element = st.get('element'), options = []
-					element.innerText && (options.push({ label: '文本', value: 'innerText' }));
-					element.href && (options.push({ label: '超链接', value: 'href' }));
-					element.src && (options.push({ label: '源地址', value: 'src' }));
-					element.title && (options.push({ label: '鼠标提示', value: 'title' }));
+					let options = []
+					st.get('innerText') && (options.push({ label: '文本', value: 'innerText' }));
+					st.get('href') && (options.push({ label: '超链接', value: 'href' }));
+					st.get('src') && (options.push({ label: '源地址', value: 'src' }));
+					st.get('title') && (options.push({ label: '鼠标提示', value: 'title' }));
 					outputChecks = (
 						<div style={css_prop_first_section}>
 							<span style={css_prop_section_title}><div style={css_prop_section_title_text_0}>输出:</div></span>
@@ -352,10 +353,10 @@ class CapturePanel extends React.Component {
 
 			let basicChecks; {
 				let options = [{ label: '使用标签', value: 'tagName' }], values = []; st.getIn(['config', 'tagName']) && values.push('tagName');
-				utils.Smart.QNode.isFirst(st) && !utils.Smart.QNode.isLast(st) && (options.push({ label: '选择第一个', value: 'isFirst' })); st.getIn(['config', 'isFirst']) && values.push('isFirst');
-				utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: '选择最后一个', value: 'isLast' })); st.getIn(['config', 'isLast']) && values.push('isLast');
-				!utils.Smart.QNode.isLast(st) && !utils.Smart.QNode.isFirst(st) && (options.push({ label: `选择第${utils.Smart.QNode.index(st) + 1}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
-				utils.Smart.QNode.innerText(st) && utils.Smart.QNode.innerText(st).length <= 16 && (options.push({ label: `选择内容为:"${utils.Smart.QNode.innerText(st)}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
+				st.get('isFirst') && !st.get('isLast') && (options.push({ label: '选择第一个', value: 'isFirst' })); st.getIn(['config', 'isFirst']) && values.push('isFirst');
+				st.get('isLast') && !st.get('isFirst') && (options.push({ label: '选择最后一个', value: 'isLast' })); st.getIn(['config', 'isLast']) && values.push('isLast');
+				!st.get('isLast') && !st.get('isFirst') && (options.push({ label: `选择第${st.get('index') + 1}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
+				st.get('innerText') && st.get('innerText').length <= 16 && (options.push({ label: `选择内容为:"${st.get('innerText')}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
 				basicChecks = (
 					<div style={outputChecks ? css_prop_section : css_prop_first_section}>
 						<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>筛选:</div></span>
@@ -367,8 +368,8 @@ class CapturePanel extends React.Component {
 			}
 
 			let divClass = null
-			if (utils.Smart.QNode.className(st).length) {
-				let options = utils.Smart.QNode.className(st).map((name, i) => ({ label: name, value: i }))
+			if (st.get('className').length) {
+				let options = st.get('className').map((name, i) => ({ label: name, value: i }))
 				let values = st.getIn(['config', 'className']).toArray()
 				divClass = (
 					<div style={css_prop_section}>
@@ -380,8 +381,8 @@ class CapturePanel extends React.Component {
 				)
 			}
 			let divAttr = null
-			if (utils.Smart.QNode.attributes(st).length) {
-				let options = utils.Smart.QNode.attributes(st).map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))
+			if (st.get('attributes').length) {
+				let options = st.get('attributes').map((attr, i) => ({ label: `${attr.name}="${decodeURI(attr.value)}"`, value: i }))
 				let values = st.getIn(['config', 'attributes']).toArray()
 				divAttr = (
 					<div style={css_prop_section}>
@@ -485,7 +486,7 @@ class Tool extends React.Component {
 	onClick(e) {
 		if (utils.eventFilterRoot(e)) { return true }
 		this.props.onCapture(e.target)
-		// const qNodeList = utils.Smart.analysePath(e.target)
+		// const qNodeList = Smart.analysePath(e.target)
 		// this.flushByQNodeList(qNodeList)
 		// const opElementRect = e.target.getBoundingClientRect()
 		// this.setState({
