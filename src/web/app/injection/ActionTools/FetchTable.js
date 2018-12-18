@@ -11,7 +11,6 @@ import 'antd/lib/Tree/style'
 import 'antd/lib/Table/style'
 import Icon from '../Common/Icon'
 import Mask from '../Common/Mask'
-import Styles from '../index.css'
 
 export default connect(
 	state => {
@@ -160,10 +159,7 @@ class TablePanel extends React.Component {
 	}
 
 	render() {
-		return <Table size="middle" bordered scroll={{y:this.props.height}} pagination={false} dataSource={this.cache_dataSource} columns={this.cache_columns} rowClassName={(rec, idx)=>{
-			debugger;
-			
-		}}/>
+		return <Table size="middle" bordered scroll={{y:this.props.height}} pagination={false} dataSource={this.cache_dataSource} columns={this.cache_columns} />
 	}
 }
 

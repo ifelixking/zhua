@@ -164,6 +164,7 @@ export default connect(
 			} else if (this.props.currentActionInfo.type == 'next') {
 				switch (currentAction.get('type')) {
 					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={this.onBtnFetchTableClick} /> } break;
+					case 'fetch-table': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={this.onBtnFetchTableClick} /> } break;
 				}
 			}
 		}
