@@ -22,7 +22,7 @@ export default connect(
 		super(props)
 
 		this.onFrameDivClick = this.onFrameDivClick.bind(this)
-		this.onBtnFetchTableClick = this.onBtnFetchTableClick.bind(this)
+		this.onCreate = this.onCreate.bind(this)
 
 		this.state = {}
 		this.config = {
@@ -43,9 +43,9 @@ export default connect(
 		}
 	}
 
-	onBtnFetchTableClick(qNodeList) {
+	onCreate(qNodeList, type) {
 		let currentActionID = this.props.currentActionInfo.id
-		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: 'fetch-table', data: utils.Smart.QTree.createByQNodeList(qNodeList) })
+		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: utils.Smart.QTree.createByQNodeList(qNodeList) })
 		this.props.onCreateNextAction(newAction, currentActionID)
 	}
 
@@ -162,10 +162,11 @@ export default connect(
 					} break;
 				}
 			} else if (this.props.currentActionInfo.type == 'next') {
-				switch (currentAction.get('type')) {
-					case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={this.onBtnFetchTableClick} /> } break;
-					case 'fetch-table': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={this.onBtnFetchTableClick} /> } break;
-				}
+				// switch (currentAction.get('type')) {
+				// 	case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={()=>this.onCreate()} /> } break;
+				// 	case 'fetch-table': { actionTool = <ActionTools.OpenURLNext onBtnOpenLinkClick={this.onBtnOpenLinkClick} /> } break;
+				// }
+				actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.onCreate(qNodeList, 'fetch-table')} onBtnOpenLinkClick={(qNodeList) => { this.onCreate(qNodeList, 'open-url') }} />
 			}
 		}
 
