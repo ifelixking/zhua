@@ -11,7 +11,7 @@ export class QNode {
 	static create(element, output = null) {
 
 		let index, isFirst, isLast
-		if (element.parentElement){
+		if (element.parentElement) {
 			index = Array.from(ele.parentElement.children).indexOf(element)
 			isFirst = index == 0
 			isLast = index == ele.parentElement.children.length - 1
@@ -21,14 +21,14 @@ export class QNode {
 
 		let result = Immutable.Map({
 			// element,
-			
+
 			tagName: element.tagName, innerText: element.innerText, index, isFirst, isLast,
 			className: element.className.split(' ').filter(a => a),
 			attributes: Array.from(element.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })),
 
 			href: element.href,
 			title: element.title,
-			src: element.src,			
+			src: element.src,
 
 			config: Immutable.Map({
 				tagName: true,
@@ -47,8 +47,8 @@ export class QNode {
 				// 	title: false
 				// }
 			}),
-			
-		})		
+
+		})
 		return result;
 	}
 
@@ -112,34 +112,6 @@ export function queryElements(qTree) {
 			return { element, children: func(element, qTree.get('children')) }
 		})
 	}
-
-	// let rootElements = $(toQueryString(qTree.get('data'))).toArray()
-
-
-	// let jqStr = toQueryString(block.get('data'))
-	// let result = {element: scopeElement, jqStr}
-	// const childBlocks = block.get('children')
-	// result.children = $(scopeElement).children($(jqStr)).toArray().map((childEle,i) => { 			
-	// 	return {
-	// 		name: `${jsStr} - ${i}`,
-	// 		element: childEle,
-	// 		children: childBlocks.map((childBlock,j)=>{
-	// 			func(childEle, childBlock)
-	// 		})
-	// 	}
-	// })
-
-	// let rawNodes = rootElements.map((scopeElement, i) => {
-	// 	let node = { element: scopeElement,  children: [] }
-
-	// 	qTree.get('children').map(block=>{
-
-	// 	})
-
-	// 	return node
-	// })
-
-	// return rawNodes
 }
 
 export class QTree {
@@ -177,7 +149,69 @@ export class QTree {
 		return func(qTree)
 	}
 
+	static resetQTreeElement(qTree, similarElement) {
+		let elementHier = utils.getElementHierarchy(similarElement)
+		let rawTree = queryElements(qTree)
+
+		const func = function (simHier, block, rawNode) {
+			let closestItem, closestNum = 0, closestHier
+
+			// 遍历当前Block查询出的所有的element
+			rawNode.elements.forEach(item => {
+				// 收集每个 element 的 Hierarchy
+				// 注: 这里的 toElement 为 给定的 相似 element Hierarchy 的 第0个 的父, 
+				// 目的就是保证 getSameCount 的 二者 起点相同
+				let hier = utils.getElementHierarchy(item.element, simHier[0].parentElement)
+				// 计算与给定的 simHier 的相同 element 的个数
+				let sameCount = utils.getSameCount(hier, simHier);
+				// 找出 相同element数 最多的 那个 item(即:element)
+				if (sameCount > closestNum) { closestItem = item; closestHier = hier }
+			})
+			// 如果 closestHier 有值, 就说明找到了相同的element, 哪怕只有一个也算
+			if (closestHier) {
+				// 将最接近 的 Hierarchy(即:closestHier) 合到 block 的 data 的 element 字段上
+				for (let i = 0; i < closestHier.length; ++i) {
+					block = block.setIn(['data', i, 'element'], closestHier[i])
+				}
+			}
+			// 如果 closestHier 为空, 则说明 完全没有相同的(不在同一路上, 多半是处理多余的子分支)
+			// 这时 将使用默认 方式 填充 element
+			else {
+				// TODO:
+			}
+
+			// 如果 拟合的路径 上的 element 个数 等于 block 上命中的 element 的 Hierarchy 的 长度
+			// 即: 拟合的路径 上的 element 个数 等于 block 的 data 的长度
+			// 说明: 这个 similarElement 可以继续往 更深入的 children(即:分支) 找相似
+			if (closestNum == closestHier.length) {
+				const subBlocks = block.get('children')
+				// 遍历 处理 block 的 children, 逐个局部更新该block
+				for (let i = 0; i < subBlocks.size; ++i) {
+					// simHier: 截断 当前 simHier, 取后段
+					// block: 给定 要更新 的 subBlock
+					// rawNode: 依据 之前找到的 最接近的 item(即:{elements, children}), 取 第 i 个 child 节点
+					// 断言: subBlocks.size == closestItem.children.size					
+					let subBlock = func(simHier.slice(closestNum), subBlocks.get(i), closestItem.children[i])
+					// 将获得的新的 subBlock 局部更新 到 block 中
+					block = block.setIn(['children', i], subBlock)
+				}
+			}
+			// 如果 是 小于
+			// 说明: 还没有在这个 block 的 data(即:qNodeList) 上比较相同 完 就分叉了
+			// 那么: 该 block 的 children 则按默认方式 设置 element
+			else if (closestNum < closestHier.length) {
+
+			}
+			
+			return block
+		}
+		return func(elementHier, qTree, rawTree)
+	}
+
 	static mergeElement(qTree, element, tryResolveConflict = true) {
+
+		qTree = QTree.resetQTreeElement(qTree, element)
+
 		let branch = []
 		const func = function (block, itorEle) {
 
@@ -193,7 +227,7 @@ export class QTree {
 			for (let i = qNodeList.size - 1; i >= 0; --i) {
 				let node = qNodeList.get(i)
 				if (node.get('element') == itorEle) {
-					
+
 					if (branch.length) {
 						if (i < qNodeList.size - 1) {
 							// 分割 当前 节点 的 qNodeList 尾部, 到 这个新建的 子节点上, 并将 当前 节点的 children 移交给他
@@ -204,7 +238,7 @@ export class QTree {
 							// 创建 一个新的 节点, 包含目前收集的element(即:branch)
 							tryResolveConflict && !QTree.resolveConflict(itorEle, branch) && (console.warn('ambiguity'))		// 新分支 作消除歧义处理
 							let newBranchBlock = Immutable.Map({ data: Immutable.List(branch), children: Immutable.List([]) })
-							
+
 							// 根分支处理，sub分支 和 new分支 作为 子分支 挂在 根分支上
 							let rootBranch = qNodeList.slice(0, i + 1).toArray()
 							// 注: 如果是 qTree 的根分支, 则不需要处理 歧义
@@ -231,7 +265,6 @@ export class QTree {
 			}
 		}
 
-		
 		for (let itorEle = element; itorEle; branch.unshift(QNode.create(itorEle, itorEle == element ? { innerText: true } : null)), itorEle = itorEle.parentElement) {
 			let newQTree = func(qTree, itorEle)
 			if (newQTree) { return newQTree }
@@ -248,7 +281,7 @@ export class QTree {
 			for (let i = 0; i < 3; ++i) {
 
 				switch (i) {
-					case 0: { 
+					case 0: {
 						// 不做任何改变
 					} break;
 					case 1: {
@@ -287,3 +320,69 @@ export class QTree {
 	}
 
 }
+
+
+	// let rootElements = $(toQueryString(qTree.get('data'))).toArray()
+
+
+	// let jqStr = toQueryString(block.get('data'))
+	// let result = {element: scopeElement, jqStr}
+	// const childBlocks = block.get('children')
+	// result.children = $(scopeElement).children($(jqStr)).toArray().map((childEle,i) => { 			
+	// 	return {
+	// 		name: `${jsStr} - ${i}`,
+	// 		element: childEle,
+	// 		children: childBlocks.map((childBlock,j)=>{
+	// 			func(childEle, childBlock)
+	// 		})
+	// 	}
+	// })
+
+	// let rawNodes = rootElements.map((scopeElement, i) => {
+	// 	let node = { element: scopeElement,  children: [] }
+
+	// 	qTree.get('children').map(block=>{
+
+	// 	})
+
+	// 	return node
+	// })
+
+	// return rawNodes
+
+
+
+
+
+	// let foundPath = []
+
+	// const func = function(node, blockToUpdate, immPath){
+	// 	let foundElementWrap = node.elements.find((elementWrap, i)=>{
+	// 		let found = false
+	// 		elementWrap.children.forEach((subNode, j)=>{
+	// 			// func(subNode, 
+	// 		})
+
+	// 		find((subNode, j)=>{
+	// 			return func(subNode, [...immPath, 'children', j])
+	// 		})
+	// 		if (found) { return found }
+
+	// 		return elementHr.includes(elementWrap.element)
+	// 	})
+
+	// 	if (foundElementWrap){
+	// 		return {block: blockToUpdate.updateIn([...immPath, 'data'], qNodeList=>{
+	// 			for (let itor = foundElementWrap.element, i=qNodeList.size-1; itor; itor = itor.parentElement,--i) { 
+	// 				qNodeList = qNodeList.setIn([i, 'eleMent'], itor)
+	// 			}
+	// 			return qNodeList
+	// 		}), found:true}
+	// 	}
+	// 	return blockToUpdate
+	// }
+
+	// qTree = func(rawTree, qTree, [])
+
+
+	// return qTree

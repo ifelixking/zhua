@@ -1,5 +1,9 @@
 import Icons from './res/iconfont/iconfont.css'
 
+export const ROOT_ELEMENT_ID = '__ZHUA_ROOT__'
+export const Z_INDEX_BASE = (2147483647 - 2000)
+export const Z_INDEX_ROOT = Z_INDEX_BASE
+
 let g_svgDOM_hidden = null
 export function getSVGTextSize(text) {
 	const ns = 'http://www.w3.org/2000/svg'
@@ -54,27 +58,6 @@ export function actionStoreFindAction(actionStore, actionID) {
 	return { action, path }
 }
 
-// export function getActionById(id, actions) {
-// 	if (actions) {
-// 		return actions.find(a => a.id == id)
-// 	} else {
-// 		let result
-// 		const f = (actions) => {
-// 			return actions.find(a => {
-// 				if (a.id == id) { result = a; return true }
-// 				return a.actionStore && f(a.actionStore.actions)
-// 			})
-// 		}
-// 		return result;
-// 	}
-// }
-
-// export function getChildStartAction(action) {
-// 	return action.actionStore && App.getActionById(action.actionStore.start, action.actionStore.actions)
-// }
-
-export const ROOT_ELEMENT_ID = '__ZHUA_ROOT__'
-
 export function eventFilterRoot(e) {
 	if (e.path.find(ele => ele.id == ROOT_ELEMENT_ID)) { return true }
 	e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation(); e.returnValue = false
@@ -123,7 +106,16 @@ export function toggleArray(array, value) {
 	}
 }
 
-export const Z_INDEX_BASE = (2147483647 - 2000)
-export const Z_INDEX_ROOT = Z_INDEX_BASE
-// export const Z_INDEX_MODAL = MAX_Z_INDEX - 2
-// export const Z_INDEX_MODAL_POPUP = MAX_Z_INDEX - 1
+export function getElementHierarchy(element, toElement = null) {
+	let result = []
+	for (let itor = element; itor != toElement; itor = itor.parentElement) { result.unshift(itor) }
+	return result
+}
+
+export function getSameCount(array1, array2) {
+	let i, cnt = Math.min(array1.length, array2.length)
+	for (i = 0; i < cnt; ++i) {
+		if (array1[i] != array2[i]) { break }
+	}
+	return i
+}
