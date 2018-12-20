@@ -1,7 +1,7 @@
 package com.felix.zhua.controller;
 
-import com.felix.zhua.model.User;
-import com.felix.zhua.service.UserService;
+import com.felix.zhua.model.Project;
+import com.felix.zhua.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
-public class UserController {
+@RequestMapping("project")
+public class ProjectController {
+
 	@Autowired
-	private UserService userService;
+	ProjectService projectService;
 
 	@RequestMapping("")
-	public List<User> users(){
-		return userService.users();
+	public List<Project> projects(){
+		return projectService.projects();
 	}
 }
