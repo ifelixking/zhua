@@ -15,4 +15,13 @@ public class ProjectService {
 	public List<Project> projects(){
 		return projectMapper.projects();
 	}
+
+	public int create(Project project){
+		projectMapper.create(project);
+		return project.getId();
+	}
+
+	public Project getById(int id){
+		return projectMapper.getById(id);
+	}
 }
