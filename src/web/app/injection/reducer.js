@@ -77,5 +77,23 @@ export default combineReducers({
 	// ====================
 	rawPanel_expandedKeys: (expandedKeys = ['r-0'], action) => {
 		return action.type == 'RAWPANEL_ONEXPAND' ? action.expandedKeys : expandedKeys
+	},
+	panelResource_state: (theState = Immutable.Map({}), action) => {
+		switch (action.type) {
+			case 'PANELRESOURCE_SWITCH': { 
+				let newState = theState.set('page', action.page)
+				if (action.params !== undefined) { newState = newState.set('pagaParams', params) }
+				return newState
+			}
+			case 'PANELRESOURCE_SEARCH': {
+				// let newState = theState.set('searchText', action.searchText)
+				// return 
+			}
+			case 'PANELRESOURCE_SEARCH_TEXT_CHANGE': {
+				let newState = theState.set('searchText', action.searchText)
+				return newState
+			}
+			default: return theState
+		}
 	}
 })
