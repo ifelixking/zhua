@@ -10,7 +10,7 @@ import java.util.List;
 @CacheNamespace(flushInterval = 5000, size = 1000, readWrite = false)
 public interface ProjectMapper {
 
-	@Select("select project.id from project where privately=false")
+	@Select("select project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data from project left join user on project.ownerId=user.id where privately=false")
 	List<Project> projects();
 
 	@Insert("insert into project(createTime, modifyTime, name, siteURL, siteTitle, privately) values(#{project.createTime}, #{project.modifyTime}, #{project.name}, #{project.siteURL}, #{project.siteTitle}, #{project.privately})")

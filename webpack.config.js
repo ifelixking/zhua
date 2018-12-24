@@ -39,7 +39,10 @@ module.exports = {
 	devServer: {
 		port: 80,
 		proxy: {
-			'/api': "http://localhost/8080",
+			'/api/*': {
+				target:"http://localhost:8080",
+				pathRewrite:{'^/api/': '/'}
+			}
 		},
 		historyApiFallback: {
 			index: '/index.html',

@@ -8,11 +8,12 @@ import java.sql.Timestamp;
 public class Project {
 	private int id;
 	private int ownerId;
-	private String ownerName;
+	private String ownerEmail;
 	private Timestamp createTime;
 	private Timestamp modifyTime;
 	private String name;
 	private String siteURL;
 	private String siteTitle;
 	private boolean privately;
+	private String data;
 }

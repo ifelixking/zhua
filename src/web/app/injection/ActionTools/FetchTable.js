@@ -500,7 +500,6 @@ class Tool extends React.Component {
 		// return false
 	}
 
-
 	render() {
 		const css_highLight = { border: '1px dashed #FF7F00' }
 

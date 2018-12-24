@@ -3,6 +3,18 @@ import Immutable from 'immutable'
 import * as utils from '../../utils'
 
 export default combineReducers({
+	projectStore: (projectStore = Immutable.Map({
+		projects: Immutable.List([]),
+		lastUpdateTime: 0,
+	}), action) => {
+		switch (action.type) {
+			case 'LOAD_PROJECT_LIST': {
+				return projectStore.set('projects', action.projects)
+					.set('lastUpdateTime', (new Date()).valueOf())
+			}
+			default: return projectStore
+		}
+	},
 	actionStore: (actionStore = Immutable.fromJS({
 		start: 1,
 		actions: [
@@ -30,7 +42,7 @@ export default combineReducers({
 		]
 	}), action) => {
 		switch (action.type) {
-			case 'LOAD_ACTION_STORE': { debugger; return action.actionStore; }
+			case 'LOAD_ACTION_STORE': { return action.actionStore; }
 			case 'CREATE_NEXT_ACTION': {
 				let { path } = utils.actionStoreFindAction(actionStore, action.currentActionID)
 				return actionStore

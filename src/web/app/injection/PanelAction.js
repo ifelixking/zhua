@@ -36,7 +36,6 @@ export default connect(
 	}
 	static title = "动作"
 
-
 	// 用于清空 current select action
 	onFrameDivClick(e) {
 		if (e.target == e.currentTarget || e.currentTarget.children[0] == e.target) {

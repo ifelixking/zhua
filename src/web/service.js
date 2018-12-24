@@ -1,7 +1,11 @@
 const API_SERVER = 'http://localhost'
 
 export function getProjects(){
-	fetch(API_SERVER + '/api/project').then((result)=>{
-		console.log(result)
-	})
+	return fetchJson(API_SERVER + '/api/project')
+}
+
+function * fetchJson(url){
+	let res = yield fetch(url)
+	let obj = yield res.json()
+	return obj
 }
