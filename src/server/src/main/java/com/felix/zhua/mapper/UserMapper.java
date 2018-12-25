@@ -13,4 +13,7 @@ public interface UserMapper {
 
 	@Select("select * from user")
 	List<User> users();
+
+	@Select("select * from user where email=#{username} and pwd=md5(#{password})")
+	User getUserByUsernamePassword(String username, String password);
 }

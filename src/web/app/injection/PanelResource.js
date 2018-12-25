@@ -1,5 +1,5 @@
 import React from 'react'
-import { connect } from 'react-redux';
+import { connect } from 'react-redux'
 import * as Actions from './action'
 import Icon from './Common/Icon'
 
