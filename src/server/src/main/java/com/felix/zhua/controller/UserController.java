@@ -21,7 +21,7 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 
-	@RequestMapping("")
+	@RequestMapping(value="", method = RequestMethod.GET)
 	public List<User> users() {
 		return userService.users();
 	}
@@ -33,23 +33,23 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public Result login(@RequestBody LoginParams loginParams) {
+	public Result<LoginInfo> login(@RequestBody LoginParams loginParams) {
 		LoginInfo loginInfo = userService.login(loginParams.username, loginParams.password);
-		Result result = new Result();
+		Result<LoginInfo> result = new Result<LoginInfo>();
 		result.setResult(loginInfo != null);
 		result.setData(loginInfo);
 		return result;
 	}
 
 	@RequestMapping(value = "/logout", method = RequestMethod.POST)
-	public Result logout(){
+	public Result<Boolean> logout(){
 		userService.logout();
-		Result result = new Result();
+		Result<Boolean> result = new Result<Boolean>();
 		result.setResult(true);
 		return result;
 	}
 
-	@RequestMapping("/loginInfo")
+	@RequestMapping(value="/loginInfo", method = RequestMethod.GET)
 	public LoginInfo loginInfo(HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		return (LoginInfo) session.getAttribute("loginInfo");

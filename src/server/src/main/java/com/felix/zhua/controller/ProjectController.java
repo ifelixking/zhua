@@ -1,36 +1,49 @@
 package com.felix.zhua.controller;
 
+import com.felix.zhua.model.Pager;
 import com.felix.zhua.model.Project;
+import com.felix.zhua.model.Result;
 import com.felix.zhua.service.ProjectService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("project")
+@RequestMapping("projects")
+@Api("项目")
 public class ProjectController {
 
 	@Autowired
 	ProjectService projectService;
 
-	@RequestMapping("")
-	public List<Project> projects(){
-		return projectService.projects();
+	@ApiOperation(value = "项目(最新)列表, 带分页, 关键字搜索")
+	@RequestMapping(value="", method = RequestMethod.GET)
+	public Pager<Project> projects(@RequestParam(required = false) String keyword, @RequestParam(required = false, defaultValue = "0") int page) {
+		if (keyword != null) {
+			return projectService.find(keyword, page);
+		} else {
+			return projectService.list(page);
+		}
 	}
 
-	@RequestMapping("/new?name={name}")
-	public Project create(@PathVariable String name){
-		Project project = new Project();
-		project.setName(name);
-		int projectId = projectService.create(project);
-		return projectService.getById(projectId);
+	@ApiOperation(value = "创建项目")
+	@RequestMapping(value = "", method = RequestMethod.POST)
+	public Project create(@RequestBody Project project) {
+		return projectService.create(project);
 	}
 
-	@RequestMapping("/{id}")
-	public Project getById(@PathVariable int id){
+	@ApiOperation(value="修改项目data")
+	@RequestMapping(value="/{id}/data", method = RequestMethod.PUT)
+	public Result<Project> setData(@PathVariable int id, @RequestBody Project project){
+		Result<Project> result = new Result<Project>();
+		result.setResult(projectService.setData(id, project.getData()));
+		return result;
+	}
+
+	@ApiOperation(value = "获取单个项目信息")
+	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
+	public Project getById(@PathVariable int id) {
 		return projectService.getById(id);
 	}
 }

@@ -9,12 +9,12 @@ import java.io.IOException;
 public class TestFilter implements Filter {
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
-		System.out.println("test filter init");
+		// System.out.println("test filter init");
 	}
 
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-		System.out.println("test filter dofilter");
+		// System.out.println("test filter dofilter");
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 		response.setHeader("Access-Control-Allow-Origin","*");
 		filterChain.doFilter(servletRequest, servletResponse);
@@ -22,6 +22,6 @@ public class TestFilter implements Filter {
 
 	@Override
 	public void destroy() {
-		System.out.println("test filter destroy");
+		// System.out.println("test filter destroy");
 	}
 }

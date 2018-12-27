@@ -5,8 +5,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class Result {
+public class Result<T> {
 	private boolean result;
 	private String desc;
-	private Serializable data;
+	private T data;
 }

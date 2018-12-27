@@ -2,6 +2,8 @@ package com.felix.zhua.mapper;
 
 import com.felix.zhua.model.User;
 import org.apache.ibatis.annotations.CacheNamespace;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 

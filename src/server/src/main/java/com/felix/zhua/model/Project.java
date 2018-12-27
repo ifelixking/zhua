@@ -2,10 +2,11 @@ package com.felix.zhua.model;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Data
-public class Project {
+public class Project implements Serializable {
 	private int id;
 	private int ownerId;
 	private String ownerEmail;
