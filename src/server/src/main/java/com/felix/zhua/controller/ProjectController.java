@@ -22,7 +22,7 @@ public class ProjectController {
 	@ApiOperation(value = "项目(最新)列表, 带分页, 关键字搜索")
 	@RequestMapping(value="", method = RequestMethod.GET)
 	public Pager<Project> projects(@RequestParam(required = false) String keyword, @RequestParam(required = false, defaultValue = "0") int page) {
-		if (keyword != null) {
+		if (keyword != null && !keyword.trim().isEmpty()) {
 			return projectService.find(keyword, page);
 		} else {
 			return projectService.list(page);
@@ -49,7 +49,7 @@ public class ProjectController {
 		return projectService.getById(id);
 	}
 
-	@ApiOperation(value = "我的项目")
+	@ApiOperation(value = "我的项目列表")
 	@RequestMapping(value = "/my/", method = RequestMethod.GET)
 	public List<Project> myProjects(){
 		return projectService.myProject();

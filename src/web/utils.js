@@ -119,3 +119,6 @@ export function getSameCount(array1, array2) {
 	}
 	return i
 }
+
+// convert mysql time string to human
+export function t()
