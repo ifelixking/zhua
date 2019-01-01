@@ -9,6 +9,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("projects")
 @Api("项目")
@@ -45,5 +47,11 @@ public class ProjectController {
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public Project getById(@PathVariable int id) {
 		return projectService.getById(id);
+	}
+
+	@ApiOperation(value = "我的项目")
+	@RequestMapping(value = "/my/", method = RequestMethod.GET)
+	public List<Project> myProjects(){
+		return projectService.myProject();
 	}
 }

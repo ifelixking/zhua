@@ -1,10 +1,7 @@
 package com.felix.zhua.mapper;
 
 import com.felix.zhua.model.User;
-import org.apache.ibatis.annotations.CacheNamespace;
-import org.apache.ibatis.annotations.Options;
-import org.apache.ibatis.annotations.Results;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,5 +14,11 @@ public interface UserMapper {
 	List<User> users();
 
 	@Select("select * from user where email=#{username} and pwd=md5(#{password})")
-	User getUserByUsernamePassword(String username, String password);
+	User getUserByUsernamePassword(@Param("username") String username, @Param("password") String password);
+
+	@Select("insert into user(email, password) values(#{username}, md5(#{password}))")
+	void add(String username, String password);
+
+	@Select("SELECT COUNT(*) FROM user WHERE email=#{email}")
+	int countByEmail(String email);
 }

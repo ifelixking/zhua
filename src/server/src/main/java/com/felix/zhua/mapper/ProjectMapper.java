@@ -13,12 +13,13 @@ public interface ProjectMapper {
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id " +
 			"where privately=false order by project.modifyTime desc limit #{start}, #{count}")
-	List<Project> list(int start, int count);
+	List<Project> list(@Param("start") int start, @Param("count") int count);
 
 	@Select("SELECT COUNT(*) FROM project WHERE privately=FALSE")
 	int count();
 
-	@Insert("insert into project(createTime, modifyTime, name, siteURL, siteTitle, privately, data) values(now(), now(), #{project.name}, #{project.siteURL}, #{project.siteTitle}, #{project.privately}, #{project.data})")
+	@Insert("insert into project(createTime, modifyTime, name, siteURL, siteTitle, privately, data, ownerId) " +
+			"values(now(), now(), #{project.name}, #{project.siteURL}, #{project.siteTitle}, #{project.privately}, #{project.data}, #{project.ownerId})")
 	@Options(useGeneratedKeys = true, keyProperty = "project.id")
 	void create(@Param("project") Project project);
 
@@ -38,4 +39,9 @@ public interface ProjectMapper {
 
 	@Update("UPDATE project SET data=#{data} WHERE id=#{id}")
 	boolean setData(int id, String data);
+
+	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, project.privately " +
+			"FROM project LEFT JOIN user ON project.ownerId=user.id " +
+			"where project.ownerId=#{userId} order by project.modifyTime desc")
+	List<Project> getProjectsByOwnerId(@Param("userId") int userId);
 }

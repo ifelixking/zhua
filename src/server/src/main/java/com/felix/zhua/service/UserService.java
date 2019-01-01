@@ -40,4 +40,18 @@ public class UserService {
 		HttpSession session = request.getSession();
 		session.setAttribute("loginInfo", null);
 	}
+
+	public void registe(String email, String password) {
+		userMapper.add(email, password);
+	}
+
+	public boolean emailExists(String email) {
+		int count = userMapper.countByEmail(email);
+		return count > 0;
+	}
+
+	public LoginInfo loginInfo() {
+		HttpSession session = request.getSession();
+		return (LoginInfo) session.getAttribute("loginInfo");
+	}
 }
