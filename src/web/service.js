@@ -29,6 +29,10 @@ export function logout() {
 }
 
 // ======================================================================================================
+export function getRecentAndPopular(){
+	return get('/projects/rap');
+}
+
 // 项目(最新)列表, 带分页, 关键字搜索
 export function getProjects(keyword = null, page = 0) {
 	let url = '/projects?1'

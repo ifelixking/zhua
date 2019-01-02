@@ -45,7 +45,7 @@ module.exports = {
 			}
 		},
 		historyApiFallback: {
-			index: '/index.html',
+			index: '/home/index.html',
 			rewrites: [
 				{ from: /^\/admin/, to: '/admin.html' }
 			],

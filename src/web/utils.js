@@ -148,3 +148,11 @@ Date.prototype.format = function (fmt) { //author: meizz
 			fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
 	return fmt;
 }
+
+export function createGlobalStyle(strStyle){
+	let style = document.createElement('style')
+	style.setAttribute('type', 'text/css')
+	style.innerHTML = strStyle
+	document.head.appendChild(style)
+	return style
+}
