@@ -1,7 +1,9 @@
 package com.felix.zhua.service;
 
 import com.felix.zhua.mapper.UserMapper;
+import com.felix.zhua.mapper.UserMapperW;
 import com.felix.zhua.model.LoginInfo;
+import com.felix.zhua.model.Result;
 import com.felix.zhua.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,9 @@ public class UserService {
 	private UserMapper userMapper;
 
 	@Autowired
+	private UserMapperW userMapperW;
+
+	@Autowired
 	private HttpServletRequest request;
 
 	public List<User> users() {
@@ -25,7 +30,7 @@ public class UserService {
 	public LoginInfo login(String username, String password) {
 		HttpSession session = request.getSession();
 		session.setAttribute("loginInfo", null);
-		User user = userMapper.getUserByUsernamePassword(username, password);
+		User user = userMapperW.getUserByUsernamePassword(username, password);
 		if (user == null) {
 			return null;
 		}
@@ -36,13 +41,13 @@ public class UserService {
 		return loginInfo;
 	}
 
-	public void logout(){
+	public void logout() {
 		HttpSession session = request.getSession();
 		session.setAttribute("loginInfo", null);
 	}
 
 	public void registe(String email, String password) {
-		userMapper.add(email, password);
+		userMapperW.add(email, password);
 	}
 
 	public boolean emailExists(String email) {
@@ -53,5 +58,11 @@ public class UserService {
 	public LoginInfo loginInfo() {
 		HttpSession session = request.getSession();
 		return (LoginInfo) session.getAttribute("loginInfo");
+	}
+
+	public int setPassword(String oldPassword, String newPassword) {
+		LoginInfo loginInfo = this.loginInfo();
+		return userMapperW.setPassword(loginInfo.getUserId(), oldPassword, newPassword);
+
 	}
 }

@@ -27,7 +27,7 @@ public class ProjectController {
 		if (keyword != null && !keyword.trim().isEmpty()) {
 			return projectService.find(keyword, page);
 		} else {
-			return projectService.list(page);
+			return projectService.listRecent(page, 10);
 		}
 	}
 
@@ -56,5 +56,12 @@ public class ProjectController {
 	@RequestMapping(value = "/my/", method = RequestMethod.GET)
 	public List<Project> myProjects(){
 		return projectService.myProject();
+	}
+
+	@ApiOperation(value="rating ++")
+	@RequestMapping(value = "/{id}/rating", method = RequestMethod.PUT)
+	public Result incRating(int id){
+		projectService.incRating(id);
+		return new Result(true, null, null);
 	}
 }

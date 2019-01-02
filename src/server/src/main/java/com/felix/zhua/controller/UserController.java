@@ -5,14 +5,12 @@ import com.felix.zhua.model.LoginInfo;
 import com.felix.zhua.model.Result;
 import com.felix.zhua.model.User;
 import com.felix.zhua.service.UserService;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
@@ -70,10 +68,23 @@ public class UserController {
 		return new Result<>(loginInfo != null, null, loginInfo);
 	}
 
-	@ApiOperation(value="邮箱是否已注册")
+	@ApiOperation(value = "邮箱是否已注册")
 	@RequestMapping(value = "/email/exists", method = RequestMethod.GET)
-	public Result<Boolean> emailExists(@RequestParam String email){
+	public Result<Boolean> emailExists(@RequestParam String email) {
 		boolean exists = userService.emailExists(email);
 		return new Result<>(true, null, exists);
+	}
+
+	@Data
+	private static class SetPasswordParams {
+		private String oldPassword;
+		private String newPassword;
+	}
+
+	@ApiOperation(value = "修改密码")
+	@RequestMapping(value = "/{id}/password", method = RequestMethod.PUT)
+	private Result<Boolean> setPassword(@RequestBody SetPasswordParams setPasswordParams) {
+		int effectRows = userService.setPassword(setPasswordParams.oldPassword, setPasswordParams.newPassword);
+		return new Result<>(true, null, effectRows > 0);
 	}
 }

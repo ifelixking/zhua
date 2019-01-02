@@ -17,4 +17,5 @@ public class Project implements Serializable {
 	private String siteTitle;
 	private boolean privately;
 	private String data;
+	private Integer rating;
 }
