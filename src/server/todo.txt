@@ -37,3 +37,7 @@ server 端是用注解方式验证邮箱格式合法
 
 // 
 zhua.exe 判断 nav to 的 site 是 http 还是 https, 对应注入
+
+
+home 页 favicon 处理
+<img src='https://www.sina.com.cn/favicon.ico' style={{ width: '16px', height: '16px', verticalAlign: 'baseline', marginBottom: '2px' }} />

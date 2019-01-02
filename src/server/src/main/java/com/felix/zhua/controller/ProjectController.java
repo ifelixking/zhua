@@ -1,5 +1,6 @@
 package com.felix.zhua.controller;
 
+import com.felix.zhua.aop.WithoutLogin;
 import com.felix.zhua.model.Pager;
 import com.felix.zhua.model.Project;
 import com.felix.zhua.model.Result;
@@ -19,6 +20,7 @@ public class ProjectController {
 	@Autowired
 	ProjectService projectService;
 
+	@WithoutLogin
 	@ApiOperation(value = "项目(最新)列表, 带分页, 关键字搜索")
 	@RequestMapping(value="", method = RequestMethod.GET)
 	public Pager<Project> projects(@RequestParam(required = false) String keyword, @RequestParam(required = false, defaultValue = "0") int page) {
@@ -43,6 +45,7 @@ public class ProjectController {
 		return result;
 	}
 
+	@WithoutLogin
 	@ApiOperation(value = "获取单个项目信息")
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public Project getById(@PathVariable int id) {

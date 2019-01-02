@@ -19,7 +19,7 @@ public interface ProjectMapper {
 	int count();
 
 	@Insert("insert into project(createTime, modifyTime, name, siteURL, siteTitle, privately, data, ownerId) " +
-			"values(now(), now(), #{project.name}, #{project.siteURL}, #{project.siteTitle}, #{project.privately}, #{project.data}, #{project.ownerId})")
+			"values(unix_timestamp(), unix_timestamp(), #{project.name}, #{project.siteURL}, #{project.siteTitle}, #{project.privately}, #{project.data}, #{project.ownerId})")
 	@Options(useGeneratedKeys = true, keyProperty = "project.id")
 	void create(@Param("project") Project project);
 
