@@ -29,7 +29,7 @@ export function logout() {
 }
 
 // ======================================================================================================
-export function getRecentAndPopular(){
+export function getRecentAndPopular() {
 	return get('/projects/rap');
 }
 
@@ -57,7 +57,7 @@ export function setProjectData(id, { data }) {
 }
 
 // 我的项目列表
-export function getMyProjects(){
+export function getMyProjects() {
 	return get('/projects/my/');
 }
 
@@ -70,13 +70,13 @@ function* get(url) {
 }
 
 function* post(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'POST', body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }
 
 function* put(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'put', body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'put', headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }

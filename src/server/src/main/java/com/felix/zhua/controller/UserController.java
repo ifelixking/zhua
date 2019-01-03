@@ -31,12 +31,12 @@ public class UserController {
 		private String password;
 	}
 
-	@ApiOperation(value = "用户登录")
 	@WithoutLogin
+	@ApiOperation(value = "用户登录")
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public Result<LoginInfo> login(@RequestBody LoginParams loginParams) {
 		LoginInfo loginInfo = userService.login(loginParams.username, loginParams.password);
-		return new Result<LoginInfo>(loginInfo != null, null, loginInfo);
+		return new Result<>(true, loginInfo == null ? "USERNAME_PASSWORD_ERROR" : null, loginInfo);
 	}
 
 	@ApiOperation(value = "用户注销")
@@ -48,10 +48,12 @@ public class UserController {
 		return result;
 	}
 
+	@WithoutLogin
 	@ApiOperation(value = "当前登录信息")
 	@RequestMapping(value = "/loginInfo", method = RequestMethod.GET)
-	public LoginInfo loginInfo() {
-		return userService.loginInfo();
+	public Result<LoginInfo> loginInfo() {
+		LoginInfo loginInfo = userService.loginInfo();
+		return new Result<>(true, null, loginInfo);
 	}
 
 	@Data
@@ -60,14 +62,19 @@ public class UserController {
 		private String password;
 	}
 
+	@WithoutLogin
 	@ApiOperation(value = "用户注册")
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public Result<LoginInfo> registe(@RequestBody RegisteParams registeParams) {
+		if (userService.emailExists(registeParams.email)) {
+			return new Result<>(true, "EMAIL_ALREADY_EXIST", null);
+		}
 		userService.registe(registeParams.getEmail(), registeParams.getPassword());
 		LoginInfo loginInfo = userService.login(registeParams.getEmail(), registeParams.getPassword());
-		return new Result<>(loginInfo != null, null, loginInfo);
+		return new Result<>(true, null, loginInfo);
 	}
 
+	@WithoutLogin
 	@ApiOperation(value = "邮箱是否已注册")
 	@RequestMapping(value = "/email/exists", method = RequestMethod.GET)
 	public Result<Boolean> emailExists(@RequestParam String email) {

@@ -20,8 +20,10 @@ import Register from './Register'
 class App extends React.Component {
 	constructor(props) {
 		super(props)
+		this.onLogin = this.onLogin.bind(this)
+		this.logout = this.logout.bind(this)
 		this.state = {
-
+			loginInfo: null
 		}
 	}
 
@@ -31,8 +33,23 @@ class App extends React.Component {
 			let result = yield Service.getRecentAndPopular()
 			_this.setState({ recentProjects: result.recent, popularProjects: result.popular })
 		})
+		co(function* () {
+			let result = yield Service.getLoginInfo()
+			_this.setState({ loginInfo: result.data })
+		})
 	}
 
+	onLogin(loginInfo) {
+		this.setState({ loginInfo })
+	}
+
+	logout() {
+		let _this = this
+		co(function* () {
+			let result = yield Service.logout()
+			_this.setState({ loginInfo: null })
+		})
+	}
 
 	render() {
 
@@ -70,9 +87,16 @@ class App extends React.Component {
 		let recentProjects = buildProjectCard(this.state.recentProjects)
 		let popularProjects = buildProjectCard(this.state.popularProjects)
 
+		let user
+		if (this.state.loginInfo) {
+			user = <span onClick={this.logout}>{this.state.loginInfo.username}</span>
+		} else {
+			user = <span><Login onLogin={this.onLogin} /><Register onLogin={this.onLogin} /></span>
+		}
+
 		return (
 			<div style={{ padding: '16px 32px', textAlign: 'center' }}>
-				<div style={{textAlign:'right'}}><Login /><Register /></div>
+				<div style={{ textAlign: 'right' }}>{user}</div>
 				<div style={{ clear: 'both', marginTop: '64px' }}>
 					<h1 style={{ fontSize: '48px', color: '#FF7F00' }}>Zhua</h1>
 				</div>
