@@ -1,14 +1,22 @@
 package com.felix.zhua.service;
 
 import com.felix.zhua.mapper.ProjectMapper;
+import com.felix.zhua.mapper.ProjectMapperES;
 import com.felix.zhua.mapper.ProjectMapperW;
 import com.felix.zhua.mapper.ProjectRatingMapperW;
 import com.felix.zhua.model.LoginInfo;
 import com.felix.zhua.model.Pager;
 import com.felix.zhua.model.Project;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +32,9 @@ public class ProjectService {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private ProjectMapperES projectMapperES;
 
 	public Pager<Project> listRecent(int page, int pageSize) {
 		int count = projectMapper.listCount();
@@ -41,24 +52,26 @@ public class ProjectService {
 		LoginInfo loginInfo = userService.loginInfo();
 		project.setOwnerId(loginInfo.getUserId());
 		projectMapperW.create(project);
+		projectMapperES.save(project.toES());
 		return project;
 	}
 
 	public Project getById(int id) {
-		Project project = projectMapperW.getById(id);
-		return project;
+		return projectMapperW.getById(id);
 	}
 
 	public Pager<Project> find(String keyword, int page) {
 		int pageSize = 10;
-		int count = projectMapper.findCount(keyword);
-		List<Project> list = projectMapper.find(keyword, pageSize * page, pageSize);
-		Pager<Project> pager = new Pager<>();
-		pager.setRecordCount(count);
-		pager.setPage(page);
-		pager.setPageCount((int) Math.ceil((double) count / pageSize));
-		pager.setData(list);
-		return pager;
+		Pageable pageable = PageRequest.of(page, pageSize);
+		QueryStringQueryBuilder builder = new QueryStringQueryBuilder(keyword);
+		SearchQuery searchQuery = new NativeSearchQueryBuilder().withPageable(pageable).withQuery(builder).build();
+		Page<Project.ES> searchPageResults = projectMapperES.search(searchQuery);
+		List<Project.ES> listES = searchPageResults.getContent();
+		List<Project> list = new ArrayList<>(listES.size());
+		for (Project.ES item : listES) {
+			list.add(projectMapper.getById4List(item.getId()));
+		}
+		return new Pager<>(page, searchPageResults.getTotalPages(), (int) searchPageResults.getTotalElements(), list);
 	}
 
 	public boolean setData(int id, String data) {
@@ -75,11 +88,4 @@ public class ProjectService {
 		projectRatingMapper.inc(id);
 	}
 
-//	public int rating(int id){
-//		return projectRatingMapper.value(id);
-//	}
-//
-//	public void incRating(int id){
-//		projectRatingMapper.inc(id);
-//	}
 }

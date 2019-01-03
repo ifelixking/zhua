@@ -22,12 +22,17 @@ public interface ProjectMapper {
 	@Select("SELECT COUNT(*) FROM project WHERE privately=FALSE")
 	int listCount();
 
+//	@Select("select project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data " +
+//			"from project left join user on project.ownerId=user.id " +
+//			"where privately=false and (project.name like CONCAT('%',#{keyword},'%') or project.siteURL like CONCAT('%',#{keyword},'%')) " +
+//			"ORDER BY rating.value DESC, project.modifyTime DESC LIMIT #{start}, #{count}")
+//	List<Project> find(String keyword, int start, int count);
+//
+//	@Select("SELECT COUNT(*) FROM project WHERE privately=FALSE AND (project.name LIKE CONCAT('%',#{keyword},'%') OR project.siteURL LIKE CONCAT('%',#{keyword},'%')) ")
+//	int findCount(String keyword);
+
 	@Select("select project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data " +
 			"from project left join user on project.ownerId=user.id " +
-			"where privately=false and (project.name like CONCAT('%',#{keyword},'%') or project.siteURL like CONCAT('%',#{keyword},'%')) " +
-			"ORDER BY rating.value DESC, project.modifyTime DESC LIMIT #{start}, #{count}")
-	List<Project> find(String keyword, int start, int count);
-
-	@Select("SELECT COUNT(*) FROM project WHERE privately=FALSE AND (project.name LIKE CONCAT('%',#{keyword},'%') OR project.siteURL LIKE CONCAT('%',#{keyword},'%')) ")
-	int findCount(String keyword);
+			"WHERE privately=false AND project.id = #{id}")
+	Project getById4List(@Param("id") int id);
 }
