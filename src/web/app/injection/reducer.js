@@ -26,27 +26,27 @@ export default combineReducers({
 	actionStore: (actionStore = Immutable.fromJS({
 		start: 1,
 		actions: [
-			{ id: 1, type: 'open-url', next: 2 },
-			{
-				id: 2, type: 'open-each-url', next: 4,
-				actionStore: {
-					start: 3,
-					actions: [
-						{ id: 3, type: 'fetch-table', next: 5 },
-						{ id: 5, type: 'fetch-table', next: 12 },
-						{
-							id: 12, type: 'open-each-url', next: 3, actionStore: {
-								start: 13,
-								actions: [
-									{ id: 13, type: 'fetch-table', next: 15 },
-									{ id: 15, type: 'fetch-table', next: 13 },
-								]
-							}
-						},
-					]
-				}
-			},
-			{ id: 4, type: 'open-url', next: 2 },
+			{ id: 1, type: 'open-url' },
+			// {
+			// 	id: 2, type: 'open-each-url', next: 4,
+			// 	actionStore: {
+			// 		start: 3,
+			// 		actions: [
+			// 			{ id: 3, type: 'fetch-table', next: 5 },
+			// 			{ id: 5, type: 'fetch-table', next: 12 },
+			// 			{
+			// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
+			// 					start: 13,
+			// 					actions: [
+			// 						{ id: 13, type: 'fetch-table', next: 15 },
+			// 						{ id: 15, type: 'fetch-table', next: 13 },
+			// 					]
+			// 				}
+			// 			},
+			// 		]
+			// 	}
+			// },
+			// { id: 4, type: 'open-url', next: 2 },
 		]
 	}), action) => {
 		switch (action.type) {

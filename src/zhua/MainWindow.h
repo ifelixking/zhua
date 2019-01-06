@@ -13,6 +13,7 @@ private:
 	void onViewLoadProgress(int progress);
 	void onViewLoadStarted();
 	void slotNavigate();
+	void slotHome();
 	void inject();
 	void slotShowDevTool();
 
@@ -21,6 +22,7 @@ private:
 
 private:
 	QString m_injectScriptID;
+	QUrl m_urlHome;
 	QWebEngineView * m_view;
 	//enum InjectStates {
 	//	IS_NOTYET,

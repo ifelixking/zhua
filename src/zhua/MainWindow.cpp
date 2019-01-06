@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget * parent)
 	// 	, m_injectState(IS_NOTYET)
 	, m_view(new QWebEngineView(this))
 	, m_injectScriptID(QUuid::createUuid().toString())
+	, m_urlHome("https://www.zhua.com")
 {
 
 	QWebEngineProfile* defaultProfile = QWebEngineProfile::defaultProfile();
@@ -68,7 +69,7 @@ MainWindow::MainWindow(QWidget * parent)
 
 	m_view->show();
 
-	m_view->load(QUrl("https://www.zhua.com"));
+	m_view->load(m_urlHome);
 }
 
 void	MainWindow::cookieAdded(const QNetworkCookie &cookie) {
@@ -117,6 +118,8 @@ void MainWindow::initMenu() {
 	// [文件]
 	{
 		auto mfile = bar->addMenu(QString::fromLocal8Bit("文件(&F)"));
+		auto aHome = mfile->addAction(QString::fromLocal8Bit("主页(&H)"));
+		connect(aHome, &QAction::triggered, this, &MainWindow::slotHome);
 
 		auto mEdit = bar->addMenu(QString::fromLocal8Bit("编辑(&E)"));
 		auto aNavi = mEdit->addAction(QString::fromLocal8Bit("打开网址(&N)..."));
@@ -172,4 +175,8 @@ void MainWindow::slotShowDevTool() {
 	pdev->setUrl(QUrl("about:blank"));
 	pdev->show();
 	m_view->page()->setDevToolsPage(pdev->page());
+}
+
+void MainWindow::slotHome(){
+	m_view->load(m_urlHome);
 }
