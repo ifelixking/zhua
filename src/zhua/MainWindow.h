@@ -16,6 +16,9 @@ private:
 	void inject();
 	void slotShowDevTool();
 
+	void	cookieAdded(const QNetworkCookie &cookie);
+		void	cookieRemoved(const QNetworkCookie &cookie);
+
 private:
 	QString m_injectScriptID;
 	QWebEngineView * m_view;

@@ -17,6 +17,7 @@ public class TestFilter implements Filter {
 		// System.out.println("test filter dofilter");
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 		response.setHeader("Access-Control-Allow-Origin","*");
+		response.setHeader("Access-Control-Allow-Credentials","true");
 		filterChain.doFilter(servletRequest, servletResponse);
 	}
 

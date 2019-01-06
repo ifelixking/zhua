@@ -4,6 +4,7 @@ import Immutable from 'immutable'
 import * as utils from '../../utils'
 import * as Smart from '../../smart'
 import ActionTools from './ActionTools'
+import Icon from './Common/Icon'
 
 export default connect(
 	state => {
@@ -24,6 +25,7 @@ export default connect(
 
 		this.onFrameDivClick = this.onFrameDivClick.bind(this)
 		this.onCreate = this.onCreate.bind(this)
+		this.onSave = this.onSave.bind(this)
 
 		this.state = {}
 		this.config = {
@@ -47,6 +49,10 @@ export default connect(
 		let currentActionID = this.props.currentActionInfo.id
 		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: Smart.QTree.createByQNodeList(qNodeList) })
 		this.props.onCreateNextAction(newAction, currentActionID)
+	}
+
+	onSave() {
+		
 	}
 
 	render() {
@@ -156,8 +162,8 @@ export default connect(
 					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
 					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
 					case 'fetch-table': {
-						actionTool = <ActionTools.FetchTable 
-							// actionStore={this.props.actionStore} actionInfo={{ action: currentAction, imPath: this.props.currentActionInfo.imPath }} 
+						actionTool = <ActionTools.FetchTable
+						// actionStore={this.props.actionStore} actionInfo={{ action: currentAction, imPath: this.props.currentActionInfo.imPath }} 
 						/>
 					} break;
 				}
@@ -174,6 +180,9 @@ export default connect(
 		const css_frame = { width: '100%', height: '100%', textAlign: 'center', overflow: 'scroll' }
 		return (
 			<div style={css_frame} onClick={this.onFrameDivClick}>
+				<div style={{ textAlign: 'right', position: 'absolute', width: 'calc(100% - 17px)', padding: '22px 16px' }}>
+					<Icon onClick={this.onSave} style={{ cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff' }} name="icon-save" />
+				</div>
 				<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>
 					<defs>
 						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#70AD47" /></marker>

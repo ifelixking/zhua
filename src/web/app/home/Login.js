@@ -27,33 +27,13 @@ export default class Login extends React.Component {
 		this.emitEmptyUsername = this.emitEmptyUsername.bind(this)
 		this.onChangePassword = this.onChangePassword.bind(this)
 		this.emitEmptyPassword = this.emitEmptyPassword.bind(this)
-		this.okByPressEnter = this.okByPressEnter.bind(this)		
+		this.okByPressEnter = this.okByPressEnter.bind(this)
+		this.onVisibleChange = this.onVisibleChange.bind(this)
 
 		this.state = {
 			username: '',
 			password: ''
 		}
-	}
-
-	componentWillMount() {
-		this.domStyle = utils.createGlobalStyle(`
-			.loginPop .ant-popover-message-title{
-				padding-left: 0px;
-			}
-			.loginPop .ant-btn-sm:first-child{
-				display:none;
-			}
-			.loginPop .ant-btn-primary{
-				width: 100%;
-				height: 46px;
-				margin-left: 0px;
-			}
-		`)
-		message.config({ maxCount: 5 });
-	}
-
-	componentWillUnmount() {
-		this.domStyle.remove()
 	}
 
 	onChangeUsername(e) { this.setState({ username: e.target.value }) }
@@ -62,9 +42,13 @@ export default class Login extends React.Component {
 	emitEmptyUsername() { this.ref_username.current.focus(); this.setState({ username: '' }) }
 	emitEmptyPassword() { this.ref_password.current.focus(); this.setState({ password: '' }) }
 
-	okByPressEnter(){
+	okByPressEnter() {
 		let btn = this.ref_form.current.parentElement.parentElement.nextElementSibling.lastElementChild
 		btn.click()
+	}
+
+	onVisibleChange(visible) {
+		visible && utils.doWhile(() => this.ref_username.current, () => { this.ref_username.current.focus() })
 	}
 
 	render() {
@@ -73,7 +57,7 @@ export default class Login extends React.Component {
 		const css_field = { marginBottom: '16px' }
 
 		let _this = this
-		const onOK = function(e){
+		const onOK = function (e) {
 			// 这里的 this 指向 Popconfirm, 可调用 setVisible 来控制提示框持续显示
 			this.setVisible(true);
 
@@ -95,7 +79,7 @@ export default class Login extends React.Component {
 				_this.setState({ username: '', password: '' }); __this.setVisible(false)
 				_this.props.onLogin(result.data)
 				message.success('登录成功');
-			})			
+			})
 		}
 
 		let login; {
@@ -105,12 +89,12 @@ export default class Login extends React.Component {
 				<form ref={this.ref_form} style={{ paddingTop: '8px' }}>
 					<div style={css_key}>输入您的账号</div>
 					<div style={css_field}>
-						<Input placeholder="账号" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
+						<Input placeholder="账号" autoComplete='email' prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
 							suffix={suffix1} value={this.state.username} onChange={this.onChangeUsername} onPressEnter={this.okByPressEnter} ref={this.ref_username} />
 					</div>
 					<div style={css_key}>请输入密码</div>
 					<div style={css_field}>
-						<Input type="password" placeholder="密码" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+						<Input type="password" placeholder="密码" autoComplete='password' prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
 							suffix={suffix2} value={this.state.password} onChange={this.onChangePassword} onPressEnter={this.okByPressEnter} ref={this.ref_password} />
 					</div>
 				</form>
@@ -120,7 +104,7 @@ export default class Login extends React.Component {
 
 
 		return (
-			<Popconfirm overlayClassName='loginPop' overlayStyle={{ width: '300px' }} placement="bottomRight" title={login} onConfirm={onOK} okText="登录" icon={null}>
+			<Popconfirm overlayClassName='zhua-loginPop' overlayStyle={{ width: '300px' }} placement="bottomRight" title={login} onConfirm={onOK} okText="登录" icon={null} onVisibleChange={this.onVisibleChange}>
 				<span style={{ cursor: 'pointer' }}>登录</span>
 			</Popconfirm>
 		)

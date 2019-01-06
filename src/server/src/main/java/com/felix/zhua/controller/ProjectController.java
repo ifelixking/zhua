@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("projects")
@@ -77,10 +78,11 @@ public class ProjectController {
 		return projectService.myProject();
 	}
 
-	@ApiOperation(value = "rating ++")
-	@RequestMapping(value = "/{id}/rating", method = RequestMethod.PUT)
-	public Result incRating(int id) {
-		projectService.incRating(id);
-		return new Result(true, null, null);
+	@WithoutLogin
+	@ApiOperation(value = "访问次数inc")
+	@RequestMapping(value = "/{id}/open/inc", method = RequestMethod.PUT)
+	public Result<Objects> incOpen(@PathVariable int id) {
+		projectService.incOpen(id);
+		return new Result<>(true, null, null);
 	}
 }

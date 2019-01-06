@@ -149,7 +149,7 @@ Date.prototype.format = function (fmt) { //author: meizz
 	return fmt;
 }
 
-export function createGlobalStyle(strStyle){
+export function createGlobalStyle(strStyle) {
 	let style = document.createElement('style')
 	style.setAttribute('type', 'text/css')
 	style.innerHTML = strStyle
@@ -158,8 +158,33 @@ export function createGlobalStyle(strStyle){
 }
 
 
-export function validEmail(text)
-{
+export function validEmail(text) {
 	var reg = /^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/;
 	return reg.test(text)
 }
+
+export function doWhile(funcWhile, funcDo, retryCount = 10, interval = 30) {
+	const func = function () {
+		if (funcWhile()) {
+			funcDo()
+		} else if (retryCount--) {
+			console.log(`retry:${retryCount}`)
+			window.setTimeout(func, interval)
+		}
+	}
+	func()
+}
+
+// export function* ping(url) {
+// 	try {
+// 		let result = yield fetch(url, { method: 'HEAD' })
+// 		return result.status == 200
+// 	} catch (ex) { return false; }
+// }
+
+export function checkURL(URL) {
+	var str = URL;
+	var Expression = /http(s)?:\/\/([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?/;
+	var objExp = new RegExp(Expression);
+	return objExp.test(str)
+} 

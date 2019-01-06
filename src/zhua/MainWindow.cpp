@@ -2,6 +2,13 @@
 #include "MainWindow.h"
 #include "DlgNavigate.h"
 
+class CustomWebEnginePage : public QWebEnginePage
+{
+public:
+	CustomWebEnginePage() {}
+	virtual bool certificateError(const QWebEngineCertificateError &certificateError) { return true; }
+};
+
 MainWindow::MainWindow(QWidget * parent)
 	: QMainWindow(parent)
 	// 	, m_injectState(IS_NOTYET)
@@ -9,15 +16,72 @@ MainWindow::MainWindow(QWidget * parent)
 	, m_injectScriptID(QUuid::createUuid().toString())
 {
 
+	QWebEngineProfile* defaultProfile = QWebEngineProfile::defaultProfile();
+	defaultProfile->setCachePath("d:\\qq\\coo");
+	defaultProfile->setPersistentStoragePath("d:\\qq\\ss");
+	defaultProfile->setPersistentCookiesPolicy(QWebEngineProfile::ForcePersistentCookies);
+
 	this->initMenu();
+
+
+
+	//QUrl url;
+	//// QWebEngineView *webView = new QWebEngineView();
+	//QNetworkAccessManager * networkManager = new QNetworkAccessManager();
+	//QNetworkCookieJar * cookieJar = networkManager->cookieJar();;
+	//QList<QNetworkCookie> cookies = cookieJar->cookiesForUrl(strUrl);
+	//QWebEngineCookieStore *cookieStore = webView->page()->profile()->cookieStore();
+	//cookieStore->setCookie(cookies.front(), url);
+	//webView->page()->load(url);
+	//webView->show();
+
+
+
+
+
+
+	m_view->setPage(new CustomWebEnginePage());
+
+
+	
+
+	m_view->page()->profile()->cookieStore()->setCookieFilter([](const QWebEngineCookieStore::FilterRequest &request)->bool {
+
+
+		auto a = request.origin.toString().toStdWString();
+		auto b = request.firstPartyUrl.toString().toStdWString();
+
+		return true;
+	});
+
+
+
+
 
 	setCentralWidget(m_view);
 	connect(m_view, &QWebEngineView::loadFinished, this, &MainWindow::onViewLoadFinished);
 	connect(m_view, &QWebEngineView::loadProgress, this, &MainWindow::onViewLoadProgress);
 	connect(m_view, &QWebEngineView::loadStarted, this, &MainWindow::onViewLoadStarted);
+
+	connect(m_view->page()->profile()->cookieStore(), &QWebEngineCookieStore::cookieAdded, this, &MainWindow::cookieAdded);
+	connect(m_view->page()->profile()->cookieStore(), &QWebEngineCookieStore::cookieAdded, this, &MainWindow::cookieAdded);
+
 	m_view->show();
-	
-	m_view->load(QUrl("https://www.sohu.com"));
+
+	m_view->load(QUrl("https://www.zhua.com"));
+}
+
+void	MainWindow::cookieAdded(const QNetworkCookie &cookie) {
+
+	auto name = QString(cookie.name()).toStdWString();
+	auto value = QString(cookie.value()).toStdWString();
+
+	// m_view->page()->profile()->cookieStore()->setCookie(cookie);
+
+	int	aa = 0;
+}
+void	MainWindow::cookieRemoved(const QNetworkCookie &cookie) {
+	int	aa = 0;
 }
 
 MainWindow::~MainWindow() {
@@ -70,9 +134,9 @@ void MainWindow::initMenu() {
 
 
 	// ×´Ì¬À¸
-	auto mBar = this->statusBar();	
+	auto mBar = this->statusBar();
 	{
-		
+
 		auto aProgress = new QProgressBar(this); aProgress->setFixedSize(100, 16); aProgress->setTextVisible(false);
 		connect(m_view, &QWebEngineView::loadProgress, [aProgress](int progress) {
 			aProgress->setValue(progress);
@@ -98,7 +162,7 @@ void MainWindow::slotNavigate() {
 
 void MainWindow::inject() {
 	// qDebug() << "--------------------- Inject";	
-	auto script = QString("(function(){ if (document.getElementById('%1')) return; if (!document.body) return; var s=document.createElement('script');s.id='%1';s.src='http://localhost:80/injection/js/index.js';document.body.append(s)})()").arg(m_injectScriptID);
+	auto script = QString("(function(){ if (document.getElementById('%1')) return; if (!document.body) return; var s=document.createElement('script');s.id='%1';s.src='https://www.zhua.com/injection/js/index.js';document.body.append(s)})()").arg(m_injectScriptID);
 	// InjectStates * state = &this->m_injectState;
 	m_view->page()->runJavaScript(script/*, [state](const QVariant & result) {*state = result == true ? IS_SUCCESSED : IS_FAILED;}*/);
 }

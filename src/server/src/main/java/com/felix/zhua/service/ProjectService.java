@@ -3,7 +3,7 @@ package com.felix.zhua.service;
 import com.felix.zhua.mapper.ProjectMapper;
 import com.felix.zhua.mapper.ProjectMapperES;
 import com.felix.zhua.mapper.ProjectMapperW;
-import com.felix.zhua.mapper.ProjectRatingMapperW;
+import com.felix.zhua.mapper.RatingMapper;
 import com.felix.zhua.model.LoginInfo;
 import com.felix.zhua.model.Pager;
 import com.felix.zhua.model.Project;
@@ -28,7 +28,7 @@ public class ProjectService {
 	ProjectMapperW projectMapperW;
 
 	@Autowired
-	ProjectRatingMapperW projectRatingMapper;
+	RatingMapper ratingMapper;
 
 	@Autowired
 	private UserService userService;
@@ -84,8 +84,8 @@ public class ProjectService {
 		return projectMapperW.getProjectsByOwnerId(userId);
 	}
 
-	public void incRating(int id) {
-		projectRatingMapper.inc(id);
+	public void incOpen(int id) {
+		ratingMapper.inc(id, "project-open");
 	}
 
 }

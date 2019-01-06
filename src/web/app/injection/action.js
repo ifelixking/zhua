@@ -9,3 +9,12 @@ export function fetchProjects() {
 		})
 	}
 }
+
+export function fetchLoginInfo() {
+	return (dispatch) => {
+		co(function* () {
+			let result = yield Service.getLoginInfo()
+			dispatch({ type: 'SET_LOGININFO', loginInfo: result.data })
+		})
+	}
+}

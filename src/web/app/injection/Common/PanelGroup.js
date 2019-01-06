@@ -10,7 +10,7 @@ export default class PanelGroup extends React.Component {
 			showMainPanel: showMainPanel,
 			positionMain: { x: 61.8, y: 100 },
 			panelSize: { width, height },
-			currentPanel: '资源',
+			currentPanel: '动作',
 		}
 		this.onMainBtnClick = this.onMainBtnClick.bind(this)
 		this.onMainBtnMove = this.onMainBtnMove.bind(this)

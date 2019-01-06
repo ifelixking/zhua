@@ -31,7 +31,8 @@ export default class Register extends React.Component {
 		this.emitEmptyPassword = this.emitEmptyPassword.bind(this)
 		this.onChangeRePassword = this.onChangeRePassword.bind(this)
 		this.emitEmptyRePassword = this.emitEmptyRePassword.bind(this)
-		this.okByPressEnter = this.okByPressEnter.bind(this)	
+		this.okByPressEnter = this.okByPressEnter.bind(this)
+		this.onVisibleChange = this.onVisibleChange.bind(this)
 
 		this.state = {
 			username: '',
@@ -39,27 +40,6 @@ export default class Register extends React.Component {
 			repassword: '',
 			loading: false
 		}
-	}
-
-	componentWillMount() {
-		this.domStyle = utils.createGlobalStyle(`
-			.loginPop .ant-popover-message-title{
-				padding-left: 0px;
-			}
-			.loginPop .ant-btn-sm:first-child{
-				display:none;
-			}
-			.loginPop .ant-btn-primary{
-				width: 100%;
-				height: 46px;
-				margin-left: 0px;
-			}
-		`)
-		message.config({ maxCount: 5 });
-	}
-
-	componentWillUnmount() {
-		this.domStyle.remove()
 	}
 
 	onChangeUsername(e) { this.setState({ username: e.target.value }) }
@@ -70,9 +50,13 @@ export default class Register extends React.Component {
 	emitEmptyPassword() { this.ref_password.current.focus(); this.setState({ password: '' }) }
 	emitEmptyRePassword() { this.ref_repassword.current.focus(); this.setState({ repassword: '' }) }
 
-	okByPressEnter(){
+	okByPressEnter() {
 		let btn = this.ref_form.current.parentElement.parentElement.nextElementSibling.lastElementChild
 		btn.click()
+	}
+
+	onVisibleChange(visible) {
+		visible && utils.doWhile(() => this.ref_username.current, () => { this.ref_username.current.focus() })
 	}
 
 	render() {
@@ -88,17 +72,17 @@ export default class Register extends React.Component {
 				<form ref={this.ref_form} style={{ paddingTop: '8px' }}>
 					<div style={css_key}>请输入您的邮箱作为账号</div>
 					<div style={css_field}>
-						<Input disabled={this.state.loading} placeholder="邮箱" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
+						<Input disabled={this.state.loading} autoComplete='email' placeholder="邮箱" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
 							suffix={suffix1} value={this.state.username} onChange={this.onChangeUsername} onPressEnter={this.okByPressEnter} ref={this.ref_username} />
 					</div>
 					<div style={css_key}>设置密码</div>
 					<div style={css_field}>
-						<Input disabled={this.state.loading} type="password" placeholder="密码" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+						<Input disabled={this.state.loading} type="password" autoComplete='new-password' placeholder="密码" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
 							suffix={suffix2} value={this.state.password} onChange={this.onChangePassword} onPressEnter={this.okByPressEnter} ref={this.ref_password} />
 					</div>
 					<div style={css_key}>再次输入密码</div>
 					<div style={css_field}>
-						<Input disabled={this.state.loading} type="password" placeholder="密码" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+						<Input disabled={this.state.loading} type="password" autoComplete='comfirm-password' placeholder="密码" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
 							suffix={suffix3} value={this.state.repassword} onChange={this.onChangeRePassword} onPressEnter={this.okByPressEnter} ref={this.ref_repassword} />
 					</div>
 				</form>
@@ -134,7 +118,7 @@ export default class Register extends React.Component {
 
 
 		return (
-			<Popconfirm overlayClassName='loginPop' overlayStyle={{ width: '300px' }} placement="bottomRight" title={login} onConfirm={onOK} okText="注册" icon={null}>
+			<Popconfirm overlayClassName='zhua-loginPop' overlayStyle={{ width: '300px' }} placement="bottomRight" title={login} onConfirm={onOK} okText="注册" icon={null} onVisibleChange={this.onVisibleChange}>
 				<span style={{ cursor: 'pointer', margin: '0px 16px' }}>注册</span>
 			</Popconfirm>
 		)

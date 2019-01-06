@@ -18,11 +18,12 @@ public interface ProjectMapperW {
 	boolean setData(int id, String data);
 
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, rating.value AS rating " +
-			"FROM project LEFT JOIN user ON project.ownerId=user.id LEFT JOIN rating ON project.id=rating.target AND rating.type='project' WHERE project.id=#{id}")
+			"FROM project LEFT JOIN user ON project.ownerId=user.id LEFT JOIN rating ON project.id=rating.target AND rating.type='project-open' WHERE project.id=#{id}")
 	Project getById(@Param("id") int id);
 
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, project.privately " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id " +
 			"where project.ownerId=#{userId} order by project.modifyTime desc")
 	List<Project> getProjectsByOwnerId(@Param("userId") int userId);
+
 }

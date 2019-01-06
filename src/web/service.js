@@ -1,6 +1,7 @@
 import { puts } from "util";
 
-const API_SERVER = 'http://localhost/api'
+const API_SERVER = 'https://www.zhua.com/api'
+// const API_SERVER = ''
 
 // ======================================================================================================
 // 用户注册
@@ -53,7 +54,12 @@ export function getProject(id) {
 
 // 修改项目data
 export function setProjectData(id, { data }) {
-	return puts(`/projects/${id}/data`, { data })
+	return put(`/projects/${id}/data`, { data })
+}
+
+// 访问次数inc
+export function incOpen(id) {
+	return put(`/projects/${id}/open/inc`)
 }
 
 // 我的项目列表
@@ -64,19 +70,19 @@ export function getMyProjects() {
 
 // ======================================================================================================
 function* get(url) {
-	let res = yield fetch(API_SERVER + url)
+	let res = yield fetch(API_SERVER + url, { method: 'GET', credentials: "include" })
 	let obj = yield res.json()
 	return obj
 }
 
 function* post(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'POST', credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }
 
 function* put(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'put', headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'put', credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }
