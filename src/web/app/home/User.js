@@ -18,11 +18,11 @@ import Styles from '../injection/index.css'
 export default class User extends React.Component {
 	constructor(props) {
 		super(props);
-
 	}
 	
 	render() {
-
+		const { loginInfo } = this.props
+		
 		let _this = this
 		const onOK = function (e) {
 			// 这里的 this 指向 Popconfirm, 可调用 setVisible 来控制提示框持续显示
@@ -38,10 +38,16 @@ export default class User extends React.Component {
 			})
 		}
 
-		let content = <span>{this.props.loginInfo.username}</span>
+		let content = <span>{loginInfo.username}</span>
+		let title
+		if (this.props.showText){
+			title = <a href="javascript:;" style={{ cursor: 'pointer', fontSize: '12px', marginRight: '12px', lineHeight: '12px' }}>{loginInfo.username}</a>
+		}else{
+			title = <MyIcon style={{ cursor: 'pointer', fontSize: '24px', marginRight: '12px', lineHeight: '24px' }} name="icon-user" />
+		}
 		return (
 			<Popconfirm overlayClassName='zhua-loginPop' overlayStyle={{ width: '300px' }} placement="bottomRight" title={content} onConfirm={onOK} okText="注销" icon={null}>
-				<MyIcon style={{ cursor: 'pointer', fontSize: '24px', marginRight: '12px' }} name="icon-user" />
+				{title}
 			</Popconfirm>
 		)
 	}

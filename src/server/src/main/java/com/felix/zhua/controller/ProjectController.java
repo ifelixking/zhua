@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Objects;
 
@@ -55,8 +57,9 @@ public class ProjectController {
 
 	@ApiOperation(value = "创建项目")
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	public Project create(@RequestBody Project project) {
-		return projectService.create(project);
+	public Result<Project> create(@RequestBody Project project) {
+		Project newProject = projectService.create(project);
+		return new Result<>(true, null, newProject);
 	}
 
 	@ApiOperation(value = "修改项目data, 该项目必须是自己的项目")
@@ -99,6 +102,14 @@ public class ProjectController {
 		}
 	}
 
+	@WithoutLogin
+	@ApiOperation(value = "openning projct")
+	@RequestMapping(value = "/openning", method = RequestMethod.PUT)
+	public Result<Boolean> openning(Integer id, HttpServletResponse response){
+		Cookie c1 = new Cookie("open-id",  String.valueOf(id)); c1.setPath("/");
+		response.addCookie(c1);
+		return new Result<>(true, null, true);
+	}
 
 
 }

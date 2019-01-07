@@ -72,6 +72,11 @@ export function getOpenedProject(){
 	return get('/projects/open')
 }
 
+// openning
+export function openning(id) {
+	return put(`/projects/openning?id=${id}`)
+}
+
 
 // ======================================================================================================
 function* get(url) {
@@ -81,13 +86,13 @@ function* get(url) {
 }
 
 function* post(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'POST', credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'POST', credentials: "include", headers: { "Content-Type": "application/json" }, body: body && JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }
 
 function* put(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'PUT', credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'PUT', credentials: "include", headers: { "Content-Type": "application/json" }, body: body && JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }

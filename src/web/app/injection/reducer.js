@@ -58,9 +58,18 @@ export default combineReducers({
 			default: return projectStore
 		}
 	},
+	actionStoreModified: (actionStoreModified = false, action) => { 
+		switch (action.type) {
+			case 'SET_PROJECT': return false
+			case 'CREATE_NEXT_ACTION': return true
+			case 'UPDATE_ACTION_STORE_BY_ACTION_DATA': return true
+			case 'PROJECT_SAVED': return false
+			default: return actionStoreModified
+		}
+	},
 	actionStore: (actionStore = defaultActionStore, action) => {
 		switch (action.type) {
-			case 'LOAD_ACTION_STORE': { return action.actionStore; }
+			// case 'LOAD_ACTION_STORE': { return action.actionStore; }
 			case 'CREATE_NEXT_ACTION': {
 				let { path } = utils.actionStoreFindAction(actionStore, action.currentActionID)
 				return actionStore
@@ -84,10 +93,10 @@ export default combineReducers({
 	},
 	maxActionID: (maxActionID = 1, action) => {
 		switch (action.type) {
-			case 'LOAD_ACTION_STORE': {
-				const maxId = function (actions) { return actions && actions.size ? actions.map(value => Math.max(value.get('id'), maxId(value.getIn(['actionStore', 'actions'])))).max() : 0 }
-				return maxId(actionStore.get('actions'))
-			}
+			// case 'LOAD_ACTION_STORE': {
+			// 	const maxId = function (actions) { return actions && actions.size ? actions.map(value => Math.max(value.get('id'), maxId(value.getIn(['actionStore', 'actions'])))).max() : 0 }
+			// 	return maxId(actionStore.get('actions'))
+			// }
 			case 'CREATE_NEXT_ACTION': {
 				return action.newAction.get('id')
 			}

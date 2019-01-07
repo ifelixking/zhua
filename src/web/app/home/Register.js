@@ -119,7 +119,7 @@ export default class Register extends React.Component {
 
 		return (
 			<Popconfirm overlayClassName='zhua-loginPop' overlayStyle={{ width: '300px' }} placement="bottomRight" title={login} onConfirm={onOK} okText="注册" icon={null} onVisibleChange={this.onVisibleChange}>
-				<span style={{ cursor: 'pointer', margin: '0px 16px' }}>注册</span>
+				<a href="javascript:;" style={Object.assign({}, { cursor: 'pointer' }, this.props.style)}>注册</a>
 			</Popconfirm>
 		)
 	}

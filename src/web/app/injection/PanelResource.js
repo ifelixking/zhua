@@ -97,7 +97,7 @@ class Search extends React.Component {
 		const css_input = {
 			border: '1px solid #FF7F00',
 			lineHeight: this.props.mini ? '24px' : '32px',
-			fontSize: '14px',
+			fontSize: this.props.mini ? '12px' : '14px',
 			borderTopLeftRadius: '16px',
 			borderBottomLeftRadius: '16px',
 			padding: '0px 16px',
@@ -105,7 +105,7 @@ class Search extends React.Component {
 			fontWeight: 'bold',
 			boxSizing: 'border-box',
 			margin: '0px',
-
+			outline: 'none'
 		}
 		const css_span = {
 			display: 'inline-block',
@@ -160,7 +160,7 @@ const Home = connect(
 
 		let search = (
 			<div style={{ padding: '48px 0px' }}>
-				<Search searchText={this.props.searchText} onSearchTextChange={this.props.onSearchTextChange} />
+				<Search mini searchText={this.props.searchText} onSearchTextChange={this.props.onSearchTextChange} />
 			</div>
 		)
 

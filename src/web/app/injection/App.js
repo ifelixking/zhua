@@ -37,7 +37,7 @@ export default connect(
 		return (
 			<PanelGroup>
 				<PanelAction />
-				<PanelResource />
+				{/* <PanelResource /> */}
 				<PanelOption />
 			</PanelGroup>
 		)

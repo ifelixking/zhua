@@ -88,7 +88,7 @@ class App extends React.Component {
 	open(item) {
 		co(function* () {
 			yield Service.incOpen(item.id)
-			Cookies.set("open-id", item.id)
+			yield Service.openning(item.id)
 			window.location = item.siteURL
 		})
 	}
@@ -97,8 +97,10 @@ class App extends React.Component {
 		let url = this.state.inputURL
 		if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) { url = 'http://' + url }
 		if (utils.checkURL(url)) {
-			Cookies.remove("open-id")
-			window.location = url
+			co(function* () {
+				yield Service.openning(null)
+				window.location = url
+			})
 		} else {
 			message.error("输入的网址不合法")
 		}
@@ -146,9 +148,9 @@ class App extends React.Component {
 
 		let user
 		if (this.state.loginInfo) {
-			user = <span onClick={this.logout}><User loginInfo={this.state.loginInfo} onLogout={this.onLogout} /></span>
+			user = <span><User loginInfo={this.state.loginInfo} onLogout={this.onLogout} /></span>
 		} else {
-			user = <span><Login onLogin={this.onLogin} /><Register onLogin={this.onLogin} /></span>
+			user = <span><Login onLogin={this.onLogin} /><Register style={{margin:'0px 16px'}} onLogin={this.onLogin} /></span>
 		}
 
 		return (

@@ -17,6 +17,7 @@ export default connect(
 			actionStore: state.actionStore,
 			currentActionInfo: state.currentActionInfo,
 			maxActionID: state.maxActionID,
+			actionStoreModified: state.actionStoreModified,
 		}
 	},
 	dispatch => {
@@ -25,7 +26,11 @@ export default connect(
 			onCreateNextAction: (newAction, currentActionID) => {
 				dispatch({ type: 'CREATE_NEXT_ACTION', newAction, currentActionID })
 				dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo: { type: 'action', id: newAction.get('id') } })
-			}
+			},
+			onCreateProject: (newProject) => {
+				dispatch({ type: 'SET_PROJECT', project: newProject })
+			},
+			onSaved: () => { dispatch({ type: 'PROJECT_SAVED', project: newProject }) }
 		}
 	}
 )(class PanelAction extends React.Component {
@@ -61,14 +66,29 @@ export default connect(
 	}
 
 	onSave() {
-		let { project, loginInfo, actionStore } = this.props
+		if (!this.props.actionStoreModified) { return; }
+		let { project, loginInfo, actionStore, onCreateProject, onSaved } = this.props
+		let data = JSON.stringify(actionStore.toJSON())
 		if (project && project.ownerId == loginInfo.userId) {
+			// 保存自己的 Project
 			co(function* () {
-				let result = yield Service.setMyProjectData(project.id, { data: JSON.stringify(actionStore.toJSON()) })
-				result.data ? message.success("保存成功") : message.error("保存失败")
+				let result = yield Service.setMyProjectData(project.id, { data })
+				result.data ? (message.success("保存成功"), onSaved) : message.error("保存失败")
+
 			})
 		} else {
-
+			// 保存为新的自己的 Project
+			co(function* () {
+				let newProject = {
+					name: 'aaa',
+					privately: false,
+					siteTitle: document.title,
+					siteURL: document.URL,
+					data,
+				}
+				let result = yield Service.createProject(newProject)
+				result.data ? (onCreateProject(result.data), message.success("保存成功"), onSaved()) : message.error("保存失败")
+			})
 		}
 	}
 
@@ -195,10 +215,15 @@ export default connect(
 
 		//
 		const css_frame = { width: '100%', height: '100%', textAlign: 'center', overflow: 'scroll' }
+		const css_redDot = {
+			display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'red',
+			borderRadius: '3px', position: 'relative', top: '-14px', left: '-6px', boxShadow: '0px 0px 3px red'
+		}
 		return (
 			<div style={css_frame} onClick={this.onFrameDivClick}>
 				<div style={{ textAlign: 'right', position: 'absolute', width: 'calc(100% - 17px)', padding: '22px 16px' }}>
-					<Icon onClick={this.onSave} style={{ cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff' }} name="icon-save" />
+					<Icon onClick={this.onSave} titie="保存" style={{ cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff' }} name="icon-save" />
+					<div style={Object.assign({}, css_redDot, { visibility: this.props.actionStoreModified ? 'visible' : 'hidden' })}></div>
 				</div>
 				<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>
 					<defs>
