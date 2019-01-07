@@ -68,6 +68,7 @@ export default connect(
 	onSave() {
 		if (!this.props.actionStoreModified) { return; }
 		let { project, loginInfo, actionStore, onCreateProject, onSaved } = this.props
+		if (!loginInfo || !loginInfo.userId) { message.warn('您还没有登录，请点击【选项】面板【登录】或【注册】'); return }
 		let data = JSON.stringify(actionStore.toJSON())
 		if (project && project.ownerId == loginInfo.userId) {
 			// 保存自己的 Project
