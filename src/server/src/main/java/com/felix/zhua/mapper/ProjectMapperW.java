@@ -14,8 +14,8 @@ public interface ProjectMapperW {
 	@Options(useGeneratedKeys = true, keyProperty = "project.id")
 	void create(@Param("project") Project project);
 
-	@Update("UPDATE project SET data=#{data} WHERE id=#{id}")
-	boolean setData(int id, String data);
+	@Update("UPDATE project SET data=#{data}, modifyTime=unix_timestamp() WHERE id=#{projectId} AND ownerId=#{userId}")
+	boolean setUserProjectData(@Param("userId") int userId, @Param("projectId") int projectId, @Param("data") String data);
 
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, rating.value AS rating " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id LEFT JOIN rating ON project.id=rating.target AND rating.type='project-open' WHERE project.id=#{id}")

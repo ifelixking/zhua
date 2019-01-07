@@ -7,6 +7,8 @@ export function findSimilarity(element) {
 	return $(qString).toArray()
 }
 
+const MAX_INNER_TEXT = 16
+
 export class QNode {
 
 	static create(element, output = null) {
@@ -20,10 +22,13 @@ export class QNode {
 			index = 0, isFirst = true, isLast = true
 		}
 
+		// 用于匹配的 innerText 不能太长
+		let innerText = element.innerText.length > MAX_INNER_TEXT ? null : element.innerText
+
 		let result = Immutable.Map({
 			// element,
 
-			tagName: element.tagName, innerText: element.innerText, index, isFirst, isLast,
+			tagName: element.tagName, innerText, index, isFirst, isLast,
 			className: element.className.split(' ').filter(a => a),
 			attributes: Array.from(element.attributes).filter(a => a.name != 'class' && a.name != 'style').map(a => ({ name: a.name, value: encodeURI(a.value) })),
 

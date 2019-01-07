@@ -5,6 +5,7 @@ import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
 import PanelGroup from './Common/PanelGroup'
 import * as Actions from './action'
+import Cookies from 'js-cookie'
 
 export default connect(
 	state => {
@@ -16,6 +17,9 @@ export default connect(
 		return {
 			fetchLoginInfo: () => {
 				dispatch(Actions.fetchLoginInfo())
+			},
+			fetchOpenedProject: () => {
+				dispatch(Actions.fetchOpenedProject())
 			}
 		}
 	}
@@ -26,6 +30,7 @@ export default connect(
 
 	componentWillMount() {
 		this.props.fetchLoginInfo()
+		this.props.fetchOpenedProject()
 	}
 
 	render() {

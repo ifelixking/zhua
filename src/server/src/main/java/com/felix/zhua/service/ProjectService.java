@@ -74,8 +74,10 @@ public class ProjectService {
 		return new Pager<>(page, searchPageResults.getTotalPages(), (int) searchPageResults.getTotalElements(), list);
 	}
 
-	public boolean setData(int id, String data) {
-		return projectMapperW.setData(id, data);
+	public boolean setMyProjectData(int id, String data) {
+		LoginInfo loginInfo = userService.loginInfo();
+		int userId = loginInfo.getUserId();
+		return projectMapperW.setUserProjectData(userId, id, data);
 	}
 
 	public List<Project> myProject() {

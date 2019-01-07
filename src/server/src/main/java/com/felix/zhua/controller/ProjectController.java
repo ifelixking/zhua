@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,12 +59,11 @@ public class ProjectController {
 		return projectService.create(project);
 	}
 
-	@ApiOperation(value = "修改项目data")
+	@ApiOperation(value = "修改项目data, 该项目必须是自己的项目")
 	@RequestMapping(value = "/{id}/data", method = RequestMethod.PUT)
-	public Result<Project> setData(@PathVariable int id, @RequestBody Project project) {
-		Result<Project> result = new Result<Project>();
-		result.setResult(projectService.setData(id, project.getData()));
-		return result;
+	public Result<Boolean> setMyProjectData(@PathVariable int id, @RequestBody Project project) {
+		boolean successed = projectService.setMyProjectData(id, project.getData());
+		return new Result<>(true, null, successed);
 	}
 
 	@WithoutLogin
@@ -85,4 +86,19 @@ public class ProjectController {
 		projectService.incOpen(id);
 		return new Result<>(true, null, null);
 	}
+
+	@WithoutLogin
+	@ApiOperation(value = "open projct")
+	@RequestMapping(value = "/open", method = RequestMethod.GET)
+	public Result<Project> getOpenedProject(@CookieValue(value = "open-id", required = false) Integer id) {
+		if (id == null) {
+			return new Result<>(true, null, null);
+		} else {
+			Project project = projectService.getById(id);
+			return new Result<>(true, null, project);
+		}
+	}
+
+
+
 }

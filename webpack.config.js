@@ -11,7 +11,7 @@ module.exports = {
 		injection: './src/web/app/injection/index.js'
 	},
 	output: {
-		path: __dirname + '/bin/web',
+		path: __dirname + '/src/server/src/main/resources/public',
 		filename: '[name]/js/index.js',
 		publicPath: '/'
 	},
@@ -37,7 +37,9 @@ module.exports = {
 		]
 	},
 	devServer: {
-		port: 80,
+		host: 'www.zhua.com',
+		port: 443,
+		https: true,
 		proxy: {
 			'/api/*': {
 				target:"http://localhost:8080",

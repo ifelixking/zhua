@@ -5,10 +5,19 @@ import * as utils from '../../utils'
 import * as Smart from '../../smart'
 import ActionTools from './ActionTools'
 import Icon from './Common/Icon'
+import * as Service from './../../service'
+import co from 'co'
+import { message } from 'antd';
 
 export default connect(
 	state => {
-		return { actionStore: state.actionStore, currentActionInfo: state.currentActionInfo, maxActionID: state.maxActionID }
+		return {
+			loginInfo: state.loginInfo,
+			project: state.project,
+			actionStore: state.actionStore,
+			currentActionInfo: state.currentActionInfo,
+			maxActionID: state.maxActionID,
+		}
 	},
 	dispatch => {
 		return {
@@ -52,7 +61,15 @@ export default connect(
 	}
 
 	onSave() {
-		
+		let { project, loginInfo, actionStore } = this.props
+		if (project && project.ownerId == loginInfo.userId) {
+			co(function* () {
+				let result = yield Service.setMyProjectData(project.id, { data: JSON.stringify(actionStore.toJSON()) })
+				result.data ? message.success("保存成功") : message.error("保存失败")
+			})
+		} else {
+
+		}
 	}
 
 	render() {

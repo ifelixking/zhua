@@ -2,6 +2,33 @@ import { combineReducers } from 'redux'
 import Immutable from 'immutable'
 import * as utils from '../../utils'
 
+const defaultActionStore = Immutable.fromJS({
+	start: 1,
+	actions: [
+		{ id: 1, type: 'open-url' },
+		// {
+		// 	id: 2, type: 'open-each-url', next: 4,
+		// 	actionStore: {
+		// 		start: 3,
+		// 		actions: [
+		// 			{ id: 3, type: 'fetch-table', next: 5 },
+		// 			{ id: 5, type: 'fetch-table', next: 12 },
+		// 			{
+		// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
+		// 					start: 13,
+		// 					actions: [
+		// 						{ id: 13, type: 'fetch-table', next: 15 },
+		// 						{ id: 15, type: 'fetch-table', next: 13 },
+		// 					]
+		// 				}
+		// 			},
+		// 		]
+		// 	}
+		// },
+		// { id: 4, type: 'open-url', next: 2 },
+	]
+})
+
 export default combineReducers({
 	loginInfo: (loginInfo = null, action) => {
 		switch (action.type) {
@@ -9,6 +36,14 @@ export default combineReducers({
 				return action.loginInfo
 			}
 			default: return loginInfo;
+		}
+	},
+	project: (project = null, action) => {
+		switch (action.type) {
+			case 'SET_PROJECT': {
+				return action.project
+			}
+			default: return project
 		}
 	},
 	projectStore: (projectStore = Immutable.Map({
@@ -23,32 +58,7 @@ export default combineReducers({
 			default: return projectStore
 		}
 	},
-	actionStore: (actionStore = Immutable.fromJS({
-		start: 1,
-		actions: [
-			{ id: 1, type: 'open-url' },
-			// {
-			// 	id: 2, type: 'open-each-url', next: 4,
-			// 	actionStore: {
-			// 		start: 3,
-			// 		actions: [
-			// 			{ id: 3, type: 'fetch-table', next: 5 },
-			// 			{ id: 5, type: 'fetch-table', next: 12 },
-			// 			{
-			// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
-			// 					start: 13,
-			// 					actions: [
-			// 						{ id: 13, type: 'fetch-table', next: 15 },
-			// 						{ id: 15, type: 'fetch-table', next: 13 },
-			// 					]
-			// 				}
-			// 			},
-			// 		]
-			// 	}
-			// },
-			// { id: 4, type: 'open-url', next: 2 },
-		]
-	}), action) => {
+	actionStore: (actionStore = defaultActionStore, action) => {
 		switch (action.type) {
 			case 'LOAD_ACTION_STORE': { return action.actionStore; }
 			case 'CREATE_NEXT_ACTION': {
@@ -60,6 +70,12 @@ export default combineReducers({
 			case 'UPDATE_ACTION_STORE_BY_ACTION_DATA': {
 				let { path } = utils.actionStoreFindAction(actionStore, action.actionId)
 				return actionStore.setIn([...path, 'data'], action.data)
+			}
+			case 'SET_PROJECT': {
+				let data = action.project && action.project.data
+				let store = null
+				if (data) { try { store = JSON.parse(data); store = Immutable.fromJS(store) } catch (ex) { console.error(ex) } }
+				return store ? store : defaultActionStore
 			}
 			default: {
 				return actionStore

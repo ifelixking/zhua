@@ -356,7 +356,7 @@ class CapturePanel extends React.Component {
 				st.get('isFirst') && !st.get('isLast') && (options.push({ label: '选择第一个', value: 'isFirst' })); st.getIn(['config', 'isFirst']) && values.push('isFirst');
 				st.get('isLast') && !st.get('isFirst') && (options.push({ label: '选择最后一个', value: 'isLast' })); st.getIn(['config', 'isLast']) && values.push('isLast');
 				!st.get('isLast') && !st.get('isFirst') && (options.push({ label: `选择第${st.get('index') + 1}个`, value: 'index' })); st.getIn(['config', 'index']) && values.push('index');
-				st.get('innerText') && st.get('innerText').length <= 16 && (options.push({ label: `选择内容为:"${st.get('innerText')}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
+				st.get('innerText') && (options.push({ label: `选择内容为:"${st.get('innerText')}"`, value: 'innerText' })); st.getIn(['config', 'innerText']) && values.push('innerText');
 				basicChecks = (
 					<div style={outputChecks ? css_prop_section : css_prop_first_section}>
 						<span style={css_prop_section_title}><div style={css_prop_section_title_text_1}>筛选:</div></span>

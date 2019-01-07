@@ -283,7 +283,7 @@ class Filter extends React.Component {
 				<div key={'i'} data-key={'index'} style={n.getIn(['config','index']) ? css_check : css_uncheck} title={`第${n.get('index') + 1}个`}>I</div>
 			)
 			// text
-			n.get('innerText') && n.get('innerText').length <= 16 && checkes.push(
+			n.get('innerText') && checkes.push(
 				<div key={'t'} data-key={'innerText'} style={n.getIn(['config','innerText']) ? css_check : css_uncheck} title={`文本:${n.get('innerText')}`}>T</div>
 			)
 			// [attributes]

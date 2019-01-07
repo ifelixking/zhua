@@ -52,8 +52,8 @@ export function getProject(id) {
 	return get(`/projects/${id}`)
 }
 
-// 修改项目data
-export function setProjectData(id, { data }) {
+// 修改项目data, 该项目必须是自己的项目
+export function setMyProjectData(id, { data }) {
 	return put(`/projects/${id}/data`, { data })
 }
 
@@ -65,6 +65,11 @@ export function incOpen(id) {
 // 我的项目列表
 export function getMyProjects() {
 	return get('/projects/my/');
+}
+
+// opened project
+export function getOpenedProject(){
+	return get('/projects/open')
 }
 
 
@@ -82,7 +87,7 @@ function* post(url, body) {
 }
 
 function* put(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'put', credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+	let res = yield fetch(API_SERVER + url, { method: 'PUT', credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }

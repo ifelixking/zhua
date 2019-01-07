@@ -23,6 +23,7 @@ public class TestFilter implements Filter {
 		response.setHeader("Access-Control-Allow-Origin", curOrigin);
 		response.setHeader("Access-Control-Allow-Credentials", "true");
 		response.setHeader("Access-Control-Allow-Methods", "HEAD, POST, GET, PUT, OPTIONS, DELETE");
+		response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 		filterChain.doFilter(servletRequest, servletResponse);
 	}
 

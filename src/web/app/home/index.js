@@ -9,6 +9,7 @@ import 'antd/lib/spin/style'
 import 'antd/lib/Popconfirm/style'
 import 'antd/lib/message/style'
 import co from 'co'
+import Cookies from 'js-cookie'
 
 import * as Service from '../../service'
 import * as utils from '../../utils'
@@ -87,6 +88,7 @@ class App extends React.Component {
 	open(item) {
 		co(function* () {
 			yield Service.incOpen(item.id)
+			Cookies.set("open-id", item.id)
 			window.location = item.siteURL
 		})
 	}
@@ -95,6 +97,7 @@ class App extends React.Component {
 		let url = this.state.inputURL
 		if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) { url = 'http://' + url }
 		if (utils.checkURL(url)) {
+			Cookies.remove("open-id")
 			window.location = url
 		} else {
 			message.error("输入的网址不合法")

@@ -18,3 +18,21 @@ export function fetchLoginInfo() {
 		})
 	}
 }
+
+export function fetchProject(id) {
+	return (dispatch) => {
+		co(function* () {
+			let result = yield Service.getProject(id)
+			dispatch({ type: 'SET_PROJECT', project: result.data })
+		})
+	}
+}
+
+export function fetchOpenedProject(){
+	return (dispatch)=>{
+		co(function*(){
+			let result = yield Service.getOpenedProject()
+			dispatch({ type: 'SET_PROJECT', project: result.data })
+		})
+	}
+}

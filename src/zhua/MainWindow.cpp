@@ -164,6 +164,7 @@ void MainWindow::slotNavigate() {
 }
 
 void MainWindow::inject() {
+	if (m_view->url().host() == m_urlHome.host()) { return; }
 	// qDebug() << "--------------------- Inject";	
 	auto script = QString("(function(){ if (document.getElementById('%1')) return; if (!document.body) return; var s=document.createElement('script');s.id='%1';s.src='https://www.zhua.com/injection/js/index.js';document.body.append(s)})()").arg(m_injectScriptID);
 	// InjectStates * state = &this->m_injectState;
