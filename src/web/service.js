@@ -37,8 +37,8 @@ export function getRecentAndPopular() {
 // 项目(最新)列表, 带分页, 关键字搜索
 export function getProjects(keyword = null, page = 0) {
 	let url = '/projects?1'
-	keyword && (url += `keyword=${keyword}`)
-	page && (url += `page=${page}`)
+	keyword && (url += `&keyword=${keyword}`)
+	page && (url += `&page=${page}`)
 	return get(url)
 }
 
@@ -63,8 +63,8 @@ export function incOpen(id) {
 }
 
 // 我的项目列表
-export function getMyProjects() {
-	return get('/projects/my/');
+export function getMyProjects(page=0) {
+	return get(`/projects/my/?page=${page}`);
 }
 
 // opened project

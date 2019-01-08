@@ -5,6 +5,9 @@
 		翻页
 	我的
 		翻页
+		编辑
+	project-name 当描述用
+	新建->保存->输入描述信息
 
 
 
@@ -19,6 +22,15 @@
 
 
 
+// -------
+
+
+动作 BLock 用图标, 允许重命名
+
+动作面板 加入 "开始" 按钮, 需提示用户设定保存路径
+
+选项中 添加 "自动保存到文件"
+	将 FetchTable 类型的 Block 列出, 由用户设定存储路径
 
 
 server 端是用注解方式验证邮箱格式合法
@@ -59,21 +71,19 @@ server 端是用注解方式验证邮箱格式合法
 	支付通道
 
 // 
-zhua.exe 判断 nav to 的 site 是 http 还是 https, 对应注入
+-- zhua.exe 判断 nav to 的 site 是 http 还是 https, 对应注入
 
 
 home 页 favicon 处理
 <img src='https://www.sina.com.cn/favicon.ico' style={{ width: '16px', height: '16px', verticalAlign: 'baseline', marginBottom: '2px' }} />
 
-登录-注册 支持 回车
+-- 登录-注册 支持 回车
 
 Antd Icon 打包 是否增加了许多js代码
-
 
 mapper 需要更加精细的区分 R/W
 
 访问次数inc 需要防止 频繁访问
 
-inject 排除 zhua.com
 
 防止未操作 连续保存

@@ -60,8 +60,7 @@ public class ProjectService {
 		return projectMapperW.getById(id);
 	}
 
-	public Pager<Project> find(String keyword, int page) {
-		int pageSize = 10;
+	public Pager<Project> find(String keyword, int page, int pageSize) {
 		Pageable pageable = PageRequest.of(page, pageSize);
 		QueryStringQueryBuilder builder = new QueryStringQueryBuilder(keyword);
 		SearchQuery searchQuery = new NativeSearchQueryBuilder().withPageable(pageable).withQuery(builder).build();
@@ -80,10 +79,12 @@ public class ProjectService {
 		return projectMapperW.setUserProjectData(userId, id, data);
 	}
 
-	public List<Project> myProject() {
+	public Pager<Project> myProject(int page, int pageSize) {
 		LoginInfo loginInfo = userService.loginInfo();
 		int userId = loginInfo.getUserId();
-		return projectMapperW.getProjectsByOwnerId(userId);
+		int count = projectMapperW.listCountByOwnerId(userId);
+		List<Project> list = projectMapperW.getProjectsByOwnerId(userId, page * pageSize, pageSize);
+		return new Pager<>(page, (int) Math.ceil((double) count / pageSize), count, list);
 	}
 
 	public void incOpen(int id) {

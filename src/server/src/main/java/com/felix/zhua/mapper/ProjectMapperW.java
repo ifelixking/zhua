@@ -23,7 +23,9 @@ public interface ProjectMapperW {
 
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, project.privately " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id " +
-			"where project.ownerId=#{userId} order by project.modifyTime desc")
-	List<Project> getProjectsByOwnerId(@Param("userId") int userId);
+			"where project.ownerId=#{userId} order by project.modifyTime desc LIMIT #{start}, #{count}")
+	List<Project> getProjectsByOwnerId(@Param("userId") int userId, @Param("start") int start, @Param("count") int count);
 
+	@Select("SELECT COUNT(*) FROM project WHERE project.ownerId=#{userId}")
+	int listCountByOwnerId(@Param("userId") int userId);
 }

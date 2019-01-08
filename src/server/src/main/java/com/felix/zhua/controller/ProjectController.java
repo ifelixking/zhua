@@ -45,13 +45,14 @@ public class ProjectController {
 		return recentAndPopular;
 	}
 
+	@WithoutLogin
 	@ApiOperation(value = "项目(最新)列表, 带分页, 关键字搜索")
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public Pager<Project> projects(@RequestParam(required = false) String keyword, @RequestParam(required = false, defaultValue = "0") int page) {
 		if (keyword != null && !keyword.trim().isEmpty()) {
-			return projectService.find(keyword, page);
+			return projectService.find(keyword, page, 8);
 		} else {
-			return projectService.listRecent(page, 10);
+			return projectService.listRecent(page, 8);
 		}
 	}
 
@@ -78,8 +79,8 @@ public class ProjectController {
 
 	@ApiOperation(value = "我的项目列表")
 	@RequestMapping(value = "/my/", method = RequestMethod.GET)
-	public List<Project> myProjects() {
-		return projectService.myProject();
+	public Pager<Project> myProjects(@RequestParam(required = false, defaultValue = "0") int page) {
+		return projectService.myProject(page, 8);
 	}
 
 	@WithoutLogin
@@ -105,8 +106,9 @@ public class ProjectController {
 	@WithoutLogin
 	@ApiOperation(value = "openning projct")
 	@RequestMapping(value = "/openning", method = RequestMethod.PUT)
-	public Result<Boolean> openning(Integer id, HttpServletResponse response){
-		Cookie c1 = new Cookie("open-id",  String.valueOf(id)); c1.setPath("/");
+	public Result<Boolean> openning(Integer id, HttpServletResponse response) {
+		Cookie c1 = new Cookie("open-id", String.valueOf(id));
+		c1.setPath("/");
 		response.addCookie(c1);
 		return new Result<>(true, null, true);
 	}
