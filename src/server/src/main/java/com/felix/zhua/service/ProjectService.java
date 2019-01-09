@@ -73,10 +73,21 @@ public class ProjectService {
 		return new Pager<>(page, searchPageResults.getTotalPages(), (int) searchPageResults.getTotalElements(), list);
 	}
 
-	public boolean setMyProjectData(int id, String data) {
+	public boolean setUserProjectData(int id, String data) {
 		LoginInfo loginInfo = userService.loginInfo();
 		int userId = loginInfo.getUserId();
 		return projectMapperW.setUserProjectData(userId, id, data);
+	}
+
+	public boolean updateUserProject(Project project) {
+		LoginInfo loginInfo = userService.loginInfo();
+		int userId = loginInfo.getUserId();
+		boolean successed = projectMapperW.updateUserProject(userId, project);
+		if (successed){
+			Project.ES es = project.toES();
+			projectMapperES.save(es);
+		}
+		return successed;
 	}
 
 	public Pager<Project> myProject(int page, int pageSize) {
@@ -91,4 +102,12 @@ public class ProjectService {
 		ratingMapper.inc(id, "project-open");
 	}
 
+	public boolean delete(int id) {
+		LoginInfo loginInfo = userService.loginInfo();
+		boolean successed = projectMapperW.deleteUserProject(loginInfo.getUserId(), id);
+		if (successed) {
+			projectMapperES.deleteById(id);
+		}
+		return successed;
+	}
 }

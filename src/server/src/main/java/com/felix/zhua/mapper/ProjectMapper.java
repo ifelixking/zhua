@@ -11,15 +11,15 @@ import java.util.List;
 public interface ProjectMapper {
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, rating.value AS rating " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id LEFT JOIN rating ON project.id=rating.target AND rating.type='project-open' " +
-			"WHERE privately=FALSE ORDER BY project.modifyTime DESC LIMIT #{start}, #{count}")
+			"WHERE project.privately=FALSE AND project.isDelete=0 ORDER BY project.modifyTime DESC LIMIT #{start}, #{count}")
 	List<Project> listRecent(@Param("start") int start, @Param("count") int count);
 
 	@Select("SELECT project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, rating.value AS rating " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id LEFT JOIN rating ON project.id=rating.target AND rating.type='project-open' " +
-			"WHERE privately=FALSE ORDER BY rating.value DESC, project.modifyTime DESC LIMIT #{start}, #{count}")
+			"WHERE project.privately=FALSE AND project.isDelete=0 ORDER BY rating.value DESC, project.modifyTime DESC LIMIT #{start}, #{count}")
 	List<Project> listPopular(@Param("start") int start, @Param("count") int count);
 
-	@Select("SELECT COUNT(*) FROM project WHERE privately=FALSE")
+	@Select("SELECT COUNT(*) FROM project WHERE privately=FALSE AND isDelete=0")
 	int listCount();
 
 //	@Select("select project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data " +
@@ -33,6 +33,6 @@ public interface ProjectMapper {
 
 	@Select("select project.id, project.ownerId, user.email as ownerEmail, project.createTime, project.modifyTime, project.name, project.siteURL, project.siteTitle, project.privately, project.data, rating.value AS rating " +
 			"FROM project LEFT JOIN user ON project.ownerId=user.id LEFT JOIN rating ON project.id=rating.target AND rating.type='project-open' " +
-			"WHERE privately=FALSE AND project.id = #{id}")
+			"WHERE project.privately=FALSE AND project.isDelete=0 AND project.id = #{id}")
 	Project getById4List(@Param("id") int id);
 }

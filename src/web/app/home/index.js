@@ -1,17 +1,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import { Tabs, Input, Spin, Icon, message, Pagination } from 'antd'
+import { Tabs, Input, Spin, Icon, message, Pagination, Modal } from 'antd'
 const TabPane = Tabs.TabPane
 const Search = Input.Search;
 import 'antd/lib/tabs/style'
 import 'antd/lib/input/style'
+import 'antd/lib/Modal/style'
 import 'antd/lib/spin/style'
 import 'antd/lib/pagination/style'
 import 'antd/lib/Popconfirm/style'
 import 'antd/lib/message/style'
 import co from 'co'
-import Cookies from 'js-cookie'
 
 import * as Service from '../../service'
 import * as utils from '../../utils'
@@ -39,6 +39,10 @@ class App extends React.Component {
 		this.onSearchValueChange = this.onSearchValueChange.bind(this)
 		this.onEmptySearchValue = this.onEmptySearchValue.bind(this)
 		this.onMyProjectPageTo = this.onMyProjectPageTo.bind(this)
+		this.onEditProject = this.onEditProject.bind(this)
+		this.onDeleteProject = this.onDeleteProject.bind(this)
+		this.flushMyProject = this.flushMyProject.bind(this)
+		this.onEditProjectOK = this.onEditProjectOK.bind(this)
 		this.state = {
 			loginInfo: null,
 			inputURL: '',
@@ -52,6 +56,9 @@ class App extends React.Component {
 			myProjects: null,
 			myProjectsTotalCount: 0,
 			myProjectsPage: 0,
+
+			dlgEditProjectVisible: false,
+			dlgEditProject: {},			// 注: 这是一份copy
 		}
 	}
 
@@ -76,6 +83,10 @@ class App extends React.Component {
 			.zhua-projects .ant-input-search.ant-input-search-enter-button > .ant-input{
 				padding-right: 80px;
 			}
+			.zhua-projects .btn-edit { color: #77F; }
+			.zhua-projects .btn-edit:hover { color: #00F; }
+			.zhua-projects .btn-delete { color: #F77; }
+			.zhua-projects .btn-delete:hover { color: #F00; }
 		`)
 	}
 
@@ -89,10 +100,15 @@ class App extends React.Component {
 		co(function* () {
 			let result = yield Service.getLoginInfo()
 			_this.setState({ loginInfo: result.data })
-			if (result.result && result.data) {
-				let result2 = yield Service.getMyProjects()
-				_this.setState({ myProjects: result2.data, myProjectsTotalCount: result2.recordCount, myProjectsPage: result2.page })
-			}
+			result.result && result.data && _this.flushMyProject()
+		})
+	}
+
+	flushMyProject() {
+		let _this = this
+		co(function* () {
+			let result = yield Service.getMyProjects()
+			_this.setState({ myProjects: result.data, myProjectsTotalCount: result.recordCount, myProjectsPage: result.page })
 		})
 	}
 
@@ -106,13 +122,7 @@ class App extends React.Component {
 
 	onLogin(loginInfo) {
 		this.setState({ loginInfo })
-		_this = this
-		if (loginInfo) {
-			co(function* () {
-				let result2 = yield Service.getMyProjects()
-				_this.setState({ myProjects: result2.data, myProjectsTotalCount: result2.recordCount, myProjectsPage: result2.page })
-			})
-		}
+		loginInfo && this.flushMyProject()
 	}
 
 	onLogout() {
@@ -199,6 +209,42 @@ class App extends React.Component {
 		}
 	}
 
+	// 编辑
+	onEditProject(project) {
+		this.setState({ dlgEditProjectVisible: true, dlgEditProject: { ...project } })
+	}
+
+	onEditProjectOK() {
+		let _this = this
+		co(function* () {
+			let { id, name, siteURL, siteTitle } = _this.state.dlgEditProject
+			let result = yield Service.updateMyProject(id, { name, siteTitle, siteURL })
+			if (!result.result || !result.data) { message.error('保存失败'); this.setState({dlgEditProjectVisible: false}); return }
+			_this.setState({
+				myProjects: _this.state.myProjects.map(item => {
+					if (item.id == id) { item.name = name; item.siteTitle = siteTitle; item.siteURL = siteURL }
+					return item
+				}),
+				dlgEditProjectVisible: false
+			})
+			message.success('保存成功');
+		})
+	}
+
+	// 删除我的项目
+	onDeleteProject(project) {
+		let _this = this
+		Modal.confirm({
+			title: '删除项目', content: `是否删除"${project.name}"？`, okText: '确认', cancelText: '取消', onOk: () => {
+				co(function* () {
+					let result = yield Service.deleteProject(project.id);
+					if (!result.result || !result.data) { message.error('删除失败'); return }
+					_this.flushMyProject(), message.success('删除成功')
+				})
+			}
+		});
+	}
+
 	render() {
 
 		const css_ellipsis = {
@@ -208,17 +254,24 @@ class App extends React.Component {
 			overflow: 'hidden',
 		}
 
-		const buildProjectCard = (projects) => {
+		const buildProjectCard = (projects, edit = false) => {
 			return projects.map((item, i) => {
 				return (
 					<div onClick={() => this.open(item)} key={item.id} className={Styles['card-grid']} style={{ cursor: 'pointer', display: 'inline-block', width: '300px', margin: `0px ${((i + 1) % 4) ? '16px' : '0px'} 16px 0px`, border: '1px solid #e8e8e8', borderRadius: '2px' }}>
 						<div style={{ borderBottom: '1px solid #e8e8e8', borderRadius: '2px 2px 0px 0px', backgroundColor: '#fafafa', padding: '12px' }}>
-							<span title={item.name} style={Object.assign({}, css_ellipsis, { width: '100px', fontSize: '14px', fontWeight: 'bold' })}>{item.id} : {item.name}</span>
-							<span title={item.ownerEmail} style={Object.assign({}, css_ellipsis, { width: '123px', float: 'right', fontSize: '12px', lineHeight: '21px', textAlign: 'right' })}>{item.ownerEmail}</span>
+							<span title={item.siteTitle} style={Object.assign({}, css_ellipsis, { width: '150px', fontSize: '14px', fontWeight: 'bold' })}>{item.id} : {item.siteTitle}</span>
+							<span style={Object.assign({}, css_ellipsis, { width: '123px', float: 'right', fontSize: '12px', lineHeight: '21px', textAlign: 'right' })}>
+								{
+									edit ? ([
+										<MyIcon key={1} title='编辑' className='btn-edit' onClick={(e) => { this.onEditProject(item); return utils.stopEvent(e) }} style={{ fontSize: '18px', marginRight: '12px' }} name='icon-edit' />,
+										<MyIcon key={2} title='删除' className='btn-delete' onClick={(e) => { this.onDeleteProject(item); return utils.stopEvent(e) }} style={{ fontSize: '18px' }} name='icon-delete' />
+									]) : (item.ownerEmail)
+								}
+							</span>
 						</div>
 						<div style={{ padding: '12px' }}>
 							<div title={item.siteURL} style={Object.assign({}, css_ellipsis, { fontSize: '12px', width: '100%', clear: 'both', marginBottom: '4px' })}>{item.siteURL}</div>
-							<div><span title={item.siteTitle} style={Object.assign({}, css_ellipsis, { width: '200px' })}>{item.siteTitle}</span><span style={{ float: 'right', fontSize: '12px', lineHeight: '22px' }}>{utils.t(item.modifyTime)}</span></div>
+							<div><span title={item.name} style={Object.assign({}, css_ellipsis, { width: '200px' })}>{item.name}</span><span style={{ float: 'right', fontSize: '12px', lineHeight: '22px' }}>{utils.t(item.modifyTime)}</span></div>
 						</div>
 					</div>
 				)
@@ -238,45 +291,16 @@ class App extends React.Component {
 		let myTabPage = this.state.loginInfo ? (
 			this.state.myProjects ? (
 				<div className="zhua-projects">
-					<div style={{ height: '292px' }}>{buildProjectCard(this.state.myProjects)}</div>
+					<div style={{ height: '292px' }}>{buildProjectCard(this.state.myProjects, true)}</div>
 					<Pagination onChange={this.onMyProjectPageTo} size="small" current={this.state.myProjectsPage + 1} total={this.state.myProjectsTotalCount} pageSize={8} />
 				</div>
 			) : spin
-		): (
-			<div style={{ textAlign: 'center' }}>
-				<span>请先登录...</span>
-		</div >
-		)
+		) : (
+				<div style={{ textAlign: 'center' }}>
+					<span>请先登录...</span>
+				</div >
+			)
 
-		// const buildProjectCard = (projects, withSearch) => {
-		// 	let cards
-		// 	if (projects) {
-		// 		let compItems = projects.map((item, i) => {
-		// 			return (
-		// 				<div onClick={() => this.open(item)} key={item.id} className={Styles['card-grid']} style={{ cursor: 'pointer', display: 'inline-block', width: '300px', margin: `0px ${((i + 1) % 4) ? '16px' : '0px'} 16px 0px`, border: '1px solid #e8e8e8', borderRadius: '2px' }}>
-		// 					<div style={{ borderBottom: '1px solid #e8e8e8', borderRadius: '2px 2px 0px 0px', backgroundColor: '#fafafa', padding: '12px' }}>
-		// 						<span title={item.name} style={Object.assign({}, css_ellipsis, { width: '100px', fontSize: '14px', fontWeight: 'bold' })}>{item.id} : {item.name}</span>
-		// 						<span title={item.ownerEmail} style={Object.assign({}, css_ellipsis, { width: '123px', float: 'right', fontSize: '12px', lineHeight: '21px', textAlign: 'right' })}>{item.ownerEmail}</span>
-		// 					</div>
-		// 					<div style={{ padding: '12px' }}>
-		// 						<div title={item.siteURL} style={Object.assign({}, css_ellipsis, { fontSize: '12px', width: '100%', clear: 'both', marginBottom: '4px' })}>{item.siteURL}</div>
-		// 						<div><span title={item.siteTitle} style={Object.assign({}, css_ellipsis, { width: '200px' })}>{item.siteTitle}</span><span style={{ float: 'right', fontSize: '12px', lineHeight: '22px' }}>{utils.t(item.modifyTime)}</span></div>
-		// 					</div>
-		// 				</div>
-		// 			)
-		// 		})
-		// 		const suffix = this.state.searchInputValue ? <Icon key={1} type="close-circle" onClick={this.onEmptySearchValue} style={{ marginRight: '8px' }} /> : null;
-		// 		cards = ()
-		// 	} else {
-		// 		cards = <Spin style={{ marginLeft: '600px', marginTop: '96px' }} indicator={<Icon type="loading" style={{ fontSize: '48px', width: 'auto', height: 'auto' }} spin />} />
-		// 	}
-		// 	return cards
-		// }
-
-		// let compProjects = buildProjectCard(this.state.projects, true)
-		// let compMyProjects = this.state.loginInfo ? buildProjectCard(this.state.myProjects, false) : (
-			
-		// )
 
 		let user
 		if (this.state.loginInfo) {
@@ -284,6 +308,27 @@ class App extends React.Component {
 		} else {
 			user = <span><Login onLogin={this.onLogin} /><Register style={{ margin: '0px 16px' }} onLogin={this.onLogin} /></span>
 		}
+
+
+		const css_field = { marginBottom: '4px' }
+		const css_value = { marginBottom: '16px' }
+
+		const compDlgEditProject = (
+			<Modal title="编辑项目" visible={this.state.dlgEditProjectVisible} onOk={this.onEditProjectOK} onCancel={() => { this.setState({ dlgEditProjectVisible: false }) }}>
+				<div style={css_field}>网站标题</div>
+				<div style={css_value}><Input value={this.state.dlgEditProject.siteTitle} onChange={(e) =>
+					this.setState({ dlgEditProject: { ...this.state.dlgEditProject, siteTitle: e.target.value } })} onPressEnter={this.onEditProjectOK} />
+				</div>
+				<div style={css_field}>网站地址</div>
+				<div style={css_value}><Input value={this.state.dlgEditProject.siteURL} onChange={(e) =>
+					this.setState({ dlgEditProject: { ...this.state.dlgEditProject, siteURL: e.target.value } })} onPressEnter={this.onEditProjectOK} />
+				</div>
+				<div style={css_field}>描述信息</div>
+				<div style={css_value}><Input value={this.state.dlgEditProject.name} onChange={(e) =>
+					this.setState({ dlgEditProject: { ...this.state.dlgEditProject, name: e.target.value } })} onPressEnter={this.onEditProjectOK} />
+				</div>
+			</Modal>
+		)
 
 		return (
 			<div style={{ padding: '16px 32px', textAlign: 'center' }}>
@@ -306,11 +351,10 @@ class App extends React.Component {
 				<div style={{ marginTop: '36px' }}>
 					<span style={{ fontFamily: '宋体', fontSize: '12px' }}>Copyright &copy;2019 zhua</span>
 				</div>
+				{compDlgEditProject}
 			</div>
 		)
 	}
 }
-
-
 
 ReactDOM.render(<App />, document.getElementById('root'))

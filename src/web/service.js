@@ -6,32 +6,32 @@ const API_SERVER = 'https://www.zhua.com/api'
 // ======================================================================================================
 // 用户注册
 export function registe({ email, password }) {
-	return post('/user', { email, password })
+	return POST('/user', { email, password })
 }
 
 // 邮箱是否已注册
 export function emailExists(email) {
-	return get(`/email/exists?email=${email}`)
+	return GET(`/email/exists?email=${email}`)
 }
 
 // 用户登录
 export function login({ username, password }) {
-	return post('/user/login', { username, password })
+	return POST('/user/login', { username, password })
 }
 
 // 当前登录信息
 export function getLoginInfo() {
-	return get('/user/loginInfo')
+	return GET('/user/loginInfo')
 }
 
 // 用户注销
 export function logout() {
-	return post('/user/logout')
+	return POST('/user/logout')
 }
 
 // ======================================================================================================
 export function getRecentAndPopular() {
-	return get('/projects/rap');
+	return GET('/projects/rap');
 }
 
 // 项目(最新)列表, 带分页, 关键字搜索
@@ -39,60 +39,60 @@ export function getProjects(keyword = null, page = 0) {
 	let url = '/projects?1'
 	keyword && (url += `&keyword=${keyword}`)
 	page && (url += `&page=${page}`)
-	return get(url)
+	return GET(url)
 }
 
 // 创建项目
 export function createProject({ name, privately, siteTitle, siteURL, data }) {
-	return post('/projects', { name, privately, siteTitle, siteURL, data })
+	return POST('/projects', { name, privately, siteTitle, siteURL, data })
 }
 
 // 获取单个项目信息
 export function getProject(id) {
-	return get(`/projects/${id}`)
+	return GET(`/projects/${id}`)
 }
 
 // 修改项目data, 该项目必须是自己的项目
 export function setMyProjectData(id, { data }) {
-	return put(`/projects/${id}/data`, { data })
+	return PUT(`/projects/${id}/data`, { data })
+}
+
+export function updateMyProject(id, { name, siteURL, siteTitle }) {
+	return PUT(`/projects/${id}/info`, { name, siteURL, siteTitle })
 }
 
 // 访问次数inc
 export function incOpen(id) {
-	return put(`/projects/${id}/open/inc`)
+	return PUT(`/projects/${id}/open/inc`)
 }
 
 // 我的项目列表
-export function getMyProjects(page=0) {
-	return get(`/projects/my/?page=${page}`);
+export function getMyProjects(page = 0) {
+	return GET(`/projects/my/?page=${page}`);
 }
 
 // opened project
-export function getOpenedProject(){
-	return get('/projects/open')
+export function getOpenedProject() {
+	return GET('/projects/open')
 }
 
 // openning
 export function openning(id) {
-	return put(`/projects/openning?id=${id}`)
+	return PUT(`/projects/openning?id=${id}`)
 }
 
+// 删除项目
+export function deleteProject(id) {
+	return DELETE(`/projects/${id}`)
+}
 
 // ======================================================================================================
-function* get(url) {
-	let res = yield fetch(API_SERVER + url, { method: 'GET', credentials: "include" })
-	let obj = yield res.json()
-	return obj
-}
-
-function* post(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'POST', credentials: "include", headers: { "Content-Type": "application/json" }, body: body && JSON.stringify(body) })
-	let obj = yield res.json()
-	return obj
-}
-
-function* put(url, body) {
-	let res = yield fetch(API_SERVER + url, { method: 'PUT', credentials: "include", headers: { "Content-Type": "application/json" }, body: body && JSON.stringify(body) })
+function GET(url) { return fetchJson('GET', url) }
+function POST(url, body) { return fetchJson('POST', url, body) }
+function PUT(url, body) { return fetchJson('PUT', url, body) }
+function DELETE(url, body) { return fetchJson('DELETE', url, body) }
+function* fetchJson(method, url, body) {
+	let res = yield fetch(API_SERVER + url, { method, credentials: "include", headers: { "Content-Type": "application/json" }, body: body && JSON.stringify(body) })
 	let obj = yield res.json()
 	return obj
 }

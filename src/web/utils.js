@@ -60,7 +60,11 @@ export function actionStoreFindAction(actionStore, actionID) {
 
 export function eventFilterRoot(e) {
 	if (e.path.find(ele => ele.id == ROOT_ELEMENT_ID)) { return true }
-	e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation(); e.returnValue = false
+	return stopEvent(e)
+}
+
+export function stopEvent(e){
+	e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation && e.stopImmediatePropagation(); e.returnValue = false
 	return false
 }
 

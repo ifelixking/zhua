@@ -9,12 +9,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Objects;
@@ -66,7 +63,15 @@ public class ProjectController {
 	@ApiOperation(value = "修改项目data, 该项目必须是自己的项目")
 	@RequestMapping(value = "/{id}/data", method = RequestMethod.PUT)
 	public Result<Boolean> setMyProjectData(@PathVariable int id, @RequestBody Project project) {
-		boolean successed = projectService.setMyProjectData(id, project.getData());
+		boolean successed = projectService.setUserProjectData(id, project.getData());
+		return new Result<>(true, null, successed);
+	}
+
+	@ApiOperation(value = "修改项目信息, 该项目必须是自己的项目")
+	@RequestMapping(value = "/{id}/info", method = RequestMethod.PUT)
+	public Result<Boolean> updateMyProject(@PathVariable int id, @RequestBody Project project) {
+		project.setId(id);
+		boolean successed = projectService.updateUserProject(project);
 		return new Result<>(true, null, successed);
 	}
 
@@ -111,6 +116,13 @@ public class ProjectController {
 		c1.setPath("/");
 		response.addCookie(c1);
 		return new Result<>(true, null, true);
+	}
+
+	@ApiOperation(value = "删除自己的项目")
+	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+	public Result<Boolean> delete(@PathVariable Integer id) {
+		Boolean result = projectService.delete(id);
+		return new Result<>(true, null, result);
 	}
 
 
