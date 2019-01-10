@@ -2,16 +2,17 @@
 #include "MainWindow.h"
 #include "DlgNavigate.h"
 
+// 运行不安全的 https
 class CustomWebEnginePage : public QWebEnginePage
 {
 public:
-	CustomWebEnginePage() {}
+	CustomWebEnginePage(QWidget * parent) : QWebEnginePage(parent) {}
 	virtual bool certificateError(const QWebEngineCertificateError &certificateError) { return true; }
 };
 
+// ================================================================================================
 MainWindow::MainWindow(QWidget * parent)
 	: QMainWindow(parent)
-	// 	, m_injectState(IS_NOTYET)
 	, m_view(new QWebEngineView(this))
 	, m_injectScriptID(QUuid::createUuid().toString())
 	, m_urlHome("https://www.zhua.com")
@@ -21,68 +22,20 @@ MainWindow::MainWindow(QWidget * parent)
 	defaultProfile->setCachePath("d:\\qq\\coo");
 	defaultProfile->setPersistentStoragePath("d:\\qq\\ss");
 	defaultProfile->setPersistentCookiesPolicy(QWebEngineProfile::ForcePersistentCookies);
-
-	this->initMenu();
-
-
-
-	//QUrl url;
-	//// QWebEngineView *webView = new QWebEngineView();
-	//QNetworkAccessManager * networkManager = new QNetworkAccessManager();
-	//QNetworkCookieJar * cookieJar = networkManager->cookieJar();;
-	//QList<QNetworkCookie> cookies = cookieJar->cookiesForUrl(strUrl);
-	//QWebEngineCookieStore *cookieStore = webView->page()->profile()->cookieStore();
-	//cookieStore->setCookie(cookies.front(), url);
-	//webView->page()->load(url);
-	//webView->show();
-
-
-
-
-
-
-	m_view->setPage(new CustomWebEnginePage());
-
-
-	
-
-	m_view->page()->profile()->cookieStore()->setCookieFilter([](const QWebEngineCookieStore::FilterRequest &request)->bool {
-
-
-		auto a = request.origin.toString().toStdWString();
-		auto b = request.firstPartyUrl.toString().toStdWString();
-
-		return true;
-	});
-
-
-
-
+	m_view->setPage(new CustomWebEnginePage(m_view));
 
 	setCentralWidget(m_view);
 	connect(m_view, &QWebEngineView::loadFinished, this, &MainWindow::onViewLoadFinished);
 	connect(m_view, &QWebEngineView::loadProgress, this, &MainWindow::onViewLoadProgress);
 	connect(m_view, &QWebEngineView::loadStarted, this, &MainWindow::onViewLoadStarted);
 
-	connect(m_view->page()->profile()->cookieStore(), &QWebEngineCookieStore::cookieAdded, this, &MainWindow::cookieAdded);
-	connect(m_view->page()->profile()->cookieStore(), &QWebEngineCookieStore::cookieAdded, this, &MainWindow::cookieAdded);
+	QWebChannel *pWebChannel = new QWebChannel(m_view->page());
+	pWebChannel->registerObject(QString("Zhua"), this);
+	m_view->page()->setWebChannel(pWebChannel);
 
+	this->initMenu();
 	m_view->show();
-
 	m_view->load(m_urlHome);
-}
-
-void	MainWindow::cookieAdded(const QNetworkCookie &cookie) {
-
-	auto name = QString(cookie.name()).toStdWString();
-	auto value = QString(cookie.value()).toStdWString();
-
-	// m_view->page()->profile()->cookieStore()->setCookie(cookie);
-
-	int	aa = 0;
-}
-void	MainWindow::cookieRemoved(const QNetworkCookie &cookie) {
-	int	aa = 0;
 }
 
 MainWindow::~MainWindow() {
@@ -143,8 +96,7 @@ void MainWindow::initMenu() {
 		auto aProgress = new QProgressBar(this); aProgress->setFixedSize(100, 16); aProgress->setTextVisible(false);
 		connect(m_view, &QWebEngineView::loadProgress, [aProgress](int progress) {
 			aProgress->setValue(progress);
-			if (progress >= 100) { aProgress->hide(); }
-			else { aProgress->show(); }
+			if (progress >= 100) { aProgress->hide(); } else { aProgress->show(); }
 		});
 		mBar->addWidget(aProgress); aProgress->hide();
 
@@ -178,6 +130,16 @@ void MainWindow::slotShowDevTool() {
 	m_view->page()->setDevToolsPage(pdev->page());
 }
 
-void MainWindow::slotHome(){
+void MainWindow::slotHome() {
 	m_view->load(m_urlHome);
 }
+
+QString MainWindow::getInfo(QString a, QString b){
+	auto kk = a.toStdWString();
+	auto kk1 = b.toStdWString();
+	return QString(a + b);
+}
+
+//void MainWindow::getInfo_retrunValue(QString returnValue){
+//	int aa = 0;
+//}

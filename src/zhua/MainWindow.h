@@ -17,18 +17,14 @@ private:
 	void inject();
 	void slotShowDevTool();
 
-	void	cookieAdded(const QNetworkCookie &cookie);
-		void	cookieRemoved(const QNetworkCookie &cookie);
+public slots:
+	QString getInfo(QString, QString);
+
+signals:
+	void getInfo_retrunValue(QString returnValue);
 
 private:
 	QString m_injectScriptID;
 	QUrl m_urlHome;
 	QWebEngineView * m_view;
-	//enum InjectStates {
-	//	IS_NOTYET,
-	//	IS_INJECTING,
-	//	IS_FAILED,
-	//	IS_SUCCESSED,
-	//};
-	//InjectStates m_injectState;
 };

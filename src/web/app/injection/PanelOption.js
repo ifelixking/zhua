@@ -6,6 +6,7 @@ import Register from '../home/Register'
 import User from '../home/User'
 import * as utils from '../../utils'
 import Icon from './Common/Icon'
+import { QWebChannel } from './Common/qwebchannel'
 
 export default connect(
 	state => {
@@ -51,6 +52,16 @@ export default connect(
 		this.domStyle && this.domStyle.remove()
 	}
 
+	test(){
+		debugger;
+		new QWebChannel(qt.webChannelTransport, function (channel) {
+			window.Zhua = channel.objects.Zhua;
+			Zhua.getInfo("show", "me", function (returnValue) {
+				alert("returnValue=" + returnValue);
+			});
+		});	
+	}
+
 	static title = "选项"
 	render() {
 		const { loginInfo, onLogin, onLogout } = this.props
@@ -73,6 +84,7 @@ export default connect(
 			<div style={css_frame}>
 				<Icon style={{ fontSize: '24px' }} name='icon-user' />
 				{domLoginInfo}
+				<button onClick={this.test}>test</button>
 			</div>
 		)
 	}
