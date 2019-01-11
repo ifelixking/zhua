@@ -1,6 +1,5 @@
-import { puts } from "util";
-
-const API_SERVER = 'https://www.zhua.com/api'
+export const HOST = 'https://www.zhua.com'
+const API_SERVER = `${HOST}/api`
 // const API_SERVER = ''
 
 // ======================================================================================================

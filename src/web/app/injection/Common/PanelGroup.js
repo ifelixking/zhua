@@ -1,6 +1,7 @@
 import React from 'react'
 import Styles from '../index.css'
 
+
 export default class PanelGroup extends React.Component {
 	constructor(props) {
 		super(props)
@@ -56,7 +57,7 @@ export default class PanelGroup extends React.Component {
 				{mainPanel}
 				<MainButton right={this.props.right}
 					onClick={this.onMainBtnClick} mini={this.state.showMainPanel}
-					onMove={this.onMainBtnMove} position={this.state.positionMain} />
+					onMove={this.onMainBtnMove} position={this.state.positionMain} >{this.props.buttons}</MainButton>
 			</div>
 		)
 	}
@@ -201,20 +202,42 @@ class MainButton extends React.Component {
 		const fontSize = this.props.mini ? 24 : 48;
 		const timing = 0.2
 
-		let css = {
+		let css_frame = { position: 'fixed', top: `${this.props.position.y}px`, }
+
+		const css = {
 			backgroundColor: '#FF7F00', width: `${size}px`, height: `${size}px`, borderRadius: `${size >> 1}px`, boxSizing: 'border-box',
-			position: 'fixed', top: `${this.props.position.y}px`, boxShadow: '0px 0px 5px #888888', cursor: 'pointer',
+			boxShadow: '0px 0px 5px #888888', cursor: 'pointer',
 			lineHeight: `${size}px`, fontSize: `${fontSize}px`, color: 'white', fontWeight: 'bold', textAlign: 'center',
 			transitionProperty: `width,height,border-radius,line-height,font-size`, transitionDuration: `${timing}s`, transitionTimingFunction: 'ease'
 		}
 		if (this.props.right) {
-			css.right = `${this.props.position.x}px`
+			css_frame.right = `${this.props.position.x}px`
 		} else {
-			css.left = `${this.props.position.x}px`
+			css_frame.left = `${this.props.position.x}px`
 		}
 
+		const css_btn = {
+			position: 'absolute', boxShadow: '0px 0px 5px #888888', cursor: 'pointer', backgroundColor: '#FF7F00',
+			borderRadius: '12px', width: '24px', height: '24px', top: '-10px', left: '0px', padding: '6px 5px'
+		}
+
+		const positions = [
+			{ top: '-26px', left: '15px' },
+			{ top: '-11px', left: '-11px' },
+			{ top: '16px', left: '-25px' }
+		]
+
+		const btns = this.props.children.map((item, i) => {
+			return (
+				<div onClick={item.onClick} key={i} style={{ ...css_btn, ...positions[i] }}>{item.title}</div>
+			)
+		})
+
 		return (
-			<div onMouseDown={this.onMouseDown} style={css}>Z</div>
+			<div style={css_frame}>
+				<div onMouseDown={this.onMouseDown} style={css}>Z</div>
+				{btns}
+			</div>
 		)
 	}
 }

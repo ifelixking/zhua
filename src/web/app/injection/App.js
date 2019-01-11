@@ -1,11 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import PanelAction from './PanelAction'
-import PanelResource from './PanelResource'
 import PanelOption from './PanelOption'
 import PanelGroup from './Common/PanelGroup'
 import * as Actions from './action'
-import Cookies from 'js-cookie'
+import Icon from './Common/Icon'
+import { HOST } from '../../service'
 
 export default connect(
 	state => {
@@ -33,11 +33,27 @@ export default connect(
 		this.props.fetchOpenedProject()
 	}
 
+	onBtnHomeClick() {
+		window.location = HOST
+	}
+	onBtnForwardClick() {
+		window.history.forward()
+	}
+	onBtnBackClick() {
+		window.history.back()
+	}
+
 	render() {
+
+		const buttons = [
+			{ title: <Icon onClick={this.onBtnHomeClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-home' /> },
+			{ title: <Icon onClick={this.onBtnForwardClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-forward' /> },
+			{ title: <Icon onClick={this.onBtnBackClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-back' /> }
+		]
+
 		return (
-			<PanelGroup>
+			<PanelGroup buttons={buttons}>
 				<PanelAction />
-				{/* <PanelResource /> */}
 				<PanelOption />
 			</PanelGroup>
 		)
