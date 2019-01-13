@@ -19,12 +19,12 @@ private:
 
 public slots:
 	QString getInfo(QString, QString);
-
-signals:
-	void getInfo_retrunValue(QString returnValue);
+	void save(QString, QString);
+	QString load(QString);
 
 private:
 	QString m_injectScriptID;
 	QUrl m_urlHome;
 	QWebEngineView * m_view;
+	QMap<QString, QString> m_mapData;
 };

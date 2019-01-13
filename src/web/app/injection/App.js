@@ -10,16 +10,13 @@ import { HOST } from '../../service'
 export default connect(
 	state => {
 		return {
-
+			
 		}
 	},
 	dispatch => {
 		return {
-			fetchLoginInfo: () => {
-				dispatch(Actions.fetchLoginInfo())
-			},
-			fetchOpenedProject: () => {
-				dispatch(Actions.fetchOpenedProject())
+			loadNative: () => {
+				dispatch(Actions.loadNative())
 			}
 		}
 	}
@@ -29,8 +26,7 @@ export default connect(
 	}
 
 	componentWillMount() {
-		this.props.fetchLoginInfo()
-		this.props.fetchOpenedProject()
+		this.props.loadNative()
 	}
 
 	onBtnHomeClick() {
@@ -46,9 +42,9 @@ export default connect(
 	render() {
 
 		const buttons = [
-			{ title: <Icon onClick={this.onBtnHomeClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-home' /> },
-			{ title: <Icon onClick={this.onBtnForwardClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-forward' /> },
-			{ title: <Icon onClick={this.onBtnBackClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-back' /> }
+			{ title: '主页', text: <Icon onClick={this.onBtnHomeClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-home' /> },
+			{ title: '前进', text: <Icon onClick={this.onBtnForwardClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-forward' /> },
+			{ title: '后退', text: <Icon onClick={this.onBtnBackClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-back' /> }
 		]
 
 		return (

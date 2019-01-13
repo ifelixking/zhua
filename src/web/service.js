@@ -1,6 +1,28 @@
+const { promisify } = require("es6-promisify");
+import { QWebChannel } from './app/injection/Common/qwebchannel'
+
 export const HOST = 'https://www.zhua.com'
 const API_SERVER = `${HOST}/api`
 // const API_SERVER = ''
+
+// ======================================================================================================
+// native
+export function nSave(key, value){
+	return NATIVE('save', [key, value])
+}
+
+export function nLoad(key){
+	return NATIVE('load', [key])
+}
+
+function NATIVE(func, args){
+	const cb = (func, args, callback)=>{
+		new QWebChannel(qt.webChannelTransport, function (channel) {
+			channel.objects.Zhua[func].apply(channel.objects.Zhua, [...args, (result)=>{callback(null, result)}]);
+		});
+	}
+	return promisify(cb)(func, args)
+}
 
 // ======================================================================================================
 // 用户注册

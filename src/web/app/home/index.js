@@ -131,8 +131,44 @@ class App extends React.Component {
 
 	open(item) {
 		co(function* () {
-			yield Service.incOpen(item.id)
-			yield Service.openning(item.id)
+			yield Service.nSave('project', '')
+			if (item.id) {
+				yield Service.incOpen(item.id)
+				let result = yield Service.getProject(item.id)
+				if (!result.result || !result.data) { result.error(result); return }
+				yield Service.nSave('project', JSON.stringify(result.data))
+				yield Service.nSave('modified', JSON.stringify(false))
+			} else {
+				const defaultActionStore = {
+					start: 1,
+					actions: [
+						{ id: 1, type: 'open-url' },
+						// {
+						// 	id: 2, type: 'open-each-url', next: 4,
+						// 	actionStore: {
+						// 		start: 3,
+						// 		actions: [
+						// 			{ id: 3, type: 'fetch-table', next: 5 },
+						// 			{ id: 5, type: 'fetch-table', next: 12 },
+						// 			{
+						// 				id: 12, type: 'open-each-url', next: 3, actionStore: {
+						// 					start: 13,
+						// 					actions: [
+						// 						{ id: 13, type: 'fetch-table', next: 15 },
+						// 						{ id: 15, type: 'fetch-table', next: 13 },
+						// 					]
+						// 				}
+						// 			},
+						// 		]
+						// 	}
+						// },
+						// { id: 4, type: 'open-url', next: 2 },
+					]
+				}
+				const defalutProject = {data:JSON.stringify(defaultActionStore)}
+				yield Service.nSave('project', JSON.stringify(defalutProject))
+				yield Service.nSave('modified', JSON.stringify(true))
+			}
 			window.location = item.siteURL
 		})
 	}
@@ -141,10 +177,7 @@ class App extends React.Component {
 		let url = this.state.inputURL
 		if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) { url = 'http://' + url }
 		if (utils.checkURL(url)) {
-			co(function* () {
-				yield Service.openning(null)
-				window.location = url
-			})
+			this.open({ siteURL: url })
 		} else {
 			message.error("输入的网址不合法")
 		}
@@ -219,7 +252,7 @@ class App extends React.Component {
 		co(function* () {
 			let { id, name, siteURL, siteTitle } = _this.state.dlgEditProject
 			let result = yield Service.updateMyProject(id, { name, siteTitle, siteURL })
-			if (!result.result || !result.data) { message.error('保存失败'); this.setState({dlgEditProjectVisible: false}); return }
+			if (!result.result || !result.data) { message.error('保存失败'); this.setState({ dlgEditProjectVisible: false }); return }
 			_this.setState({
 				myProjects: _this.state.myProjects.map(item => {
 					if (item.id == id) { item.name = name; item.siteTitle = siteTitle; item.siteURL = siteURL }

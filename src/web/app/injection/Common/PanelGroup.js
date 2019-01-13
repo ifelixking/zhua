@@ -217,11 +217,16 @@ class MainButton extends React.Component {
 		}
 
 		const css_btn = {
-			position: 'absolute', boxShadow: '0px 0px 5px #888888', cursor: 'pointer', backgroundColor: '#FF7F00',
-			borderRadius: '12px', width: '24px', height: '24px', top: '-10px', left: '0px', padding: '6px 5px'
+			position: 'absolute', boxShadow: '0px 0px 5px #888888', cursor: 'pointer', backgroundColor: '#FF7F00', zIndex:-1,
+			borderRadius: '12px', width: '24px', height: '24px', top: '-10px', left: '0px', padding: '6px 5px',
+			transitionProperty: `top,left`, transitionDuration: `${timing}s`, transitionTimingFunction: 'ease'
 		}
 
-		const positions = [
+		const positions = this.props.mini ? [
+			{ top: '9px', left: '9px' },
+			{ top: '9px', left: '9px' },
+			{ top: '9px', left: '9px' }
+		]:[
 			{ top: '-26px', left: '15px' },
 			{ top: '-11px', left: '-11px' },
 			{ top: '16px', left: '-25px' }
@@ -229,7 +234,7 @@ class MainButton extends React.Component {
 
 		const btns = this.props.children.map((item, i) => {
 			return (
-				<div onClick={item.onClick} key={i} style={{ ...css_btn, ...positions[i] }}>{item.title}</div>
+				<div title={item.title} onClick={item.onClick} key={i} style={{ ...css_btn, ...positions[i] }}>{item.text}</div>
 			)
 		})
 

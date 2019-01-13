@@ -78,8 +78,9 @@ public class ProjectController {
 	@WithoutLogin
 	@ApiOperation(value = "获取单个项目信息")
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
-	public Project getById(@PathVariable int id) {
-		return projectService.getById(id);
+	public Result<Project> getById(@PathVariable int id) {
+		Project project = projectService.getById(id);
+		return new Result<>(true, null, project);
 	}
 
 	@ApiOperation(value = "我的项目列表")

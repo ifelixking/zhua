@@ -112,6 +112,7 @@ export default class Register extends React.Component {
 				}
 				_this.setState({ username: '', password: '', repassword: '' }); __this.setVisible(false)
 				_this.props.onLogin(result.data)
+				yield Service.nSave('loginInfo', JSON.stringify(result.data))		// 写本地
 				message.success('注册成功');
 			})
 		}

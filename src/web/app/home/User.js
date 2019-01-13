@@ -34,6 +34,7 @@ export default class User extends React.Component {
 				_this.setState({ loading: false }); theButton.disabled = false
 				__this.setVisible(false)
 				_this.props.onLogout(result.data)
+				yield Service.nSave('loginInfo', "")		// 写本地
 				message.success('已注销');
 			})
 		}

@@ -7,7 +7,8 @@ import ActionTools from './ActionTools'
 import Icon from './Common/Icon'
 import * as Service from './../../service'
 import co from 'co'
-import { message } from 'antd';
+import { Modal, message } from 'antd';
+import 'antd/lib/Modal/style'
 
 export default connect(
 	state => {
@@ -91,6 +92,21 @@ export default connect(
 				result.data ? (onCreateProject(result.data), message.success("保存成功"), onSaved()) : message.error("保存失败")
 			})
 		}
+	}
+
+	onStart() {
+		
+
+
+		// const doStart = () => { }
+		// if (this.props.actionStoreModified) {
+		// 	Modal.confirm({
+		// 		title: '开始执行', content: `开始执行前必须先保存项目，是否保存项目并继续？`, okText: '确认', cancelText: '取消', onOk: () => {
+		// 		}
+		// 	});
+		// } else {
+		// 	doStart()
+		// }
 	}
 
 	render() {
@@ -220,10 +236,12 @@ export default connect(
 			display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'red',
 			borderRadius: '3px', position: 'relative', top: '-14px', left: '-6px', boxShadow: '0px 0px 3px red'
 		}
+		const css_btn = { cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff', marginLeft: '8px'}
 		return (
 			<div style={css_frame} onClick={this.onFrameDivClick}>
 				<div style={{ textAlign: 'right', position: 'absolute', width: 'calc(100% - 17px)', padding: '22px 16px' }}>
-					<Icon onClick={this.onSave} titie="保存" style={{ cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff' }} name="icon-save" />
+					<Icon onClick={this.onStart} titie="保存" style={css_btn} name="icon-save" />
+					<Icon onClick={this.onSave} titie="保存" style={css_btn} name="icon-save" />
 					<div style={Object.assign({}, css_redDot, { visibility: this.props.actionStoreModified ? 'visible' : 'hidden' })}></div>
 				</div>
 				<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>

@@ -140,6 +140,12 @@ QString MainWindow::getInfo(QString a, QString b){
 	return QString(a + b);
 }
 
-//void MainWindow::getInfo_retrunValue(QString returnValue){
-//	int aa = 0;
-//}
+void MainWindow::save(QString key, QString data) {
+	m_mapData[key] = data;
+}
+
+QString MainWindow::load(QString key){
+	auto itor = m_mapData.find(key);
+	if (itor == m_mapData.end()) { return QString(""); }
+	return itor.value();
+}

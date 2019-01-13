@@ -28,11 +28,15 @@ export function fetchProject(id) {
 	}
 }
 
-export function fetchOpenedProject(){
-	return (dispatch)=>{
-		co(function*(){
-			let result = yield Service.getOpenedProject()
-			dispatch({ type: 'SET_PROJECT', project: result.data })
+export function loadNative() {
+	return (dispatch) => {
+		co(function* () {
+			let loginInfo = yield Service.nLoad('loginInfo')
+			dispatch({ type: 'SET_LOGININFO', loginInfo: loginInfo && JSON.parse(loginInfo) })
+			let project = yield Service.nLoad('project')
+			dispatch({ type: 'SET_PROJECT', project: project && JSON.parse(project) })
+			let modified = yield Service.nLoad('modified')
+			dispatch({ type: 'SET_MODIFIED', flag: modified && JSON.parse(modified) })
 		})
 	}
 }
