@@ -99,6 +99,7 @@ class App extends React.Component {
 		})
 		co(function* () {
 			let result = yield Service.getLoginInfo()
+			yield Service.nSave('loginInfo', JSON.stringify(result.data))		// 写本地
 			_this.setState({ loginInfo: result.data })
 			result.result && result.data && _this.flushMyProject()
 		})
@@ -142,7 +143,7 @@ class App extends React.Component {
 				const defaultActionStore = {
 					start: 1,
 					actions: [
-						{ id: 1, type: 'open-url' },
+						{ id: 1, type: 'open-url', data: { url: item.siteURL } },
 						// {
 						// 	id: 2, type: 'open-each-url', next: 4,
 						// 	actionStore: {
@@ -162,7 +163,7 @@ class App extends React.Component {
 						// 		]
 						// 	}
 						// },
-						// { id: 4, type: 'open-url', next: 2 },
+						{ id: 4, type: 'open-url', next: 2 },
 					]
 				}
 				const defalutProject = {data:JSON.stringify(defaultActionStore)}

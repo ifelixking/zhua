@@ -10,7 +10,7 @@ import { HOST } from '../../service'
 export default connect(
 	state => {
 		return {
-			
+
 		}
 	},
 	dispatch => {
@@ -38,13 +38,17 @@ export default connect(
 	onBtnBackClick() {
 		window.history.back()
 	}
+	onBtnFlushClick() {
+		window.location.reload()
+	}
 
 	render() {
 
 		const buttons = [
 			{ title: '主页', text: <Icon onClick={this.onBtnHomeClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-home' /> },
 			{ title: '前进', text: <Icon onClick={this.onBtnForwardClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-forward' /> },
-			{ title: '后退', text: <Icon onClick={this.onBtnBackClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-back' /> }
+			{ title: '后退', text: <Icon onClick={this.onBtnBackClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-back' /> },
+			{ title: '刷新', text: <Icon onClick={this.onBtnFlushClick} style={{ fontSize: '14px', color: '#fff' }} name='icon-flush' /> },
 		]
 
 		return (

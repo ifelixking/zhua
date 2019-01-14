@@ -179,6 +179,10 @@ export function doWhile(funcWhile, funcDo, retryCount = 10, interval = 30) {
 	func()
 }
 
+export function doAsync(func, timeout = 1){
+	window.setTimeout(func, timeout)
+}
+
 // export function* ping(url) {
 // 	try {
 // 		let result = yield fetch(url, { method: 'HEAD' })

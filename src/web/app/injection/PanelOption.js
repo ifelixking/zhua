@@ -6,7 +6,8 @@ import Register from '../home/Register'
 import User from '../home/User'
 import * as utils from '../../utils'
 import Icon from './Common/Icon'
-import { QWebChannel } from './Common/qwebchannel'
+import { co } from 'co'
+import * as Service from '../../service'
 
 export default connect(
 	state => {
@@ -53,13 +54,18 @@ export default connect(
 	}
 
 	test(){
-		debugger;
-		new QWebChannel(qt.webChannelTransport, function (channel) {
-			window.Zhua = channel.objects.Zhua;
-			Zhua.getInfo("show", "me", function (returnValue) {
-				alert("returnValue=" + returnValue);
-			});
-		});	
+		co(function*(){
+			let result = yield Service.NATIVE('openSaveFileDialog', [''])
+			debugger;
+		})		
+		
+
+		// new QWebChannel(qt.webChannelTransport, function (channel) {
+		// 	window.Zhua = channel.objects.Zhua;
+		// 	Zhua.getInfo("show", "me", function (returnValue) {
+		// 		alert("returnValue=" + returnValue);
+		// 	});
+		// });	
 	}
 
 	static title = "选项"
@@ -90,5 +96,3 @@ export default connect(
 	}
 }
 )
-
-

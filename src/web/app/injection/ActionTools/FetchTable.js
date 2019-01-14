@@ -17,7 +17,7 @@ export default connect(
 	state => {
 		return {
 			actionStore: state.actionStore,
-			actionInfo: utils.actionStoreFindAction(state.actionStore, state.currentActionInfo.id)
+			actionInfo: utils.actionStoreFindAction(state.actionStore, state.selectedActionInfo.id)
 		}
 	},
 	dispatch => {

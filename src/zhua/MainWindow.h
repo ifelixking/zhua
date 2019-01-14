@@ -16,11 +16,13 @@ private:
 	void slotHome();
 	void inject();
 	void slotShowDevTool();
+	void slotShowNativeStorage();
 
 public slots:
 	QString getInfo(QString, QString);
 	void save(QString, QString);
 	QString load(QString);
+	QString openSaveFileDialog(QString);
 
 private:
 	QString m_injectScriptID;

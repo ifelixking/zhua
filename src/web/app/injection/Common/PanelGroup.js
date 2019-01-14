@@ -225,14 +225,16 @@ class MainButton extends React.Component {
 		const positions = this.props.mini ? [
 			{ top: '9px', left: '9px' },
 			{ top: '9px', left: '9px' },
-			{ top: '9px', left: '9px' }
+			{ top: '9px', left: '9px' },
+			{ top: '9px', left: '9px' },
 		]:[
 			{ top: '-26px', left: '15px' },
 			{ top: '-11px', left: '-11px' },
-			{ top: '16px', left: '-25px' }
+			{ top: '16px', left: '-25px' },
+			{ top: '-23px', left: '45px' },
 		]
 
-		const btns = this.props.children.map((item, i) => {
+		const btns = this.props.children && this.props.children.map((item, i) => {
 			return (
 				<div title={item.title} onClick={item.onClick} key={i} style={{ ...css_btn, ...positions[i] }}>{item.text}</div>
 			)

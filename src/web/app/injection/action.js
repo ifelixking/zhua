@@ -37,6 +37,8 @@ export function loadNative() {
 			dispatch({ type: 'SET_PROJECT', project: project && JSON.parse(project) })
 			let modified = yield Service.nLoad('modified')
 			dispatch({ type: 'SET_MODIFIED', flag: modified && JSON.parse(modified) })
+			// let selectedActionInfo = yield Service.nLoad('selectedActionInfo')
+			// dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', selectedActionInfo })
 		})
 	}
 }

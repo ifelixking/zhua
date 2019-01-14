@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "MainWindow.h"
 #include "DlgNavigate.h"
+#include "DlgNative.h"
+
 
 // 运行不安全的 https
 class CustomWebEnginePage : public QWebEnginePage
@@ -79,6 +81,8 @@ void MainWindow::initMenu() {
 		connect(aNavi, &QAction::triggered, this, &MainWindow::slotNavigate);
 		auto aDevTool = mEdit->addAction(QString::fromLocal8Bit("DevTools(&D)..."));
 		connect(aDevTool, &QAction::triggered, this, &MainWindow::slotShowDevTool);
+		auto aNativeStorage = mEdit->addAction(QString::fromLocal8Bit("NativeStorage(&N)..."));
+		connect(aNativeStorage, &QAction::triggered, this, &MainWindow::slotShowNativeStorage);
 	}
 
 	//// Toolbar 
@@ -96,7 +100,8 @@ void MainWindow::initMenu() {
 		auto aProgress = new QProgressBar(this); aProgress->setFixedSize(100, 16); aProgress->setTextVisible(false);
 		connect(m_view, &QWebEngineView::loadProgress, [aProgress](int progress) {
 			aProgress->setValue(progress);
-			if (progress >= 100) { aProgress->hide(); } else { aProgress->show(); }
+			if (progress >= 100) { aProgress->hide(); }
+			else { aProgress->show(); }
 		});
 		mBar->addWidget(aProgress); aProgress->hide();
 
@@ -134,18 +139,31 @@ void MainWindow::slotHome() {
 	m_view->load(m_urlHome);
 }
 
-QString MainWindow::getInfo(QString a, QString b){
+QString MainWindow::getInfo(QString a, QString b) {
 	auto kk = a.toStdWString();
 	auto kk1 = b.toStdWString();
 	return QString(a + b);
 }
 
 void MainWindow::save(QString key, QString data) {
+#ifdef _DEBUG
+	auto k = key.toStdWString();
+	auto v = data.toStdWString();
+#endif 
 	m_mapData[key] = data;
 }
 
-QString MainWindow::load(QString key){
+QString MainWindow::load(QString key) {
 	auto itor = m_mapData.find(key);
 	if (itor == m_mapData.end()) { return QString(""); }
 	return itor.value();
+}
+
+void MainWindow::slotShowNativeStorage() {
+	DlgNative::ShowNativeDialog(this->m_mapData);
+}
+
+QString MainWindow::openSaveFileDialog(QString oldFilename){
+	QString fileName = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存到..."), oldFilename, QString("Excel CSV (*.csv)"));
+	return fileName;
 }

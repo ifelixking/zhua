@@ -2,8 +2,6 @@ import { combineReducers } from 'redux'
 import Immutable from 'immutable'
 import * as utils from '../../utils'
 
-
-
 export default combineReducers({
 	loginInfo: (loginInfo = null, action) => {
 		switch (action.type) {
@@ -11,14 +9,6 @@ export default combineReducers({
 				return action.loginInfo
 			}
 			default: return loginInfo;
-		}
-	},
-	project: (project = null, action) => {
-		switch (action.type) {
-			case 'SET_PROJECT': {
-				return action.project
-			}
-			default: return project
 		}
 	},
 	projectStore: (projectStore = Immutable.Map({
@@ -33,6 +23,14 @@ export default combineReducers({
 			default: return projectStore
 		}
 	},
+	project: (project = null, action) => {
+		switch (action.type) {
+			case 'SET_PROJECT': {
+				return action.project
+			}
+			default: return project
+		}
+	},	
 	actionStoreModified: (actionStoreModified = false, action) => { 
 		switch (action.type) {
 			case 'SET_MODIFIED': return action.flag
@@ -44,7 +42,6 @@ export default combineReducers({
 	},
 	actionStore: (actionStore = Immutable.Map({}), action) => {
 		switch (action.type) {
-			// case 'LOAD_ACTION_STORE': { return action.actionStore; }
 			case 'CREATE_NEXT_ACTION': {
 				let { path } = utils.actionStoreFindAction(actionStore, action.currentActionID)
 				return actionStore
@@ -68,18 +65,21 @@ export default combineReducers({
 	},
 	maxActionID: (maxActionID = 1, action) => {
 		switch (action.type) {
-			// case 'LOAD_ACTION_STORE': {
-			// 	const maxId = function (actions) { return actions && actions.size ? actions.map(value => Math.max(value.get('id'), maxId(value.getIn(['actionStore', 'actions'])))).max() : 0 }
-			// 	return maxId(actionStore.get('actions'))
-			// }
 			case 'CREATE_NEXT_ACTION': {
 				return action.newAction.get('id')
 			}
 			default: return maxActionID
 		}
 	},
-	currentActionInfo: (currentActionInfo = null, action) => {
-		return action.type == 'CHANGE_CURRENT_ACTION_INFO' ? action.currentActionInfo : currentActionInfo
+	selectedActionInfo: (selectedActionInfo = null, action) => {
+		switch (action.type) {
+			case 'CHANGE_CURRENT_ACTION_INFO': {
+				return action.selectedActionInfo
+			}
+			default:{
+				return selectedActionInfo
+			}				
+		}
 	},
 
 	// ====================

@@ -9,10 +9,13 @@ export default class OpenURL extends React.Component {
 	constructor(props) {
 		super(props)
 
+		const url = this.props.action.getIn(['data', 'url'])
+		let protocol = this.getProtocol(url)
+		let inputURL = url.substr(protocol.length)
+
 		this.state = {
-			showDialog: true,
-			inputURL: '',
-			protocol: '',
+			name: this.props.action.getIn(['data', 'name']),
+			inputURL, protocol,
 		}
 
 		this.onCancel = this.onCancel.bind(this)
@@ -20,21 +23,18 @@ export default class OpenURL extends React.Component {
 		this.onURLChange = this.onURLChange.bind(this)
 		this.onProtocolChange = this.onProtocolChange.bind(this)
 		this.getProtocol = this.getProtocol.bind(this)
-	}
-
-	componentWillMount() {
-		let protocol = this.getProtocol(window.location.href)
-		let inputURL = window.location.href.substr(protocol.length)
-		this.setState({ protocol, inputURL })
+		this.onNameChange = this.onNameChange.bind(this)
 	}
 
 	onCancel(e) {
 		e.stopPropagation()
-		this.setState({ showDialog: false })
+		this.props.onDialogCancel()
 	}
 
-	onOK() {
-		window.location = this.state.protocol + '//' + this.state.inputURL
+	onOK(e) {
+		const url = this.state.protocol + this.state.inputURL
+		const newAction = this.props.action.setIn(['data', 'url'], url).setIn(['data', 'name'], this.state.name)
+		this.props.onDialogOK(newAction)
 	}
 
 	onURLChange(e) {
@@ -57,6 +57,12 @@ export default class OpenURL extends React.Component {
 		return ''
 	}
 
+	onNameChange(e) {
+		this.setState({
+			name: e.target.value
+		})
+	}
+	
 	render() {
 		let selectBefore = null
 		if (this.state.protocol) {
@@ -66,9 +72,15 @@ export default class OpenURL extends React.Component {
 			</Select>
 		}
 
+		const css_field = { marginBottom: '4px' }
+		const css_value = { marginBottom: '16px' }
+
 		return (
-			<Modal title='Open-URL' visible={this.state.showDialog} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
-				<Input addonBefore={selectBefore} value={this.state.inputURL} onChange={this.onURLChange} onPressEnter={this.onOK} />
+			<Modal title='Open-URL' visible={true} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
+				<div style={css_field}>名称</div>
+				<div style={css_value}><Input value={this.state.name} onChange={this.onNameChange} onPressEnter={this.onOK} /></div>
+				<div style={css_field}>打开网页</div>
+				<div style={css_value}><Input addonBefore={selectBefore} value={this.state.inputURL} onChange={this.onURLChange} onPressEnter={this.onOK} /></div>
 			</Modal>
 		)
 	}

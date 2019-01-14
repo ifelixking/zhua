@@ -15,7 +15,7 @@ export function nLoad(key){
 	return NATIVE('load', [key])
 }
 
-function NATIVE(func, args){
+export function NATIVE(func, args){
 	const cb = (func, args, callback)=>{
 		new QWebChannel(qt.webChannelTransport, function (channel) {
 			channel.objects.Zhua[func].apply(channel.objects.Zhua, [...args, (result)=>{callback(null, result)}]);

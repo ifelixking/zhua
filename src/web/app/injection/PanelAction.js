@@ -1,5 +1,5 @@
 import React from 'react'
-import { connect } from 'react-redux';
+import { connect } from 'react-redux'
 import Immutable from 'immutable'
 import * as utils from '../../utils'
 import * as Smart from '../../smart'
@@ -7,7 +7,7 @@ import ActionTools from './ActionTools'
 import Icon from './Common/Icon'
 import * as Service from './../../service'
 import co from 'co'
-import { Modal, message } from 'antd';
+import { Modal, message } from 'antd'
 import 'antd/lib/Modal/style'
 
 export default connect(
@@ -16,22 +16,26 @@ export default connect(
 			loginInfo: state.loginInfo,
 			project: state.project,
 			actionStore: state.actionStore,
-			currentActionInfo: state.currentActionInfo,
+			selectedActionInfo: state.selectedActionInfo,
 			maxActionID: state.maxActionID,
 			actionStoreModified: state.actionStoreModified,
+			store: state
 		}
 	},
 	dispatch => {
 		return {
-			onActionClick: (currentActionInfo) => { dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo }) },
+			onActionSelect: (selectedActionInfo) => { dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', selectedActionInfo }) },
 			onCreateNextAction: (newAction, currentActionID) => {
 				dispatch({ type: 'CREATE_NEXT_ACTION', newAction, currentActionID })
-				dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', currentActionInfo: { type: 'action', id: newAction.get('id') } })
+				dispatch({ type: 'CHANGE_CURRENT_ACTION_INFO', selectedActionInfo: { type: 'action', id: newAction.get('id') } })
 			},
 			onCreateProject: (newProject) => {
 				dispatch({ type: 'SET_PROJECT', project: newProject })
 			},
-			onSaved: () => { dispatch({ type: 'PROJECT_SAVED', project: newProject }) }
+			onSaved: (newProject) => { dispatch({ type: 'PROJECT_SAVED', project: newProject }) },
+			updateActionData: (actionId, data) => {
+				dispatch({ type: 'UPDATE_ACTION_STORE_BY_ACTION_DATA', actionId, data })
+			}
 		}
 	}
 )(class PanelAction extends React.Component {
@@ -41,8 +45,19 @@ export default connect(
 		this.onFrameDivClick = this.onFrameDivClick.bind(this)
 		this.onCreate = this.onCreate.bind(this)
 		this.onSave = this.onSave.bind(this)
+		this.onEdit = this.onEdit.bind(this)
+		this.onDelete = this.onDelete.bind(this)
+		this.onActionClick = this.onActionClick.bind(this)
 
-		this.state = {}
+		this.onDlgOpenURLOK = this.onDlgOpenURLOK.bind(this)
+		this.onDlgOpenURLCancel = this.onDlgOpenURLCancel.bind(this)
+
+		this.onDlgFetchTableEditOK = this.onDlgFetchTableEditOK.bind(this)
+		this.onDlgFetchTableEditCancel = this.onDlgFetchTableEditCancel.bind(this)
+
+		this.state = {
+			editing: false
+		}
 		this.config = {
 			blockPadding: { x: 16, y: 8 },
 			blockMargin: { x: 0, y: 32 },
@@ -56,27 +71,36 @@ export default connect(
 	// 用于清空 current select action
 	onFrameDivClick(e) {
 		if (e.target == e.currentTarget || e.currentTarget.children[0] == e.target) {
-			this.props.onActionClick(null)
+			this.onActionClick(null)
+			this.setState({ editing: false })
 		}
 	}
 
 	onCreate(qNodeList, type) {
-		let currentActionID = this.props.currentActionInfo.id
+		let currentActionID = this.props.selectedActionInfo.id
 		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: Smart.QTree.createByQNodeList(qNodeList) })
 		this.props.onCreateNextAction(newAction, currentActionID)
+		utils.doAsync(() => {
+			let _this = this
+			co(function* () {
+				let data = JSON.stringify(_this.props.actionStore.toJS())
+				let project = { ..._this.props.project, data }
+				yield Service.nSave('project', JSON.stringify(project))
+				yield Service.nSave('modified', JSON.stringify(true))
+			})
+		})
 	}
 
 	onSave() {
 		if (!this.props.actionStoreModified) { return; }
 		let { project, loginInfo, actionStore, onCreateProject, onSaved } = this.props
 		if (!loginInfo || !loginInfo.userId) { message.warn('您还没有登录，请点击【选项】面板【登录】或【注册】'); return }
-		let data = JSON.stringify(actionStore.toJSON())
+		let data = JSON.stringify(actionStore.toJS())
 		if (project && project.ownerId == loginInfo.userId) {
 			// 保存自己的 Project
 			co(function* () {
 				let result = yield Service.setMyProjectData(project.id, { data })
 				result.data ? (message.success("保存成功"), onSaved) : message.error("保存失败")
-
 			})
 		} else {
 			// 保存为新的自己的 Project
@@ -89,15 +113,28 @@ export default connect(
 					data,
 				}
 				let result = yield Service.createProject(newProject)
-				result.data ? (onCreateProject(result.data), message.success("保存成功"), onSaved()) : message.error("保存失败")
+				result.data ? (onCreateProject(result.data), message.success("保存成功"), onSaved(result.data)) : message.error("保存失败")
 			})
 		}
 	}
 
+	// Block 选择
+	onActionClick(selectedActionInfo) {
+		if (this.props.selectedActionInfo && selectedActionInfo && this.props.selectedActionInfo.id == selectedActionInfo.id) { return }
+		let _this = this
+		co(function*(){
+			yield Service.nSave('selectedActionInfo', JSON.stringify(selectedActionInfo))
+			_this.props.onActionSelect(selectedActionInfo)
+		})
+	}
+
+	// Block 编辑
+	onEdit() {
+		this.props.selectedActionInfo && (this.setState({ editing: true }))
+	}
+
+	// Block 开始
 	onStart() {
-		
-
-
 		// const doStart = () => { }
 		// if (this.props.actionStoreModified) {
 		// 	Modal.confirm({
@@ -106,7 +143,52 @@ export default connect(
 		// 	});
 		// } else {
 		// 	doStart()
-		// }
+		// }		
+	}
+
+	// Block 删除
+	onDelete() {
+
+	}
+
+	onDlgOpenURLOK(newAction) {
+		this.props.updateActionData(newAction.get('id'), newAction.get('data'))
+		utils.doAsync(() => {
+			let _this = this
+			co(function* () {
+				let data = JSON.stringify(_this.props.actionStore.toJS())
+				let project = { ..._this.props.project, data }
+				yield Service.nSave('project', JSON.stringify(project))
+				yield Service.nSave('modified', JSON.stringify(true))
+				_this.onDlgOpenURLCancel()
+			})
+		})
+	}
+
+	onDlgOpenURLCancel(){
+		this.setState({ editing: false })
+	}
+
+	onDlgFetchTableEditOK(newAction) {
+		this.props.updateActionData(newAction.get('id'), newAction.get('data'))
+		utils.doAsync(() => {
+			let _this = this
+			co(function* () {
+				let data = JSON.stringify(_this.props.actionStore.toJS())
+				let project = { ..._this.props.project, data }
+				yield Service.nSave('project', JSON.stringify(project))
+				yield Service.nSave('modified', JSON.stringify(true))
+				_this.onDlgOpenURLCancel()
+			})
+		})
+	}
+	onDlgFetchTableEditCancel() {
+		this.setState({ editing: false })
+	}
+
+	getActionText(action){
+		let text = action.get('id') + '-' + (action.getIn(['data', 'name']) || action.get('type'))
+		return text.length > 16 ? text.substr(0, 16) + '...' : text
 	}
 
 	render() {
@@ -116,7 +198,7 @@ export default connect(
 			const func = (action, uiList, parentStore, offset) => {
 
 				let ui = { action }; uiList.push(ui)
-				const textSize = utils.getCachedSVGTextSize(action.get('type'))
+				const textSize = utils.getCachedSVGTextSize(this.getActionText(action))
 				ui.blockSize = { width: textSize.width + (this.config.blockPadding.x << 1), height: textSize.height + (this.config.blockPadding.y << 1) }
 
 				// child
@@ -161,23 +243,23 @@ export default connect(
 			// child
 			let childBlocks = null
 			if (ui.children) {
-				let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'innerNext' && ui.action.get('id') == this.props.currentActionInfo.id
+				let lineHighLight = this.props.selectedActionInfo && this.props.selectedActionInfo.type == 'innerNext' && ui.action.get('id') == this.props.selectedActionInfo.id
 				const x1 = (width >> 1), y1 = this.config.lineOffset;
 				const x2 = x1, y2 = ui.childStart.position.y - this.config.lineOffset - this.config.lineWidth;
 				childBlocks = [<Line data={{ type: 'innerNext', id: ui.action.get('id'), childStartId: ui.childStart.action.get('id') }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={0}
-					points={[{ x: x1, y: y1 }, { x: x2, y: y2 }]} onClick={this.props.onActionClick} />]
+					points={[{ x: x1, y: y1 }, { x: x2, y: y2 }]} onClick={this.onActionClick} />]
 				func(ui.childStart, childBlocks, width, [...imPath, 'actionStore', 'actions', ui.childStart.index])
 			}
 
 			// block
-			let blockHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'action' && ui.action.get('id') == this.props.currentActionInfo.id
-			let block = <Block key={ui.action.get('id')} data={{ type: 'action', id: ui.action.get('id'), imPath }} highLight={blockHighLight} onClick={this.props.onActionClick}
-				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={ui.action.get('id') + '-' + ui.action.get('type')}>{childBlocks}</Block>
+			let blockHighLight = this.props.selectedActionInfo && this.props.selectedActionInfo.type == 'action' && ui.action.get('id') == this.props.selectedActionInfo.id
+			let block = <Block key={ui.action.get('id')} data={{ type: 'action', id: ui.action.get('id'), imPath }} highLight={blockHighLight} onClick={this.onActionClick}
+				blockSize={ui.blockSize} frameSize={ui.frameSize} position={ui.position} text={this.getActionText(ui.action)}>{childBlocks}</Block>
 			blocks.push(block); exists.push(ui.action.get('id'))
 
 			// next
 			const x1 = ui.position.x + (width >> 1), y1 = ui.position.y + height + this.config.lineOffset;
-			let lineHighLight = this.props.currentActionInfo && this.props.currentActionInfo.type == 'next' && ui.action.get('id') == this.props.currentActionInfo.id
+			let lineHighLight = this.props.selectedActionInfo && this.props.selectedActionInfo.type == 'next' && ui.action.get('id') == this.props.selectedActionInfo.id
 			if (ui.next) {
 				const nextSize = ui.next.frameSize || ui.next.blockSize
 				const key = `${ui.action.get('id')}.${ui.next.action.get('id')}`
@@ -196,61 +278,100 @@ export default connect(
 					])
 				}
 
-				blocks.push(<Line data={{ type: 'next', id: ui.action.get('id'), nextId: ui.next.action.get('id') }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
+				blocks.push(<Line data={{ type: 'next', id: ui.action.get('id'), nextId: ui.next.action.get('id') }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.onActionClick} />)
 			} else {
 				const key = `${ui.action.get('id')}.`
 				let points = [{ x: x1, y: y1 }, { x: x1, y: y1 + this.config.blockMargin.y - (this.config.lineOffset << 1) - this.config.lineWidth }]
-				blocks.push(<Line data={{ type: 'next', id: ui.action.get('id'), next: null }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.props.onActionClick} />)
+				blocks.push(<Line data={{ type: 'next', id: ui.action.get('id'), next: null }} highLight={lineHighLight} lineWidth={this.config.lineWidth} key={key} points={points} onClick={this.onActionClick} />)
 			}
 		}
 		func(uiStart, blocks, totalWidth, ['actions', uiStart.index])
 
-		// tool
+		// on block selected
 		let actionTool = null
-
-		if (this.props.currentActionInfo) {
-			let { action: currentAction } = utils.actionStoreFindAction(this.props.actionStore, this.props.currentActionInfo.id)
-			if (this.props.currentActionInfo.type == 'action') {
-
+		if (this.props.selectedActionInfo) {
+			let { action: currentAction } = utils.actionStoreFindAction(this.props.actionStore, this.props.selectedActionInfo.id)
+			if (this.props.selectedActionInfo.type == 'action') {
 				switch (currentAction.get('type')) {
-					case 'open-url': { actionTool = <ActionTools.OpenURL onDialogCancel={() => { this.props.onActionClick(null) }} /> } break;
-					case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
+					case 'open-url': {
+						if (this.state.editing) {
+							actionTool = <ActionTools.OpenURL action={currentAction}
+								onDialogOK={this.onDlgOpenURLOK} onDialogCancel={this.onDlgOpenURLCancel} />
+						}
+					} break;
+					case 'open-each-url': {
+						actionTool = <ActionTools.OpenEachURL />
+					} break;
 					case 'fetch-table': {
-						actionTool = <ActionTools.FetchTable
-						// actionStore={this.props.actionStore} actionInfo={{ action: currentAction, imPath: this.props.currentActionInfo.imPath }} 
-						/>
+						if (this.state.editing) {
+							actionTool = <ActionTools.FetchTableEdit action={currentAction} 
+								onDialogOK={this.onDlgFetchTableEditOK} onDialogCancel={this.onDlgFetchTableEditCancel} />
+						} else {
+							actionTool = <ActionTools.FetchTable />
+						}
 					} break;
 				}
-			} else if (this.props.currentActionInfo.type == 'next') {
+			} else if (this.props.selectedActionInfo.type == 'next') {
 				// switch (currentAction.get('type')) {
 				// 	case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={()=>this.onCreate()} /> } break;
 				// 	case 'fetch-table': { actionTool = <ActionTools.OpenURLNext onBtnOpenLinkClick={this.onBtnOpenLinkClick} /> } break;
 				// }
-				actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.onCreate(qNodeList, 'fetch-table')} onBtnOpenLinkClick={(qNodeList) => { this.onCreate(qNodeList, 'open-url') }} />
+				actionTool = <ActionTools.OpenURLNext
+					onBtnFetchTableClick={(qNodeList) => this.onCreate(qNodeList, 'fetch-table')}
+					onBtnOpenLinkClick={(qNodeList) => { this.onCreate(qNodeList, 'open-url') }} />
 			}
 		}
 
+
+
+		// if (this.state.editing && this.props.selectedActionInfo) {
+		// 	let { action: currentAction } = utils.actionStoreFindAction(this.props.actionStore, this.props.selectedActionInfo.id)
+		// 	if (this.props.selectedActionInfo.type == 'action') {
+
+		// 		switch (currentAction.get('type')) {
+		// 			case 'open-url': { actionTool = <ActionTools.OpenURL action={currentAction} onDialogOK={this.onDlgOpenURLOK} onDialogCancel={() => { this.setState({dlgActionEditVisible:false}) }} /> } break;
+		// 			case 'open-each-url': { actionTool = <ActionTools.OpenEachURL /> } break;
+		// 			case 'fetch-table': {
+		// 				actionTool = <ActionTools.FetchTable
+		// 				// actionStore={this.props.actionStore} actionInfo={{ action: currentAction, imPath: this.props.selectedActionInfo.imPath }} 
+		// 				/>
+		// 			} break;
+		// 		}
+		// 	} else if (this.props.selectedActionInfo.type == 'next') {
+		// 		// switch (currentAction.get('type')) {
+		// 		// 	case 'open-url': { actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={()=>this.onCreate()} /> } break;
+		// 		// 	case 'fetch-table': { actionTool = <ActionTools.OpenURLNext onBtnOpenLinkClick={this.onBtnOpenLinkClick} /> } break;
+		// 		// }
+		// 		actionTool = <ActionTools.OpenURLNext onBtnFetchTableClick={(qNodeList) => this.onCreate(qNodeList, 'fetch-table')} onBtnOpenLinkClick={(qNodeList) => { this.onCreate(qNodeList, 'open-url') }} />
+		// 	}
+		// }
+
 		//
-		const css_frame = { width: '100%', height: '100%', textAlign: 'center', overflow: 'scroll' }
+		const css_frame = { width: '100%', height: '100%' }
+		const css_svg = { width: '100%', height: 'calc(100% - 28px)', textAlign: 'center', overflow: 'scroll' }
 		const css_redDot = {
 			display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'red',
 			borderRadius: '3px', position: 'relative', top: '-14px', left: '-6px', boxShadow: '0px 0px 3px red'
 		}
-		const css_btn = { cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff', marginLeft: '8px'}
+		const css_btn = { pointerEvents: 'auto', cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff', marginLeft: '4px' }
 		return (
-			<div style={css_frame} onClick={this.onFrameDivClick}>
-				<div style={{ textAlign: 'right', position: 'absolute', width: 'calc(100% - 17px)', padding: '22px 16px' }}>
-					<Icon onClick={this.onStart} titie="保存" style={css_btn} name="icon-save" />
-					<Icon onClick={this.onSave} titie="保存" style={css_btn} name="icon-save" />
+			<div style={css_frame}>
+				<div style={{ width: 'calc(100% - 17px)', padding: '14px 10px 0px 10px' }}>
+					<Icon onClick={this.onSave} title="保存" style={css_btn} name="icon-save" />
 					<div style={Object.assign({}, css_redDot, { visibility: this.props.actionStoreModified ? 'visible' : 'hidden' })}></div>
+					<Icon onClick={this.onStart} title="开始执行" style={css_btn} name="icon-start" />
+					<Icon onClick={this.onEdit} title="编辑" style={{ ...css_btn, marginLeft: '10px', color: '#33F' }} name="icon-edit" />
+					<Icon onClick={this.onDelete} title="删除" style={{ ...css_btn, marginLeft: '10px', color: '#F33' }} name="icon-delete1" />
 				</div>
-				<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>
-					<defs>
-						<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#70AD47" /></marker>
-						<marker id="arrowHighLight" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#507E32" /></marker>
-					</defs>
-					{blocks}
-				</svg>
+				<div style={css_svg} onClick={this.onFrameDivClick}>
+					<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>
+						<defs>
+							<marker id="arrow" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#70AD47" /></marker>
+							<marker id="arrowHighLight" markerWidth="1" markerHeight="2" refX="0" refY="1" orient="auto"><path d="M0,0 L0,2 L1,1 z" fill="#507E32" /></marker>
+						</defs>
+						{blocks}
+					</svg>
+				</div>
 				{actionTool}
 			</div>
 		)

@@ -15,11 +15,19 @@
     <ClCompile Include="GeneratedFiles\moc_DlgNavigate.cpp">
       <Filter>GeneratedFiles</Filter>
     </ClCompile>
+    <ClCompile Include="DlgNative.cpp" />
+    <ClCompile Include="GeneratedFiles\moc_DlgNative.cpp">
+      <Filter>GeneratedFiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="GeneratedFiles\ui_DlgNavigate.h">
+      <Filter>GeneratedFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgNative.h" />
+    <ClInclude Include="GeneratedFiles\ui_dlgnative.h">
       <Filter>GeneratedFiles</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,5 +40,8 @@
     <Filter Include="GeneratedFiles">
       <UniqueIdentifier>{971d9a78-5d0e-4e05-930a-cd5a8d5ee2df}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dlgnative.ui" />
   </ItemGroup>
 </Project>

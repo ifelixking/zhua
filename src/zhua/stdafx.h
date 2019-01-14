@@ -1,9 +1,12 @@
 #pragma once
 
 #include <QtWidgets\QApplication>
+#include <QtWidgets\QListView>
 #include <QtWidgets\QDeskTopWidget>
 #include <QtWidgets\QMainWindow>
+#include <QtWidgets\QFileDialog>
 #include <QtWidgets\QMenuBar>
+#include <QtWidgets\QListWidgetItem>
 #include <QtWebEngineWidgets\QWebEngineView>
 #include <QtWebEngineWidgets\QWebEngineProfile>
 #include <QtCore\QRect>
@@ -20,6 +23,7 @@
 #include <QtNetwork/QNetworkCookie>  
 #include <QtNetwork/QNetworkCookieJar>
 #include <QtWebChannel/QWebChannel>
+
 
 
 #include "Utils.h"
