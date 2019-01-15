@@ -26,7 +26,6 @@
     <ClInclude Include="GeneratedFiles\ui_DlgNavigate.h">
       <Filter>GeneratedFiles</Filter>
     </ClInclude>
-    <ClInclude Include="DlgNative.h" />
     <ClInclude Include="GeneratedFiles\ui_dlgnative.h">
       <Filter>GeneratedFiles</Filter>
     </ClInclude>
@@ -35,13 +34,12 @@
     <CustomBuild Include="MainWindow.h" />
     <CustomBuild Include="DlgNavigate.h" />
     <CustomBuild Include="DlgNavigate.ui" />
+    <CustomBuild Include="DlgNative.h" />
+    <CustomBuild Include="dlgnative.ui" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GeneratedFiles">
       <UniqueIdentifier>{971d9a78-5d0e-4e05-930a-cd5a8d5ee2df}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="dlgnative.ui" />
   </ItemGroup>
 </Project>

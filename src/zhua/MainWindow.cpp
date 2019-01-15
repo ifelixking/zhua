@@ -100,8 +100,7 @@ void MainWindow::initMenu() {
 		auto aProgress = new QProgressBar(this); aProgress->setFixedSize(100, 16); aProgress->setTextVisible(false);
 		connect(m_view, &QWebEngineView::loadProgress, [aProgress](int progress) {
 			aProgress->setValue(progress);
-			if (progress >= 100) { aProgress->hide(); }
-			else { aProgress->show(); }
+			if (progress >= 100) { aProgress->hide(); } else { aProgress->show(); }
 		});
 		mBar->addWidget(aProgress); aProgress->hide();
 
@@ -136,7 +135,68 @@ void MainWindow::slotShowDevTool() {
 }
 
 void MainWindow::slotHome() {
-	m_view->load(m_urlHome);
+	// m_view->load(m_urlHome);
+
+	QString filepath = QFileDialog::getSaveFileName(this, tr("Save orbit"), ".", tr("Microsoft Office 2007 (*.xlsx)"));//获取保存路径
+	if (!filepath.isEmpty()) {
+		QAxObject *excel = new QAxObject(this);
+		excel->setControl("Excel.Application");//连接Excel控件
+		excel->dynamicCall("SetVisible (bool Visible)", "false");//不显示窗体
+		excel->setProperty("DisplayAlerts", false);//不显示任何警告信息。如果为true那么在关闭是会出现类似“文件已修改，是否保存”的提示
+
+		QAxObject *workbooks = excel->querySubObject("WorkBooks");//获取工作簿集合
+		workbooks->dynamicCall("Add");//新建一个工作簿
+		QAxObject *workbook = excel->querySubObject("ActiveWorkBook");//获取当前工作簿
+		QAxObject *worksheets = workbook->querySubObject("Sheets");//获取工作表集合
+		QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);//获取工作表集合的工作表1，即sheet1
+
+		QAxObject *cellA, *cellB, *cellC, *cellD;
+
+		//设置标题
+		int cellrow = 1;
+		QString A = "A" + QString::number(cellrow);//设置要操作的单元格，如A1
+		QString B = "B" + QString::number(cellrow);
+		QString C = "C" + QString::number(cellrow);
+		QString D = "D" + QString::number(cellrow);
+		cellA = worksheet->querySubObject("Range(QVariant, QVariant)", A);//获取单元格
+		cellB = worksheet->querySubObject("Range(QVariant, QVariant)", B);
+		cellC = worksheet->querySubObject("Range(QVariant, QVariant)", C);
+		cellD = worksheet->querySubObject("Range(QVariant, QVariant)", D);
+		cellA->dynamicCall("SetValue(const QVariant&)", QVariant(QString::fromLocal8Bit("流水号")));//设置单元格的值
+		cellB->dynamicCall("SetValue(const QVariant&)", QVariant(QString::fromLocal8Bit("用户名")));
+		cellC->dynamicCall("SetValue(const QVariant&)", QVariant(QString::fromLocal8Bit("金额")));
+		cellD->dynamicCall("SetValue(const QVariant&)", QVariant(QString::fromLocal8Bit("日期")));
+		cellrow++;
+
+		// int rows = this->model->rowCount();
+		// for (int i = 0; i < rows; i++) {
+		{
+			QString A = "A" + QString::number(cellrow);//设置要操作的单元格，如A1
+			QString B = "B" + QString::number(cellrow);
+			QString C = "C" + QString::number(cellrow);
+			QString D = "D" + QString::number(cellrow);
+			cellA = worksheet->querySubObject("Range(QVariant, QVariant)", A);//获取单元格
+			cellB = worksheet->querySubObject("Range(QVariant, QVariant)", B);
+			cellC = worksheet->querySubObject("Range(QVariant, QVariant)", C);
+			cellD = worksheet->querySubObject("Range(QVariant, QVariant)", D);
+			cellA->dynamicCall("SetValue(const QVariant&)", QVariant("felix"));//设置单元格的值
+			cellB->dynamicCall("SetValue(const QVariant&)", QVariant("mary"));
+			cellC->dynamicCall("SetValue(const QVariant&)", QVariant("victoria"));
+			cellD->dynamicCall("SetValue(const QVariant&)", QVariant("hugo"));
+		}
+			//	cellrow++;
+		// }
+
+		workbook->dynamicCall("SaveAs(const QString&)", QDir::toNativeSeparators(filepath));//保存至filepath，注意一定要用QDir::toNativeSeparators将路径中的"/"转换为"\"，不然一定保存不了。
+		workbook->dynamicCall("Close()");//关闭工作簿
+		excel->dynamicCall("Quit()");//关闭excel
+		delete excel;
+		excel = NULL;
+	}
+	
+
+
+
 }
 
 QString MainWindow::getInfo(QString a, QString b) {
@@ -163,7 +223,7 @@ void MainWindow::slotShowNativeStorage() {
 	DlgNative::ShowNativeDialog(this->m_mapData);
 }
 
-QString MainWindow::openSaveFileDialog(QString oldFilename){
+QString MainWindow::openSaveFileDialog(QString oldFilename) {
 	QString fileName = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存到..."), oldFilename, QString("Excel CSV (*.csv)"));
 	return fileName;
 }

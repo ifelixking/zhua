@@ -23,7 +23,7 @@
 #include <QtNetwork/QNetworkCookie>  
 #include <QtNetwork/QNetworkCookieJar>
 #include <QtWebChannel/QWebChannel>
-
+#include <ActiveQt\QAxObject>
 
 
 #include "Utils.h"
@@ -36,6 +36,9 @@
 #pragma comment(lib, "Qt5WebEngineCored.lib")
 #pragma comment(lib, "Qt5Networkd.lib")
 #pragma comment(lib, "Qt5WebChanneld.lib")
+#pragma comment(lib, "Qt5AxBased.lib")
+#pragma comment(lib, "Qt5AxContainerd.lib")
+#pragma comment(lib, "Qt5AxServerd.lib")
 #else
 #pragma comment(lib, "Qt5Widgets.lib")
 #pragma comment(lib, "Qt5Core.lib")
@@ -44,4 +47,7 @@
 #pragma comment(lib, "Qt5WebEngineCore.lib")
 #pragma comment(lib, "Qt5Network.lib")
 #pragma comment(lib, "Qt5WebChannel.lib")
+#pragma comment(lib, "Qt5AxBase.lib")
+#pragma comment(lib, "Qt5AxContainer.lib")
+#pragma comment(lib, "Qt5AxServer.lib")
 #endif
