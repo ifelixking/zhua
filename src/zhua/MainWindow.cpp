@@ -99,7 +99,8 @@ void MainWindow::initMenu() {
 		auto aProgress = new QProgressBar(this); aProgress->setFixedSize(100, 16); aProgress->setTextVisible(false);
 		connect(m_view, &QWebEngineView::loadProgress, [aProgress](int progress) {
 			aProgress->setValue(progress);
-			if (progress >= 100) { aProgress->hide(); } else { aProgress->show(); }
+			if (progress >= 100) { aProgress->hide(); }
+			else { aProgress->show(); }
 		});
 		mBar->addWidget(aProgress); aProgress->hide();
 
@@ -201,7 +202,7 @@ QString MainWindow::getInfo(QString a, QString b) {
 }
 
 void MainWindow::save(QString key, QString data) {
-#ifdef _DEBUG
+#ifdef _DEBUG 
 	auto k = key.toStdWString();
 	auto v = data.toStdWString();
 #endif 
@@ -219,7 +220,7 @@ void MainWindow::slotShowNativeStorage() {
 }
 
 QString MainWindow::openSaveFileDialog(QString oldFilename) {
-	QString fileName = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存到..."), oldFilename, QString("Excel CSV (*.csv)"));
+	QString fileName = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存到..."), oldFilename, QString::fromLocal8Bit("Microsoft Excel (*.xlsx);;CSV (*.csv);;所有文件 (*.*)"));
 	return fileName;
 }
 
@@ -234,20 +235,55 @@ public:
 };
 
 void MainWindow::exportToExcel(QString filename, QString jsonColumns, QString jsonRows) {
-	QAxObject * app = new QAxObject(this); AutoDelete<QAxObject> _app(app);
-	app->setControl("Excel.Application");
-	app->dynamicCall("SetVisible (bool Visible)", "false");
-	app->setProperty("DisplayAlerts", false);
-
-	QAxObject *workbooks = app->querySubObject("WorkBooks"); workbooks->dynamicCall("Add");
-	QAxObject *workbook = app->querySubObject("ActiveWorkBook");
-	QAxObject *worksheets = workbook->querySubObject("Sheets");
-	QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);
-
-
-
-	// column
 	{
-		
+		QAxObject * app = new QAxObject(this); AutoDelete<QAxObject> _app(app);
+		app->setControl("Excel.Application");
+		app->dynamicCall("SetVisible (bool Visible)", "false");
+		app->setProperty("DisplayAlerts", false);
+
+		QAxObject *workbooks = app->querySubObject("WorkBooks"); workbooks->dynamicCall("Add");
+		QAxObject *workbook = app->querySubObject("ActiveWorkBook");
+		QAxObject *worksheets = workbook->querySubObject("Sheets");
+		QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);
+
+		// columns
+		QMap<QString, int> mapColumn; {
+			auto columns = QJsonDocument::fromJson(jsonColumns.toUtf8()).array();
+			for (int i = 0; i < columns.count(); ++i) {
+				auto cell = worksheet->querySubObject("Cells(int, int)", 1, i + 1);
+				auto col = columns.at(i).toObject();
+				auto title = col["title"].toString();
+				auto key = col["key"].toString();
+				auto width = col["width"].toInt();
+				cell->dynamicCall("SetValue(const QVariant&)", QVariant(title));
+				cell->setProperty("ColumnWidth", width);
+				auto font = cell->querySubObject("Font");
+				font->setProperty("Bold", true);
+				font->setProperty("Size", 12);
+				mapColumn.insert(key, i + 1);
+			}
+		}
+
+		// rows
+		{
+			auto rows = QJsonDocument::fromJson(jsonRows.toUtf8()).array();
+			for (int i = 0; i < rows.count(); ++i) {
+				auto obj = rows.at(i).toObject();
+				for (auto itor = obj.begin(); itor != obj.end(); ++itor) {
+					auto itorFind = mapColumn.find(itor.key()); if (itorFind == mapColumn.end()) { continue; }
+					auto colName = itorFind.value();
+					auto cell = worksheet->querySubObject("Cells(int, int)", i + 2, colName);	// TODO: 考虑 A,B,C...Z 之后不够用的情况
+					auto value = itor.value().toString();
+					cell->dynamicCall("SetValue(const QVariant&)", value);
+					auto font = cell->querySubObject("Font");
+					font->setProperty("Size", 12);
+				}
+			}
+		}
+
+		workbook->dynamicCall("SaveAs(const QString&)", QDir::toNativeSeparators(filename));
+		workbook->dynamicCall("Close()");
+		app->dynamicCall("Quit()");
 	}
+	QMessageBox::information(this, "title", "comment");
 }

@@ -29,6 +29,8 @@
 #include <QtCore\QJsonParseError>
 #include <QtCore\QJsonObject>
 #include <QtCore\QJsonValue>
+#include <QtWidgets\QMessageBox>
+
 
 #include "Utils.h"
 

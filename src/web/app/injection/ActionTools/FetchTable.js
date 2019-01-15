@@ -12,6 +12,8 @@ import 'antd/lib/Tree/style'
 import 'antd/lib/Table/style'
 import Icon from '../Common/Icon'
 import Mask from '../Common/Mask'
+import { co } from 'co'
+import * as Service from '../../../service'
 
 export default connect(
 	state => {
@@ -98,6 +100,7 @@ class TablePanel extends React.Component {
 	constructor(props) {
 		super(props)
 		this.flushCache = this.flushCache.bind(this)
+		this.onExport = this.onExport.bind(this)
 		this.cache_dataSource = []
 		this.cache_columns = []
 		this.flushCache(this.props.rawTree)
@@ -159,8 +162,20 @@ class TablePanel extends React.Component {
 		}
 	}
 
+	onExport(){
+		let _this = this
+		co(function*(){
+			let result = yield Service.NATIVE('openSaveFileDialog', ['导出'])
+			yield Service.NATIVE('exportToExcel', [result, JSON.stringify(_this.cache_columns), JSON.stringify(_this.cache_dataSource)])
+		})		
+	}
+
 	render() {
-		return <Table size="middle" bordered scroll={{y:this.props.height}} pagination={false} dataSource={this.cache_dataSource} columns={this.cache_columns} />
+		const css_btn = { position: 'absolute', top: '48px', right: '32px', fontSize: '24px', cursor: 'pointer' }
+		return (<div>
+			<Table size="middle" bordered scroll={{ y: this.props.height }} pagination={false} dataSource={this.cache_dataSource} columns={this.cache_columns} />
+			<Icon onClick={this.onExport} title='导出...' style={css_btn} name='icon-save' />
+		</div>)
 	}
 }
 
