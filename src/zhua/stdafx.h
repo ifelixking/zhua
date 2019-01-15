@@ -24,7 +24,11 @@
 #include <QtNetwork/QNetworkCookieJar>
 #include <QtWebChannel/QWebChannel>
 #include <ActiveQt\QAxObject>
-
+#include <QtCore\QJsonDocument>
+#include <QtCore\QJsonArray>
+#include <QtCore\QJsonParseError>
+#include <QtCore\QJsonObject>
+#include <QtCore\QJsonValue>
 
 #include "Utils.h"
 

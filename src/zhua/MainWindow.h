@@ -23,6 +23,7 @@ public slots:
 	void save(QString, QString);
 	QString load(QString);
 	QString openSaveFileDialog(QString);
+	void exportToExcel(QString, QString, QString);
 
 private:
 	QString m_injectScriptID;

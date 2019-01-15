@@ -3,7 +3,6 @@
 #include "DlgNavigate.h"
 #include "DlgNative.h"
 
-
 // 运行不安全的 https
 class CustomWebEnginePage : public QWebEnginePage
 {
@@ -184,8 +183,8 @@ void MainWindow::slotHome() {
 			cellC->dynamicCall("SetValue(const QVariant&)", QVariant("victoria"));
 			cellD->dynamicCall("SetValue(const QVariant&)", QVariant("hugo"));
 		}
-			//	cellrow++;
-		// }
+		//	cellrow++;
+	// }
 
 		workbook->dynamicCall("SaveAs(const QString&)", QDir::toNativeSeparators(filepath));//保存至filepath，注意一定要用QDir::toNativeSeparators将路径中的"/"转换为"\"，不然一定保存不了。
 		workbook->dynamicCall("Close()");//关闭工作簿
@@ -193,10 +192,6 @@ void MainWindow::slotHome() {
 		delete excel;
 		excel = NULL;
 	}
-	
-
-
-
 }
 
 QString MainWindow::getInfo(QString a, QString b) {
@@ -226,4 +221,33 @@ void MainWindow::slotShowNativeStorage() {
 QString MainWindow::openSaveFileDialog(QString oldFilename) {
 	QString fileName = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存到..."), oldFilename, QString("Excel CSV (*.csv)"));
 	return fileName;
+}
+
+template<typename T>
+class AutoDelete
+{
+private:
+	T * m_obj;
+public:
+	AutoDelete<T>(T * obj) : m_obj(obj) {}
+	~AutoDelete<T>() { delete m_obj; }
+};
+
+void MainWindow::exportToExcel(QString filename, QString jsonColumns, QString jsonRows) {
+	QAxObject * app = new QAxObject(this); AutoDelete<QAxObject> _app(app);
+	app->setControl("Excel.Application");
+	app->dynamicCall("SetVisible (bool Visible)", "false");
+	app->setProperty("DisplayAlerts", false);
+
+	QAxObject *workbooks = app->querySubObject("WorkBooks"); workbooks->dynamicCall("Add");
+	QAxObject *workbook = app->querySubObject("ActiveWorkBook");
+	QAxObject *worksheets = workbook->querySubObject("Sheets");
+	QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);
+
+
+
+	// column
+	{
+		
+	}
 }
