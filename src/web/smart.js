@@ -363,6 +363,52 @@ export class QTree {
 
 }
 
+export function getColumnsFromRawTree(rawTree){
+	let colmuns = [];
+	if (rawTree) {
+		const func = function (node, baseKey = null) {
+			let theKey = (baseKey ? (baseKey + '>') : '') + toQueryString(node.get('data'))
+			let output = QTree.getNodeOutput(node)
+			if (output) {
+				if (output.get('innerText') !== false) { let key = `${theKey}~innerText`; colmuns.push({ title: '文本', key, dataIndex: key, width: 100 }) }
+				if (output.get('href')) { let key = `${theKey}~href`; colmuns.push({ title: '超链接', key, dataIndex: key, width: 100 }) }
+				if (output.get('src')) { let key = `${theKey}~src`; colmuns.push({ title: '源地址', key, dataIndex: key, width: 100 }) }
+				if (output.get('title')) { let key = `${theKey}~title`; colmuns.push({ title: '提示文本', key, dataIndex: key, width: 100 }) }
+			}
+			node.get('children').forEach((childNode) => {
+				func(childNode, theKey)
+			})
+		}
+		func(rawTree.block)
+	}
+	return colmuns
+}
+
+export function getRowsFromRawTree(rawTree){
+	if (!rawTree) { return [] }
+
+	const processItem = function (item, row, output, baseKey) {
+		const element = item.element
+		if (output) {
+			if (output.get('innerText') !== false) { row[`${baseKey}~innerText`] = element.innerText }
+			if (output.get('href')) { row[`${baseKey}~href`] = element.href }
+			if (output.get('src')) { row[`${baseKey}~src`] = element.src }
+			if (output.get('title')) { row[`${baseKey}~title`] = element.title }
+		}
+		item.children.forEach((subNode, j) => {
+			if (subNode.elements.length == 0) { return }
+			let theKey = toQueryString(subNode.block.get('data'))
+			processItem(subNode.elements[0], row, QTree.getNodeOutput(subNode.block), `${baseKey}>${theKey}`)
+		})
+	}
+
+	let output = QTree.getNodeOutput(rawTree.block)
+	let baseKey = toQueryString(rawTree.block.get('data'))
+	return rawTree.elements.map((item, i) => {
+		let row = { key: i }; processItem(item, row, output, baseKey)
+		return row
+	})
+}
 
 	// let rootElements = $(toQueryString(qTree.get('data'))).toArray()
 

@@ -48,6 +48,7 @@ export default connect(
 		this.onEdit = this.onEdit.bind(this)
 		this.onDelete = this.onDelete.bind(this)
 		this.onActionClick = this.onActionClick.bind(this)
+		this.onStart = this.onStart.bind(this)
 
 		this.onDlgOpenURLOK = this.onDlgOpenURLOK.bind(this)
 		this.onDlgOpenURLCancel = this.onDlgOpenURLCancel.bind(this)
@@ -135,15 +136,13 @@ export default connect(
 
 	// Block 开始
 	onStart() {
-		// const doStart = () => { }
-		// if (this.props.actionStoreModified) {
-		// 	Modal.confirm({
-		// 		title: '开始执行', content: `开始执行前必须先保存项目，是否保存项目并继续？`, okText: '确认', cancelText: '取消', onOk: () => {
-		// 		}
-		// 	});
-		// } else {
-		// 	doStart()
-		// }		
+		let _this = this
+		co(function* () {
+			// let status = yield Service.nLoad('status')
+			// if (status == 'start'){ return }
+			// yield Service.nSave('status', 'start')			
+			yield Service.NATIVE('onStart', []);
+		})
 	}
 
 	// Block 删除

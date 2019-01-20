@@ -8,7 +8,8 @@ module.exports = {
 	entry: {
 		admin: './src/web/app/admin/index.js',
 		home: './src/web/app/home/index.js',
-		injection: './src/web/app/injection/index.js'
+		injection: './src/web/app/injection/index.js',
+		run: './src/web/app/injection/run.js'
 	},
 	output: {
 		path: __dirname + '/src/server/src/main/resources/public',

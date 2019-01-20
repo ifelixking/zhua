@@ -11,8 +11,8 @@ export default class OpenURL extends React.Component {
 
 		const url = this.props.action.getIn(['data', 'url'])
 		let protocol = this.getProtocol(url)
-		let inputURL = url.substr(protocol.length)
-
+		let inputURL = url && url.substr(protocol.length)
+		
 		this.state = {
 			name: this.props.action.getIn(['data', 'name']),
 			inputURL, protocol,
@@ -24,6 +24,7 @@ export default class OpenURL extends React.Component {
 		this.onProtocolChange = this.onProtocolChange.bind(this)
 		this.getProtocol = this.getProtocol.bind(this)
 		this.onNameChange = this.onNameChange.bind(this)
+		this.onFillLocation = this.onFillLocation.bind(this)
 	}
 
 	onCancel(e) {
@@ -52,8 +53,8 @@ export default class OpenURL extends React.Component {
 	}
 
 	getProtocol(url) {
-		if (url.startsWith('http://')) { return 'http://' }
-		if (url.startsWith('https://')) { return 'https://' }
+		if (url && url.startsWith('http://')) { return 'http://' }
+		if (url && url.startsWith('https://')) { return 'https://' }
 		return ''
 	}
 
@@ -61,6 +62,11 @@ export default class OpenURL extends React.Component {
 		this.setState({
 			name: e.target.value
 		})
+	}
+
+	onFillLocation() {
+		let location = window.location.toString()
+		this.onURLChange({ currentTarget: { value: location } })
 	}
 	
 	render() {
@@ -80,7 +86,7 @@ export default class OpenURL extends React.Component {
 				<div style={css_field}>名称</div>
 				<div style={css_value}><Input value={this.state.name} onChange={this.onNameChange} onPressEnter={this.onOK} /></div>
 				<div style={css_field}>打开网页</div>
-				<div style={css_value}><Input addonBefore={selectBefore} value={this.state.inputURL} onChange={this.onURLChange} onPressEnter={this.onOK} /></div>
+				<div style={css_value}><Input onDoubleClick={this.onFillLocation} addonBefore={selectBefore} value={this.state.inputURL} onChange={this.onURLChange} onPressEnter={this.onOK} /></div>
 			</Modal>
 		)
 	}

@@ -42,6 +42,10 @@ export default connect(
 		window.location.reload()
 	}
 
+	run(actionId){
+
+	}
+
 	render() {
 
 		const buttons = [

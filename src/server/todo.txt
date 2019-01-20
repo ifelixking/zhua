@@ -80,3 +80,6 @@ open				跳转到URL		编辑名称/JQ		跳转到URL
 处理 打开页面url 与实际URL 不一样的问题
 
 open 等 Block 文本右侧加入按钮 用于跳转
+
+
+将输出column 的key 使用 index 或hash

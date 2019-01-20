@@ -25,7 +25,7 @@ export default connect(
 	dispatch => {
 		return {
 			updateActionData: (actionId, data) => {
-				dispatch({ type: 'UPDATE_ACTION_STORE_BY_ACTION_DATA', actionId, data })
+				dispatch({ type: 'UPDATE_ACTION_STORE_BY_ACTION_DATA', actionId, data })				
 			}
 		}
 	}
@@ -108,52 +108,54 @@ class TablePanel extends React.Component {
 
 	static title = "表格"
 
-	getColumns(rawTree) {
-		let colmuns = [];
-		if (rawTree) {
-			const func = function (node, baseKey = null) {
-				let theKey = (baseKey ? (baseKey + '>') : '') + Smart.toQueryString(node.get('data'))
-				let output = Smart.QTree.getNodeOutput(node)
-				if (output) {
-					if (output.innerText !== false) { let key = `${theKey}~innerText`; colmuns.push({ title: '文本', key, dataIndex: key, width: 100 }) }
-					if (output.href) { let key = `${theKey}~href`; colmuns.push({ title: '超链接', key, dataIndex: key, width: 100 }) }
-					if (output.src) { let key = `${theKey}~src`; colmuns.push({ title: '源地址', key, dataIndex: key, width: 100 }) }
-					if (output.title) { let key = `${theKey}~title`; colmuns.push({ title: '提示文本', key, dataIndex: key, width: 100 }) }
-				}
-				node.get('children').forEach((childNode) => {
-					func(childNode, theKey)
-				})
-			}
-			func(rawTree.block)
-		}
-		return colmuns
-	}
+	// getColumns(rawTree) {
+	// 	let colmuns = [];
+	// 	if (rawTree) {
+	// 		const func = function (node, baseKey = null) {
+	// 			let theKey = (baseKey ? (baseKey + '>') : '') + Smart.toQueryString(node.get('data'))
+	// 			let output = Smart.QTree.getNodeOutput(node)
+	// 			if (output) {
+	// 				if (output.innerText !== false) { let key = `${theKey}~innerText`; colmuns.push({ title: '文本', key, dataIndex: key, width: 100 }) }
+	// 				if (output.href) { let key = `${theKey}~href`; colmuns.push({ title: '超链接', key, dataIndex: key, width: 100 }) }
+	// 				if (output.src) { let key = `${theKey}~src`; colmuns.push({ title: '源地址', key, dataIndex: key, width: 100 }) }
+	// 				if (output.title) { let key = `${theKey}~title`; colmuns.push({ title: '提示文本', key, dataIndex: key, width: 100 }) }
+	// 			}
+	// 			node.get('children').forEach((childNode) => {
+	// 				func(childNode, theKey)
+	// 			})
+	// 		}
+	// 		func(rawTree.block)
+	// 	}
+	// 	return colmuns
+	// }
 
 	flushCache(tree) {
-		this.cache_columns = this.getColumns(tree)
-		if (!tree) { this.cache_dataSource = []; return }
+		this.cache_columns = Smart.getColumnsFromRawTree(tree)
+		this.cache_dataSource = Smart.getRowsFromRawTree(tree)
+		// this.cache_columns = this.getColumns(tree)
+		// if (!tree) { this.cache_dataSource = []; return }
 
-		const processItem = function (item, row, output, baseKey) {
-			const element = item.element
-			if (output) {
-				if (output.innerText !== false) { row[`${baseKey}~innerText`] = element.innerText }
-				if (output.href) { row[`${baseKey}~href`] = element.href }
-				if (output.src) { row[`${baseKey}~src`] = element.src }
-				if (output.title) { row[`${baseKey}~title`] = element.title }
-			}
-			item.children.forEach((subNode, j) => {
-				if (subNode.elements.length == 0) { return }
-				let theKey = Smart.toQueryString(subNode.block.get('data'))
-				processItem(subNode.elements[0], row, Smart.QTree.getNodeOutput(subNode.block), `${baseKey}>${theKey}`)
-			})
-		}
+		// const processItem = function (item, row, output, baseKey) {
+		// 	const element = item.element
+		// 	if (output) {
+		// 		if (output.innerText !== false) { row[`${baseKey}~innerText`] = element.innerText }
+		// 		if (output.href) { row[`${baseKey}~href`] = element.href }
+		// 		if (output.src) { row[`${baseKey}~src`] = element.src }
+		// 		if (output.title) { row[`${baseKey}~title`] = element.title }
+		// 	}
+		// 	item.children.forEach((subNode, j) => {
+		// 		if (subNode.elements.length == 0) { return }
+		// 		let theKey = Smart.toQueryString(subNode.block.get('data'))
+		// 		processItem(subNode.elements[0], row, Smart.QTree.getNodeOutput(subNode.block), `${baseKey}>${theKey}`)
+		// 	})
+		// }
 
-		let output = Smart.QTree.getNodeOutput(tree.block)
-		let baseKey = Smart.toQueryString(tree.block.get('data'))
-		this.cache_dataSource = tree.elements.map((item, i) => {
-			let row = { key: i }; processItem(item, row, output, baseKey)
-			return row
-		})
+		// let output = Smart.QTree.getNodeOutput(tree.block)
+		// let baseKey = Smart.toQueryString(tree.block.get('data'))
+		// this.cache_dataSource = tree.elements.map((item, i) => {
+		// 	let row = { key: i }; processItem(item, row, output, baseKey)
+		// 	return row
+		// })
 	}
 
 	componentWillReceiveProps(nextProps) {
@@ -222,9 +224,9 @@ const RawPanel = connect(
 		const output = function (n, element) {
 			let output = n.get('data').last().getIn(['config', 'output'])
 			if (!output) { return element.innerText }
-			if (output.href) { return element.href }
-			if (output.src) { return element.src }
-			if (output.title) { return element.title }
+			if (output.get('href')) { return element.href }
+			if (output.get('src')) { return element.src }
+			if (output.get('title')) { return element.title }
 			return element.innerText
 		}
 
@@ -284,12 +286,12 @@ class CapturePanel extends React.Component {
 						})
 					case 1: return c.set('className', Immutable.List(values))
 					case 2: return c.set('attributes', Immutable.List(values))
-					case 3: return c.set('output', {
+					case 3: return c.set('output', Immutable.Map({
 						innerText: values.includes('innerText'),
 						href: values.includes('href'),
 						src: values.includes('src'),
 						title: values.includes('title'),
-					})
+					}))
 				}
 			})
 			this.setState({ selectedTag: newTag })
@@ -346,10 +348,10 @@ class CapturePanel extends React.Component {
 			let outputChecks = null; {
 				let output = st.getIn(['config', 'output']), values = []
 				if (output) {
-					output && output.innerText && (values.push('innerText'))
-					output && output.href && (values.push('href'))
-					output && output.src && (values.push('src'))
-					output && output.title && (values.push('title'))
+					output && output.get('innerText') && (values.push('innerText'))
+					output && output.get('href') && (values.push('href'))
+					output && output.get('src') && (values.push('src'))
+					output && output.get('title') && (values.push('title'))
 					let options = []
 					st.get('innerText') && (options.push({ label: '文本', value: 'innerText' }));
 					st.get('href') && (options.push({ label: '超链接', value: 'href' }));
