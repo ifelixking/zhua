@@ -12,13 +12,17 @@ export default class FetchTableEdit extends React.Component {
 		this.state = {
 			name: this.props.action.getIn(['data', 'name']),
 			export: this.props.action.getIn(['data', 'export']),
+			showDialog: true
 		}
+
+		this.dlgResult = null
 
 		this.onCancel = this.onCancel.bind(this)
 		this.onOK = this.onOK.bind(this)
 		this.onNameChange = this.onNameChange.bind(this)
 		this.onExportChange = this.onExportChange.bind(this)
 		this.onSettingExport = this.onSettingExport.bind(this)
+		this.onClosed = this.onClosed.bind(this)
 	}
 
 	onNameChange(e) {
@@ -35,13 +39,25 @@ export default class FetchTableEdit extends React.Component {
 
 	onCancel(e) {
 		e.stopPropagation()
-		this.props.onDialogCancel()
+		this.dlgResult = false;
+		this.setState({ showDialog: false })
 	}
 
 	onOK(e) {
 		e.stopPropagation()
+
 		const newAction = this.props.action.setIn(['data', 'export'], this.state.export).setIn(['data', 'name'], this.state.name)
-		this.props.onDialogOK(newAction)
+
+		this.dlgResult = newAction;
+		this.setState({ showDialog: false })
+	}
+
+	onClosed() {
+		if (this.dlgResult) {
+			this.props.onDialogOK(this.dlgResult)
+		} else {
+			this.props.onDialogCancel()
+		}
 	}
 
 	onSettingExport() {
@@ -56,7 +72,7 @@ export default class FetchTableEdit extends React.Component {
 		const css_field = { marginBottom: '4px' }
 		const css_value = { marginBottom: '16px' }
 		return (
-			<Modal title='Open-URL' visible={true} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
+			<Modal maskClosable={false} title='Open-URL' visible={this.state.showDialog} onCancel={this.onCancel} afterClose={this.onClosed} onOk={this.onOK}>
 				<div style={css_field}>名称</div>
 				<div style={css_value}><Input value={this.state.name} onChange={this.onNameChange} onPressEnter={this.onOK} /></div>
 				<div style={css_field}>导出到...</div>

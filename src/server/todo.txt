@@ -1,12 +1,34 @@
+ - 1. home 页 favicon 处理 <img src='https://www.sina.com.cn/favicon.ico' style={{ width: '16px', height: '16px', verticalAlign: 'baseline', marginBottom: '2px' }} />
 
-// -------
+-- 2. 处理 打开页面url 与实际URL 不一样的问题
 
-动作 BLock 用图标, 允许重命名
+ - 3. open 等 Block 文本右侧加入按钮 用于跳转
 
-动作面板 加入 "开始" 按钮, 需提示用户设定保存路径
+ - 4. 任意时刻修改 actionStore 都要存储到本地
 
-选项中 添加 "自动保存到文件"
-	将 FetchTable 类型的 Block 列出, 由用户设定存储路径
+5. fetch-table 的 导出的默认位置
+
+6. fetch-table 为 append 输出
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ---------------------------------------------------------------
+// ---------------------------------------------------------------
+// ---------------------------------------------------------------
+// ---------------------------------------------------------------
 
 
 server 端是用注解方式验证邮箱格式合法
@@ -22,27 +44,17 @@ server 端是用注解方式验证邮箱格式合法
 
 // -------
 动作
-	导出 excel-cvs
 
 // 私有处理
 	支付通道
 
 
-home 页 favicon 处理
-<img src='https://www.sina.com.cn/favicon.ico' style={{ width: '16px', height: '16px', verticalAlign: 'baseline', marginBottom: '2px' }} />
 
 
 
 mapper 需要更加精细的区分 R/W
 
 访问次数inc 需要防止 频繁访问
-
-
-
-
-
-
-
 
 
 去掉 antd Icon
@@ -57,11 +69,6 @@ Antd Icon 打包 是否增加了许多js代码
 刷新 读本地 包括[是否保存状态]
 保存 写网络
 
-开始
-	标记开始状态 到 本地
-	禁用操作按钮, 改为 暂停按钮	
-	重置next节点 到 本地
-
 
 节点Block 需要实现 onSelect、onEdit、onExecute
 	节点边上有一个编辑按钮
@@ -75,11 +82,6 @@ open-url-next		创建next		*				*
 fetch-table			详情面板		编辑/名称/导出	导出table
 open-each			跳转到第一个	编辑名称/JQ		跳转到URL
 open				跳转到URL		编辑名称/JQ		跳转到URL
-
-
-处理 打开页面url 与实际URL 不一样的问题
-
-open 等 Block 文本右侧加入按钮 用于跳转
 
 
 将输出column 的key 使用 index 或hash

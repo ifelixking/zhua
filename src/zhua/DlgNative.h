@@ -12,6 +12,7 @@ private:
 	~DlgNative();
 private slots:
 	void itemClicked(QListWidgetItem *);
+	void btnJsonClicked();
 
 private:
 	Ui::DlgNative *ui;

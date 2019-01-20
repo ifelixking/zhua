@@ -74,6 +74,7 @@ export default connect(
 
 	updateActionData(data) {
 		this.props.updateActionData(this.props.actionInfo.action.get('id'), data)
+		this.props.onModified()
 	}
 
 	onPanelResize(size){

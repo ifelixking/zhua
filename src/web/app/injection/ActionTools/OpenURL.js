@@ -12,11 +12,13 @@ export default class OpenURL extends React.Component {
 		const url = this.props.action.getIn(['data', 'url'])
 		let protocol = this.getProtocol(url)
 		let inputURL = url && url.substr(protocol.length)
-		
+
 		this.state = {
 			name: this.props.action.getIn(['data', 'name']),
 			inputURL, protocol,
+			showDialog: true
 		}
+		this.dlgResult = null
 
 		this.onCancel = this.onCancel.bind(this)
 		this.onOK = this.onOK.bind(this)
@@ -25,17 +27,31 @@ export default class OpenURL extends React.Component {
 		this.getProtocol = this.getProtocol.bind(this)
 		this.onNameChange = this.onNameChange.bind(this)
 		this.onFillLocation = this.onFillLocation.bind(this)
+		this.onClosed = this.onClosed.bind(this)
 	}
 
 	onCancel(e) {
 		e.stopPropagation()
-		this.props.onDialogCancel()
+		this.dlgResult = false;
+		this.setState({ showDialog: false })
 	}
 
 	onOK(e) {
+		e.stopPropagation()
+
 		const url = this.state.protocol + this.state.inputURL
 		const newAction = this.props.action.setIn(['data', 'url'], url).setIn(['data', 'name'], this.state.name)
-		this.props.onDialogOK(newAction)
+
+		this.dlgResult = newAction;
+		this.setState({ showDialog: false })
+	}
+
+	onClosed() {
+		if (this.dlgResult) {
+			this.props.onDialogOK(this.dlgResult)
+		} else {
+			this.props.onDialogCancel()
+		}
 	}
 
 	onURLChange(e) {
@@ -68,7 +84,7 @@ export default class OpenURL extends React.Component {
 		let location = window.location.toString()
 		this.onURLChange({ currentTarget: { value: location } })
 	}
-	
+
 	render() {
 		let selectBefore = null
 		if (this.state.protocol) {
@@ -82,7 +98,7 @@ export default class OpenURL extends React.Component {
 		const css_value = { marginBottom: '16px' }
 
 		return (
-			<Modal title='Open-URL' visible={true} onCancel={this.onCancel} afterClose={this.props.onDialogCancel} onOk={this.onOK}>
+			<Modal maskClosable={false} title='Open-URL' visible={this.state.showDialog} onCancel={this.onCancel} afterClose={this.onClosed} onOk={this.onOK}>
 				<div style={css_field}>名称</div>
 				<div style={css_value}><Input value={this.state.name} onChange={this.onNameChange} onPressEnter={this.onOK} /></div>
 				<div style={css_field}>打开网页</div>

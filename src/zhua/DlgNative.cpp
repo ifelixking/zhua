@@ -9,7 +9,16 @@ DlgNative::DlgNative(QWidget * parent, const QMap<QString, QString> & data)
 	, m_data(data)
 {
 	ui->setupUi(this);
+	connect(ui->btnJson, SIGNAL(clicked()), this, SLOT(btnJsonClicked));
 	connect(ui->listWidget, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(itemClicked(QListWidgetItem *)));
+}
+
+void DlgNative::btnJsonClicked(){
+	auto doc = QJsonDocument::fromJson(ui->textEdit->toPlainText().toUtf8());
+	if (doc.isNull()) { return; }
+	auto byteArray = doc.toJson(QJsonDocument::Indented);
+	QString string; string.prepend(byteArray);
+	ui->textEdit->setText(string);
 }
 
 void DlgNative::itemClicked(QListWidgetItem * item){

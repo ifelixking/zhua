@@ -143,7 +143,7 @@ class App extends React.Component {
 				const defaultActionStore = {
 					start: 1,
 					actions: [
-						{ id: 1, type: 'open-url', data: { url: item.siteURL } },
+						{ id: 1, type: 'open-url', data: { url: item.siteURL, name:'打开网站' } },
 						// {
 						// 	id: 2, type: 'open-each-url', next: 4,
 						// 	actionStore: {
@@ -290,10 +290,13 @@ class App extends React.Component {
 
 		const buildProjectCard = (projects, edit = false) => {
 			return projects.map((item, i) => {
+				let urlInfo = utils.parseURL(item.siteURL)
+				let favIcon = `${urlInfo.protocol}://${urlInfo.host}${urlInfo.port && ':' + urlInfo.port}/favicon.ico`
 				return (
 					<div onClick={() => this.open(item)} key={item.id} className={Styles['card-grid']} style={{ cursor: 'pointer', display: 'inline-block', width: '300px', margin: `0px ${((i + 1) % 4) ? '16px' : '0px'} 16px 0px`, border: '1px solid #e8e8e8', borderRadius: '2px' }}>
 						<div style={{ borderBottom: '1px solid #e8e8e8', borderRadius: '2px 2px 0px 0px', backgroundColor: '#fafafa', padding: '12px' }}>
-							<span title={item.siteTitle} style={Object.assign({}, css_ellipsis, { width: '150px', fontSize: '14px', fontWeight: 'bold' })}>{item.id} : {item.siteTitle}</span>
+							<img src={favIcon} style={{ width: '16px', height: '16px', verticalAlign: 'baseline', margin: '0px 2px 2px 0px' }} />
+							<span title={`[${item.id}]${item.siteTitle}`} style={Object.assign({}, css_ellipsis, { width: '132px', fontSize: '14px', fontWeight: 'bold' })}>{item.siteTitle}</span>
 							<span style={Object.assign({}, css_ellipsis, { width: '123px', float: 'right', fontSize: '12px', lineHeight: '21px', textAlign: 'right' })}>
 								{
 									edit ? ([

@@ -49,12 +49,15 @@ export default connect(
 		this.onDelete = this.onDelete.bind(this)
 		this.onActionClick = this.onActionClick.bind(this)
 		this.onStart = this.onStart.bind(this)
+		this.onExecuteSelect = this.onExecuteSelect.bind(this)
 
 		this.onDlgOpenURLOK = this.onDlgOpenURLOK.bind(this)
 		this.onDlgOpenURLCancel = this.onDlgOpenURLCancel.bind(this)
 
 		this.onDlgFetchTableEditOK = this.onDlgFetchTableEditOK.bind(this)
 		this.onDlgFetchTableEditCancel = this.onDlgFetchTableEditCancel.bind(this)
+
+		this.onProjectModified = this.onProjectModified.bind(this)
 
 		this.state = {
 			editing: false
@@ -81,15 +84,7 @@ export default connect(
 		let currentActionID = this.props.selectedActionInfo.id
 		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: Smart.QTree.createByQNodeList(qNodeList) })
 		this.props.onCreateNextAction(newAction, currentActionID)
-		utils.doAsync(() => {
-			let _this = this
-			co(function* () {
-				let data = JSON.stringify(_this.props.actionStore.toJS())
-				let project = { ..._this.props.project, data }
-				yield Service.nSave('project', JSON.stringify(project))
-				yield Service.nSave('modified', JSON.stringify(true))
-			})
-		})
+		this.onProjectModified()
 	}
 
 	onSave() {
@@ -134,7 +129,19 @@ export default connect(
 		this.props.selectedActionInfo && (this.setState({ editing: true }))
 	}
 
-	// Block 开始
+	// 执行 当前 Block 
+	onExecuteSelect() {
+		if (!this.props.selectedActionInfo) { return; }
+		let { action: currentAction } = utils.actionStoreFindAction(this.props.actionStore, this.props.selectedActionInfo.id)
+		switch(currentAction.get('type')){
+			case 'open-url':{
+				let url = currentAction.getIn(['data', 'url']);
+				window.location = url;
+			}break
+		}
+	}
+
+	// 执行整个项目
 	onStart() {
 		let _this = this
 		co(function* () {
@@ -152,16 +159,7 @@ export default connect(
 
 	onDlgOpenURLOK(newAction) {
 		this.props.updateActionData(newAction.get('id'), newAction.get('data'))
-		utils.doAsync(() => {
-			let _this = this
-			co(function* () {
-				let data = JSON.stringify(_this.props.actionStore.toJS())
-				let project = { ..._this.props.project, data }
-				yield Service.nSave('project', JSON.stringify(project))
-				yield Service.nSave('modified', JSON.stringify(true))
-				_this.onDlgOpenURLCancel()
-			})
-		})
+		this.onProjectModified()
 	}
 
 	onDlgOpenURLCancel(){
@@ -170,16 +168,7 @@ export default connect(
 
 	onDlgFetchTableEditOK(newAction) {
 		this.props.updateActionData(newAction.get('id'), newAction.get('data'))
-		utils.doAsync(() => {
-			let _this = this
-			co(function* () {
-				let data = JSON.stringify(_this.props.actionStore.toJS())
-				let project = { ..._this.props.project, data }
-				yield Service.nSave('project', JSON.stringify(project))
-				yield Service.nSave('modified', JSON.stringify(true))
-				_this.onDlgOpenURLCancel()
-			})
-		})
+		this.onProjectModified()
 	}
 	onDlgFetchTableEditCancel() {
 		this.setState({ editing: false })
@@ -189,6 +178,20 @@ export default connect(
 		let text = action.get('id') + '-' + (action.getIn(['data', 'name']) || action.get('type'))
 		return text.length > 16 ? text.substr(0, 16) + '...' : text
 	}
+
+	onProjectModified(){
+		utils.doAsync(() => {
+			let _this = this
+			co(function* () {
+				let data = JSON.stringify(_this.props.actionStore.toJS())
+				let project = { ..._this.props.project, data }
+				yield Service.nSave('project', JSON.stringify(project))
+				yield Service.nSave('modified', JSON.stringify(true))
+				_this.onDlgOpenURLCancel()
+			})
+		})
+	}
+
 
 	render() {
 
@@ -306,7 +309,7 @@ export default connect(
 							actionTool = <ActionTools.FetchTableEdit action={currentAction} 
 								onDialogOK={this.onDlgFetchTableEditOK} onDialogCancel={this.onDlgFetchTableEditCancel} />
 						} else {
-							actionTool = <ActionTools.FetchTable />
+							actionTool = <ActionTools.FetchTable onModified={this.onProjectModified} />
 						}
 					} break;
 				}
@@ -347,7 +350,7 @@ export default connect(
 
 		//
 		const css_frame = { width: '100%', height: '100%' }
-		const css_svg = { width: '100%', height: 'calc(100% - 28px)', textAlign: 'center', overflow: 'scroll' }
+		const css_svg = { width: '100%', height: 'calc(100% - 42px)', textAlign: 'center', overflow: 'scroll' }
 		const css_redDot = {
 			display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'red',
 			borderRadius: '3px', position: 'relative', top: '-14px', left: '-6px', boxShadow: '0px 0px 3px red'
@@ -355,12 +358,13 @@ export default connect(
 		const css_btn = { pointerEvents: 'auto', cursor: 'pointer', fontSize: '20px', borderRadius: '14px', padding: '4px', boxShadow: '0px 0px 3px #888888', backgroundColor: '#fff', marginLeft: '4px' }
 		return (
 			<div style={css_frame}>
-				<div style={{ width: 'calc(100% - 17px)', padding: '14px 10px 0px 10px' }}>
+				<div style={{ boxShadow: '0px 2px 2px #ccc', padding: '18px 10px 10px' }}>
 					<Icon onClick={this.onSave} title="保存" style={css_btn} name="icon-save" />
 					<div style={Object.assign({}, css_redDot, { visibility: this.props.actionStoreModified ? 'visible' : 'hidden' })}></div>
 					<Icon onClick={this.onStart} title="开始执行" style={css_btn} name="icon-start" />
-					<Icon onClick={this.onEdit} title="编辑" style={{ ...css_btn, marginLeft: '10px', color: '#33F' }} name="icon-edit" />
-					<Icon onClick={this.onDelete} title="删除" style={{ ...css_btn, marginLeft: '10px', color: '#F33' }} name="icon-delete1" />
+					<Icon onClick={this.onExecuteSelect} title="执行选择的动作" style={{ ...css_btn, marginLeft: '10px', color: this.props.selectedActionInfo ? 'inherit' : 'gray' }} name="icon-execute" />
+					<Icon onClick={this.onEdit} title="编辑" style={{ ...css_btn, marginLeft: '10px', color: this.props.selectedActionInfo ? 'inherit' : 'gray' }} name="icon-edit" />
+					<Icon onClick={this.onDelete} title="删除" style={{ ...css_btn, marginLeft: '10px', color: this.props.selectedActionInfo ? 'inherit' : 'gray' }} name="icon-delete1" />
 				</div>
 				<div style={css_svg} onClick={this.onFrameDivClick}>
 					<svg width={totalWidth} height={totalHeight} style={{ cursor: 'default' }}>
