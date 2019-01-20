@@ -80,9 +80,9 @@ export default connect(
 		}
 	}
 
-	onCreate(qNodeList, type) {
+	onCreate(type, data) {
 		let currentActionID = this.props.selectedActionInfo.id
-		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data: Smart.QTree.createByQNodeList(qNodeList) })
+		let newAction = Immutable.Map({ id: this.props.maxActionID + 1, type: type, data })
 		this.props.onCreateNextAction(newAction, currentActionID)
 		this.onProjectModified()
 	}
@@ -319,8 +319,14 @@ export default connect(
 				// 	case 'fetch-table': { actionTool = <ActionTools.OpenURLNext onBtnOpenLinkClick={this.onBtnOpenLinkClick} /> } break;
 				// }
 				actionTool = <ActionTools.OpenURLNext
-					onBtnFetchTableClick={(qNodeList) => this.onCreate(qNodeList, 'fetch-table')}
-					onBtnOpenLinkClick={(qNodeList) => { this.onCreate(qNodeList, 'open-url') }} />
+					onBtnFetchTableClick={(qNodeList) => {
+						let data = Smart.QTree.createByQNodeList(qNodeList)
+						.set('name', '抓取表格')
+						.set('export', '导出.xlsx')
+						this.onCreate('fetch-table', data)
+					}}
+					// onBtnOpenLinkClick={(qNodeList) => { this.onCreate(qNodeList, 'open-url') }} 
+					/>
 			}
 		}
 

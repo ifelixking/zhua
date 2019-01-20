@@ -25,7 +25,7 @@ export class QNode {
 		// 用于匹配的 innerText 不能太长
 		let innerText = element.innerText.length > MAX_INNER_TEXT ? null : element.innerText
 
-		let result = Immutable.Map({
+		let result = Immutable.fromJS({
 			// element,
 
 			tagName: element.tagName, innerText, index, isFirst, isLast,
@@ -36,14 +36,14 @@ export class QNode {
 			title: element.title,
 			src: element.src,
 
-			config: Immutable.Map({
+			config: {
 				tagName: true,
 				innerText: false,
-				className: Immutable.List([]),
+				className: [],
 				index: false,
 				isFirst: false,
 				isLast: false,
-				attributes: Immutable.List([]),
+				attributes: [],
 
 				output
 				// {
@@ -52,7 +52,7 @@ export class QNode {
 				// 	src: false,
 				// 	title: false
 				// }
-			}),
+			},
 
 		})
 		return result;
@@ -132,7 +132,7 @@ export class QTree {
 	static getNodeOutput(node) {
 		const data = node.get('data'); if (!data || !data.size) { return }
 		let output = data.last().getIn(['config', 'output'])
-		if (!output && node.get('children').size == 0) { output = { innerText: true } }
+		if (!output && node.get('children').size == 0) { output = Immutable.map({ innerText: true }) }
 		return output
 	}
 

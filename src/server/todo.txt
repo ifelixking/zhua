@@ -6,7 +6,7 @@
 
  - 4. 任意时刻修改 actionStore 都要存储到本地
 
-5. fetch-table 的 导出的默认位置
+ - 5. fetch-table 的 导出的默认位置
 
 6. fetch-table 为 append 输出
 
