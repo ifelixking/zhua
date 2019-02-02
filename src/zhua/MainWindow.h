@@ -25,7 +25,7 @@ private:
 	void runGroup(int startId, const QJsonArray & actions);
 	bool run(const QJsonObject & action);
 
-	void doExportToExcel(QString, QJsonArray, QJsonArray);
+	void doExportToExcel(QString, QJsonArray, QJsonArray, bool);
 	void doStart();
 
 public slots:
@@ -33,7 +33,7 @@ public slots:
 	void save(QString, QString);
 	QString load(QString);
 	QString openSaveFileDialog(QString);
-	void exportToExcel(QString, QString, QString);
+	void exportToExcel(QString, QString, QString, bool);
 	void onStart() { emit start(); }
 
 signals:

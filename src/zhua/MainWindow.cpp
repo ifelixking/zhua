@@ -44,6 +44,8 @@ MainWindow::MainWindow(QWidget * parent)
 	this->initMenu();
 	m_view->load(m_urlHome);
 	m_view->show();
+
+	// this->exportToExcel("C:\\Users\\liyh\\Desktop\\test.xlsx", "{\"title\":\"Name\",\"key\":\"name\",\"width\":\"100\"}", "{\"name\":\"felix\"}", true);
 }
 
 MainWindow::~MainWindow() {
@@ -279,21 +281,35 @@ public:
 	~AutoFalse() { m_value = false; }
 };
 
-void MainWindow::doExportToExcel(QString filename, QJsonArray columns, QJsonArray rows) {
+void MainWindow::doExportToExcel(QString filename, QJsonArray columns, QJsonArray rows, bool append) {
 	{
+		bool isAppend = append;
+
 		QAxObject * app = new QAxObject(this); AutoDelete<QAxObject> _app(app);
 		app->setControl("Excel.Application");
 		app->dynamicCall("SetVisible (bool Visible)", "false");
 		app->setProperty("DisplayAlerts", false);
 
-		QAxObject *workbooks = app->querySubObject("WorkBooks"); workbooks->dynamicCall("Add");
-		QAxObject *workbook = app->querySubObject("ActiveWorkBook");
+		QAxObject *workbooks = app->querySubObject("WorkBooks");
+		QAxObject * workbook;
+		// 尝试打开 filename, 如果 filename 不存在 或 不是合法的 excel 格式, workbook 将为 NULL
+		if (append) {
+			workbook = workbooks->querySubObject("Open(const QString&)", filename);
+		}
+		if (workbook == NULL) {
+			isAppend = false;
+			workbooks->dynamicCall("Add");
+			workbook = app->querySubObject("ActiveWorkBook");
+		}
+
+
 		QAxObject *worksheets = workbook->querySubObject("Sheets");
 		QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);
 
-		// columns
-		QMap<QString, int> mapColumn; {
-
+		int rowOffset, colOffset;
+		QMap<QString, int> mapColumn;
+		if (!isAppend) {
+			// columns
 			for (int i = 0; i < columns.count(); ++i) {
 				auto cell = worksheet->querySubObject("Cells(int, int)", 1, i + 1);
 				auto col = columns.at(i).toObject();
@@ -307,6 +323,27 @@ void MainWindow::doExportToExcel(QString filename, QJsonArray columns, QJsonArra
 				font->setProperty("Size", 12);
 				mapColumn.insert(key, i + 1);
 			}
+			rowOffset = 2;
+			colOffset = 0;
+		}
+		else {
+			for (int i = 0; i < columns.count(); ++i) {
+				auto col = columns.at(i).toObject();
+				auto key = col["key"].toString();
+				mapColumn.insert(key, i + 1);
+			}
+
+			// 计算 offset
+			QAxObject* usedrange = worksheet->querySubObject("UsedRange"); //!  sheet 范围
+			int intRowStart = usedrange->property("Row").toInt(); //!  起始行数
+			int intColStart = usedrange->property("Column").toInt(); //!  起始列数　
+			QAxObject *rows, *columns;
+			rows = usedrange->querySubObject("Rows"); //! 行　
+			columns = usedrange->querySubObject("Columns"); //! 列
+			int intRow = rows->property("Count").toInt(); //! 行数
+			int intCol = columns->property("Count").toInt();  //!  列数
+			colOffset = intColStart - 1;
+			rowOffset = intRowStart + intRow;
 		}
 
 		// rows
@@ -316,8 +353,8 @@ void MainWindow::doExportToExcel(QString filename, QJsonArray columns, QJsonArra
 				auto obj = rows.at(i).toObject();
 				for (auto itor = obj.begin(); itor != obj.end(); ++itor) {
 					auto itorFind = mapColumn.find(itor.key()); if (itorFind == mapColumn.end()) { continue; }
-					auto colName = itorFind.value();
-					auto cell = worksheet->querySubObject("Cells(int, int)", i + 2, colName);	// TODO: 考虑 A,B,C...Z 之后不够用的情况
+					auto colIdx = itorFind.value();
+					auto cell = worksheet->querySubObject("Cells(int, int)", i + rowOffset, colOffset + colIdx);	// TODO: 考虑 A,B,C...Z 之后不够用的情况
 					auto value = itor.value().toString();
 					cell->dynamicCall("SetValue(const QVariant&)", value);
 					auto font = cell->querySubObject("Font");
@@ -334,10 +371,10 @@ void MainWindow::doExportToExcel(QString filename, QJsonArray columns, QJsonArra
 
 }
 
-void MainWindow::exportToExcel(QString filename, QString jsonColumns, QString jsonRows) {
+void MainWindow::exportToExcel(QString filename, QString jsonColumns, QString jsonRows, bool append) {
 	auto columns = QJsonDocument::fromJson(jsonColumns.toUtf8()).array();
 	auto rows = QJsonDocument::fromJson(jsonRows.toUtf8()).array();
-	doExportToExcel(filename, columns, rows);
+	doExportToExcel(filename, columns, rows, append);
 }
 
 void MainWindow::doStart() {
@@ -396,7 +433,7 @@ bool MainWindow::run(const QJsonObject & action) {
 		QVariant result = runScript2(script);
 		QJsonObject jsResult = QJsonDocument::fromJson(result.toString().toUtf8()).object();
 		auto filename = jsData["export"].toString();
-		doExportToExcel(filename, jsResult["columns"].toArray(), jsResult["rows"].toArray());
+		doExportToExcel(filename, jsResult["columns"].toArray(), jsResult["rows"].toArray(), true);
 		return false;
 	}
 

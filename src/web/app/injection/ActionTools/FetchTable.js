@@ -169,7 +169,7 @@ class TablePanel extends React.Component {
 		let _this = this
 		co(function*(){
 			let result = yield Service.NATIVE('openSaveFileDialog', ['导出'])
-			yield Service.NATIVE('exportToExcel', [result, JSON.stringify(_this.cache_columns), JSON.stringify(_this.cache_dataSource)])
+			yield Service.NATIVE('exportToExcel', [result, JSON.stringify(_this.cache_columns), JSON.stringify(_this.cache_dataSource), true])
 		})		
 	}
 
