@@ -263,3 +263,5 @@ __pycache__/
 /package-lock.json
 /tmp
 /src/server/src/main/resources/public
+src/zhua/cache/
+src/zhua/storage/

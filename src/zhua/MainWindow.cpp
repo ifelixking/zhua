@@ -3,7 +3,7 @@
 #include "DlgNavigate.h"
 #include "DlgNative.h"
 
-// 运行不安全的 https
+// 允许不安全的 https
 class CustomWebEnginePage : public QWebEnginePage
 {
 public:
@@ -14,19 +14,161 @@ public:
 	virtual bool certificateError(const QWebEngineCertificateError &certificateError) { return true; }
 };
 
+template<typename T>
+class AutoDelete
+{
+private:
+	T * m_obj;
+public:
+	AutoDelete<T>(T * obj) : m_obj(obj) {}
+	~AutoDelete<T>() { delete m_obj; }
+};
+class AutoFalse
+{
+private:
+	bool & m_value;
+public:
+	AutoFalse(bool & value) : m_value(value) {}
+	~AutoFalse() { m_value = false; }
+};
+
+
+// ================================================================================================
+
+QString ChannelObject::getInfo(QString a, QString b) {
+	auto kk = a.toStdWString();
+	auto kk1 = b.toStdWString();
+	return QString(a + b);
+}
+
+void ChannelObject::save(QString key, QString data) {
+#ifdef _DEBUG 
+	auto k = key.toStdWString();
+	auto v = data.toStdWString();
+#endif 
+	m_mapData[key] = data;
+}
+
+QString ChannelObject::load(QString key) {
+	auto itor = m_mapData.find(key);
+	if (itor == m_mapData.end()) { return QString(""); }
+	return itor.value();
+}
+
+QString ChannelObject::openSaveFileDialog(QString oldFilename) {
+	QString fileName = QFileDialog::getSaveFileName(m_mainWindow, QString::fromLocal8Bit("保存到..."), oldFilename, QString::fromLocal8Bit("Microsoft Excel (*.xlsx);;CSV (*.csv);;所有文件 (*.*)"));
+	return fileName;
+}
+
+void ChannelObject::exportToExcel(QString filename, QString jsonColumns, QString jsonRows, bool append) {
+	auto columns = QJsonDocument::fromJson(jsonColumns.toUtf8()).array();
+	auto rows = QJsonDocument::fromJson(jsonRows.toUtf8()).array();
+	doExportToExcel(filename, columns, rows, append);
+}
+
+void ChannelObject::doExportToExcel(QString filename, QJsonArray columns, QJsonArray rows, bool append) {
+	{
+		bool isAppend = append;
+
+		QAxObject * app = new QAxObject(this); AutoDelete<QAxObject> _app(app);
+		app->setControl("Excel.Application");
+		app->dynamicCall("SetVisible (bool Visible)", "false");
+		app->setProperty("DisplayAlerts", false);
+
+		QAxObject *workbooks = app->querySubObject("WorkBooks");
+		QAxObject * workbook;
+		// 尝试打开 filename, 如果 filename 不存在 或 不是合法的 excel 格式, workbook 将为 NULL
+		if (append) {
+			workbook = workbooks->querySubObject("Open(const QString&)", filename);
+		}
+		if (workbook == NULL) {
+			isAppend = false;
+			workbooks->dynamicCall("Add");
+			workbook = app->querySubObject("ActiveWorkBook");
+		}
+
+
+		QAxObject *worksheets = workbook->querySubObject("Sheets");
+		QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);
+
+		int rowOffset, colOffset;
+		QMap<QString, int> mapColumn;
+		if (!isAppend) {
+			// columns
+			for (int i = 0; i < columns.count(); ++i) {
+				auto cell = worksheet->querySubObject("Cells(int, int)", 1, i + 1);
+				auto col = columns.at(i).toObject();
+				auto title = col["title"].toString();
+				auto key = col["key"].toString();
+				auto width = col["width"].toInt();
+				cell->dynamicCall("SetValue(const QVariant&)", QVariant(title));
+				cell->setProperty("ColumnWidth", width);
+				auto font = cell->querySubObject("Font");
+				font->setProperty("Bold", true);
+				font->setProperty("Size", 12);
+				mapColumn.insert(key, i + 1);
+			}
+			rowOffset = 2;
+			colOffset = 0;
+		}
+		else {
+			for (int i = 0; i < columns.count(); ++i) {
+				auto col = columns.at(i).toObject();
+				auto key = col["key"].toString();
+				mapColumn.insert(key, i + 1);
+			}
+
+			// 计算 offset
+			QAxObject* usedrange = worksheet->querySubObject("UsedRange"); //!  sheet 范围
+			int intRowStart = usedrange->property("Row").toInt(); //!  起始行数
+			int intColStart = usedrange->property("Column").toInt(); //!  起始列数　
+			QAxObject *rows, *columns;
+			rows = usedrange->querySubObject("Rows"); //! 行　
+			columns = usedrange->querySubObject("Columns"); //! 列
+			int intRow = rows->property("Count").toInt(); //! 行数
+			int intCol = columns->property("Count").toInt();  //!  列数
+			colOffset = intColStart - 1;
+			rowOffset = intRowStart + intRow;
+		}
+
+		// rows
+		{
+
+			for (int i = 0; i < rows.count(); ++i) {
+				auto obj = rows.at(i).toObject();
+				for (auto itor = obj.begin(); itor != obj.end(); ++itor) {
+					auto itorFind = mapColumn.find(itor.key()); if (itorFind == mapColumn.end()) { continue; }
+					auto colIdx = itorFind.value();
+					auto cell = worksheet->querySubObject("Cells(int, int)", i + rowOffset, colOffset + colIdx);	// TODO: 考虑 A,B,C...Z 之后不够用的情况
+					auto value = itor.value().toString();
+					cell->dynamicCall("SetValue(const QVariant&)", value);
+					auto font = cell->querySubObject("Font");
+					font->setProperty("Size", 12);
+				}
+			}
+		}
+
+		workbook->dynamicCall("SaveAs(const QString&)", QDir::toNativeSeparators(filename));
+		workbook->dynamicCall("Close()");
+		app->dynamicCall("Quit()");
+	}
+	QMessageBox::information(m_mainWindow, "title", "comment");
+
+}
+
 // ================================================================================================
 MainWindow::MainWindow(QWidget * parent)
 	: QMainWindow(parent)
-	, m_view(new WebEngineView(this))
 	, m_injectScriptID(QUuid::createUuid().toString())
 	, m_urlHome("https://www.zhua.com")
 	, m_isRunning(false)
 	, m_isLoaded(false)
 {
+	m_view = new WebEngineView(this);
 
 	QWebEngineProfile* defaultProfile = QWebEngineProfile::defaultProfile();
-	defaultProfile->setCachePath("d:\\qq\\coo");
-	defaultProfile->setPersistentStoragePath("d:\\qq\\ss");
+	defaultProfile->setCachePath("./cache");
+	defaultProfile->setPersistentStoragePath("./storage");
 	defaultProfile->setPersistentCookiesPolicy(QWebEngineProfile::ForcePersistentCookies);
 	m_view->setPage(new CustomWebEnginePage(m_view));
 
@@ -34,27 +176,25 @@ MainWindow::MainWindow(QWidget * parent)
 	connect(m_view, &QWebEngineView::loadFinished, this, &MainWindow::onViewLoadFinished);
 	//connect(m_view, &QWebEngineView::loadProgress, this, &MainWindow::onViewLoadProgress);
 	//connect(m_view, &QWebEngineView::loadStarted, this, &MainWindow::onViewLoadStarted);
-	connect(this, &MainWindow::start, this, &MainWindow::doStart, Qt::QueuedConnection);
 
-
+	m_channelObject = new ChannelObject(this);
 	QWebChannel *pWebChannel = new QWebChannel(m_view->page());
-	pWebChannel->registerObject(QString("Zhua"), this);
+	pWebChannel->registerObject(QString("Zhua"), m_channelObject);
 	m_view->page()->setWebChannel(pWebChannel);
+	connect(m_channelObject, &ChannelObject::start, this, &MainWindow::doStart, Qt::QueuedConnection);
 
 	this->initMenu();
 	m_view->load(m_urlHome);
 	m_view->show();
-
-	// this->exportToExcel("C:\\Users\\liyh\\Desktop\\test.xlsx", "{\"title\":\"Name\",\"key\":\"name\",\"width\":\"100\"}", "{\"name\":\"felix\"}", true);
 }
 
 MainWindow::~MainWindow() {
-
+	delete m_channelObject;
 }
 
 //void MainWindow::onViewLoadStarted() {
 //	//	m_injectState = IS_NOTYET;
-//	//	qDebug() << "--------------------- Start";
+//	//	qDebug() << "--------------------- Start";m_view(new WebEngineView(this))
 //}
 //
 //void MainWindow::onViewLoadProgress(int progress) {
@@ -167,9 +307,6 @@ void MainWindow::slotShowDevTool() {
 
 void MainWindow::slotHome() {
 
-	this->onStart();
-	return;
-
 	QString info;
 	info += "url:" + m_view->url().toString();
 	QMessageBox::information(this, "info", info);
@@ -234,153 +371,14 @@ void MainWindow::slotHome() {
 	//}
 }
 
-QString MainWindow::getInfo(QString a, QString b) {
-	auto kk = a.toStdWString();
-	auto kk1 = b.toStdWString();
-	return QString(a + b);
-}
-
-void MainWindow::save(QString key, QString data) {
-#ifdef _DEBUG 
-	auto k = key.toStdWString();
-	auto v = data.toStdWString();
-#endif 
-	m_mapData[key] = data;
-}
-
-QString MainWindow::load(QString key) {
-	auto itor = m_mapData.find(key);
-	if (itor == m_mapData.end()) { return QString(""); }
-	return itor.value();
-}
-
 void MainWindow::slotShowNativeStorage() {
-	DlgNative::ShowNativeDialog(this->m_mapData);
-}
-
-QString MainWindow::openSaveFileDialog(QString oldFilename) {
-	QString fileName = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存到..."), oldFilename, QString::fromLocal8Bit("Microsoft Excel (*.xlsx);;CSV (*.csv);;所有文件 (*.*)"));
-	return fileName;
-}
-
-template<typename T>
-class AutoDelete
-{
-private:
-	T * m_obj;
-public:
-	AutoDelete<T>(T * obj) : m_obj(obj) {}
-	~AutoDelete<T>() { delete m_obj; }
-};
-class AutoFalse
-{
-private:
-	bool & m_value;
-public:
-	AutoFalse(bool & value) : m_value(value) {}
-	~AutoFalse() { m_value = false; }
-};
-
-void MainWindow::doExportToExcel(QString filename, QJsonArray columns, QJsonArray rows, bool append) {
-	{
-		bool isAppend = append;
-
-		QAxObject * app = new QAxObject(this); AutoDelete<QAxObject> _app(app);
-		app->setControl("Excel.Application");
-		app->dynamicCall("SetVisible (bool Visible)", "false");
-		app->setProperty("DisplayAlerts", false);
-
-		QAxObject *workbooks = app->querySubObject("WorkBooks");
-		QAxObject * workbook;
-		// 尝试打开 filename, 如果 filename 不存在 或 不是合法的 excel 格式, workbook 将为 NULL
-		if (append) {
-			workbook = workbooks->querySubObject("Open(const QString&)", filename);
-		}
-		if (workbook == NULL) {
-			isAppend = false;
-			workbooks->dynamicCall("Add");
-			workbook = app->querySubObject("ActiveWorkBook");
-		}
-
-
-		QAxObject *worksheets = workbook->querySubObject("Sheets");
-		QAxObject *worksheet = worksheets->querySubObject("Item(int)", 1);
-
-		int rowOffset, colOffset;
-		QMap<QString, int> mapColumn;
-		if (!isAppend) {
-			// columns
-			for (int i = 0; i < columns.count(); ++i) {
-				auto cell = worksheet->querySubObject("Cells(int, int)", 1, i + 1);
-				auto col = columns.at(i).toObject();
-				auto title = col["title"].toString();
-				auto key = col["key"].toString();
-				auto width = col["width"].toInt();
-				cell->dynamicCall("SetValue(const QVariant&)", QVariant(title));
-				cell->setProperty("ColumnWidth", width);
-				auto font = cell->querySubObject("Font");
-				font->setProperty("Bold", true);
-				font->setProperty("Size", 12);
-				mapColumn.insert(key, i + 1);
-			}
-			rowOffset = 2;
-			colOffset = 0;
-		}
-		else {
-			for (int i = 0; i < columns.count(); ++i) {
-				auto col = columns.at(i).toObject();
-				auto key = col["key"].toString();
-				mapColumn.insert(key, i + 1);
-			}
-
-			// 计算 offset
-			QAxObject* usedrange = worksheet->querySubObject("UsedRange"); //!  sheet 范围
-			int intRowStart = usedrange->property("Row").toInt(); //!  起始行数
-			int intColStart = usedrange->property("Column").toInt(); //!  起始列数　
-			QAxObject *rows, *columns;
-			rows = usedrange->querySubObject("Rows"); //! 行　
-			columns = usedrange->querySubObject("Columns"); //! 列
-			int intRow = rows->property("Count").toInt(); //! 行数
-			int intCol = columns->property("Count").toInt();  //!  列数
-			colOffset = intColStart - 1;
-			rowOffset = intRowStart + intRow;
-		}
-
-		// rows
-		{
-
-			for (int i = 0; i < rows.count(); ++i) {
-				auto obj = rows.at(i).toObject();
-				for (auto itor = obj.begin(); itor != obj.end(); ++itor) {
-					auto itorFind = mapColumn.find(itor.key()); if (itorFind == mapColumn.end()) { continue; }
-					auto colIdx = itorFind.value();
-					auto cell = worksheet->querySubObject("Cells(int, int)", i + rowOffset, colOffset + colIdx);	// TODO: 考虑 A,B,C...Z 之后不够用的情况
-					auto value = itor.value().toString();
-					cell->dynamicCall("SetValue(const QVariant&)", value);
-					auto font = cell->querySubObject("Font");
-					font->setProperty("Size", 12);
-				}
-			}
-		}
-
-		workbook->dynamicCall("SaveAs(const QString&)", QDir::toNativeSeparators(filename));
-		workbook->dynamicCall("Close()");
-		app->dynamicCall("Quit()");
-	}
-	QMessageBox::information(this, "title", "comment");
-
-}
-
-void MainWindow::exportToExcel(QString filename, QString jsonColumns, QString jsonRows, bool append) {
-	auto columns = QJsonDocument::fromJson(jsonColumns.toUtf8()).array();
-	auto rows = QJsonDocument::fromJson(jsonRows.toUtf8()).array();
-	doExportToExcel(filename, columns, rows, append);
+	DlgNative::ShowNativeDialog(this->m_channelObject->m_mapData);
 }
 
 void MainWindow::doStart() {
 
 	QJsonObject actionStore; {
-		auto itorFind = m_mapData.find("project"); if (itorFind == m_mapData.end()) { return; }
+		auto itorFind = m_channelObject->m_mapData.find("project"); if (itorFind == m_channelObject->m_mapData.end()) { return; }
 		auto jsonProject = itorFind.value();
 		QJsonObject project = QJsonDocument::fromJson(jsonProject.toUtf8()).object();
 		actionStore = QJsonDocument::fromJson(project["data"].toString().toUtf8()).object();
@@ -433,7 +431,7 @@ bool MainWindow::run(const QJsonObject & action) {
 		QVariant result = runScript2(script);
 		QJsonObject jsResult = QJsonDocument::fromJson(result.toString().toUtf8()).object();
 		auto filename = jsData["export"].toString();
-		doExportToExcel(filename, jsResult["columns"].toArray(), jsResult["rows"].toArray(), true);
+		m_channelObject->doExportToExcel(filename, jsResult["columns"].toArray(), jsResult["rows"].toArray(), true);
 		return false;
 	}
 

@@ -30,7 +30,8 @@
 #include <QtCore\QJsonObject>
 #include <QtCore\QJsonValue>
 #include <QtWidgets\QMessageBox>
-
+#include <QtCore\qmutex>
+#include <windows.h>
 
 #include "Utils.h"
 

@@ -24,9 +24,24 @@ private:
 	
 	void runGroup(int startId, const QJsonArray & actions);
 	bool run(const QJsonObject & action);
-
-	void doExportToExcel(QString, QJsonArray, QJsonArray, bool);
 	void doStart();
+
+private:
+	QString m_injectScriptID;
+	QUrl m_urlHome;
+	class WebEngineView * m_view;
+	class ChannelObject * m_channelObject;
+	
+	bool m_isRunning;
+	bool m_isLoaded;
+	friend class ChannelObject;
+};
+
+class ChannelObject : public QObject {
+	Q_OBJECT
+public:
+	ChannelObject(MainWindow * mainWindow) : m_mainWindow(mainWindow){
+	}
 
 public slots:
 	QString getInfo(QString, QString);
@@ -36,16 +51,16 @@ public slots:
 	void exportToExcel(QString, QString, QString, bool);
 	void onStart() { emit start(); }
 
+private:
+	void doExportToExcel(QString filename, QJsonArray columns, QJsonArray rows, bool append);
+
 signals:
 	void start();
 
 private:
-	QString m_injectScriptID;
-	QUrl m_urlHome;
-	class WebEngineView * m_view;
+	MainWindow * m_mainWindow;
 	QMap<QString, QString> m_mapData;
-	bool m_isRunning;
-	bool m_isLoaded;
+	friend class MainWindow;
 };
 
 class WebEngineView : public QWebEngineView {

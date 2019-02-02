@@ -8,7 +8,7 @@
 
  - 5. fetch-table 的 导出的默认位置
 
-6. fetch-table 为 append 输出
+ - 6. fetch-table 为 append 输出
 
 
 
